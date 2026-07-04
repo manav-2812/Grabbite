@@ -2,7 +2,7 @@
 
 <!-- CI badge -->
 
-![CI](https://github.com/YOUR_USERNAME/Grabbite/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml/badge.svg)
 
 <!-- Tech badges -->
 
