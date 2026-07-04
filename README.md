@@ -1,9 +1,11 @@
 # 🍽️ GrabBite — Food Ordering Web Application
 
 <!-- CI badge -->
+
 ![CI](https://github.com/YOUR_USERNAME/Grabbite/actions/workflows/ci.yml/badge.svg)
 
 <!-- Tech badges -->
+
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-2.3-000000?style=flat&logo=flask&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=flat&logo=sqlite&logoColor=white)
@@ -13,13 +15,13 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat)
 
 <!-- GitHub repo badges — replace YOUR_USERNAME with your GitHub username after pushing -->
-![GitHub stars](https://img.shields.io/github/stars/YOUR_USERNAME/Grabbite?style=flat&logo=github&color=f59e0b)
-![GitHub forks](https://img.shields.io/github/forks/YOUR_USERNAME/Grabbite?style=flat&logo=github&color=6366f1)
-![GitHub issues](https://img.shields.io/github/issues/YOUR_USERNAME/Grabbite?style=flat&logo=github&color=ef4444)
-![GitHub last commit](https://img.shields.io/github/last-commit/YOUR_USERNAME/Grabbite?style=flat&logo=github&color=10b981)
+
+![GitHub stars](https://img.shields.io/github/stars/manav-2812/Grabbite?style=flat&logo=github&color=f59e0b)
+![GitHub forks](https://img.shields.io/github/forks/manav-2812/Grabbite?style=flat&logo=github&color=6366f1)
+![GitHub issues](https://img.shields.io/github/issues/manav-2812/Grabbite?style=flat&logo=github&color=ef4444)
+![GitHub last commit](https://img.shields.io/github/last-commit/manav-2812/Grabbite?style=flat&logo=github&color=10b981)
 
 GrabBite is a full-stack food ordering platform built with **Python (Flask)**. Customers can browse restaurants, explore menus, add dishes to a cart, and place orders online — with Razorpay payment integration, real-time order notifications via WebSockets, email confirmations, and a full admin panel.
-
 
 ---
 
