@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrabBite Database Viewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { background: linear-gradient(135deg, #dc3545, #c82333); min-height: 100vh; }
+        .sidebar .nav-link { color: white; border-radius: 8px; margin: 2px 0; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); color: white; }
+        .table-container { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .table th { background-color: #dc3545; color: white; border: none; }
+        .table td { border-color: #dee2e6; }
+        .badge-count { background-color: rgba(255,255,255,0.3); }
+        .header-title { color: #dc3545; font-weight: 600; }
+        .pagination .page-link { color: #dc3545; }
+        .pagination .page-item.active .page-link { background-color: #dc3545; border-color: #dc3545; }
+        .table-responsive { max-height: 70vh; overflow-y: auto; }
+        .json-data { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+        .json-data:hover { overflow: visible; white-space: normal; background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-database me-2"></i>Database Viewer
+                </h4>
+                
+                <!-- Database Summary -->
+                <div class="mb-4">
+                    <h6 class="text-white-50 mb-2">Table Summary</h6>
+                    {% for table_name, count in table_counts_list %}
+                    <div class="d-flex justify-content-between text-white-50 small mb-1">
+                        <span>{{ table_name.replace('_', ' ').title() }}</span>
+                        <span class="badge badge-count">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Table Navigation -->
+                <nav class="nav flex-column">
+                    {% for table_name in table_names %}
+                    <a class="nav-link {% if table_name == current_table %}active{% endif %}" 
+                       href="?table={{ table_name }}">
+                        <i class="fas fa-table me-2"></i>{{ table_name.replace('_', ' ').title() }}
+                        <span class="badge badge-count ms-auto">{{ table_counts[table_name] }}</span>
+                    </a>
+                    {% endfor %}
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="header-title">
+                        <i class="fas fa-table me-2"></i>{{ current_table.replace('_', ' ').title() }} Table
+                    </h2>
+                    <div class="text-muted">
+                        Total Records: <strong>{{ table_data['total'] }}</strong>
+                    </div>
+                </div>
+                
+                {% if table_data.get('error') %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Error: {{ table_data.error }}
+                </div>
+                {% endif %}
+                
+                <!-- Table Schema Info -->
+                <div class="table-container mb-4 p-3">
+                    <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Table Schema</h5>
+                    <div class="row">
+                        {% for column in table_schema %}
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <div class="d-flex align-items-center">
+                                <strong class="me-2">{{ column.name }}</strong>
+                                <span class="badge bg-secondary me-1">{{ column.type }}</span>
+                                {% if column.primary_key %}
+                                <span class="badge bg-warning text-dark">PK</span>
+                                {% endif %}
+                                {% if column.foreign_key %}
+                                <span class="badge bg-info">FK</span>
+                                {% endif %}
+                                {% if not column.nullable %}
+                                <span class="badge bg-danger">NOT NULL</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Data Table -->
+                <div class="table-container">
+                    {% if table_data['items'] %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    {% for column in table_schema %}
+                                    <th>{{ column.name }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in table_data['items'] %}
+                                <tr>
+                                    {% for column in table_schema %}
+                                    <td>
+                                        {% set value = item[column.name] %}
+                                        {% if value == 'NULL' %}
+                                            <span class="text-muted">NULL</span>
+                                        {% elif column.name == 'order_items' and value %}
+                                            <div class="json-data" title="{{ value }}">
+                                                <i class="fas fa-code me-1"></i>JSON Data
+                                            </div>
+                                        {% elif column.name in ['password'] %}
+                                            <span class="text-muted">••••••••</span>
+                                        {% elif column.name in ['created_at', 'updated_at', 'last_login', 'sent_at'] %}
+                                            <small class="text-muted">{{ value }}</small>
+                                        {% elif column.name in ['is_admin', 'is_active', 'is_available', 'is_approved', 'is_read', 'is_sent'] %}
+                                            {% if value %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        {% elif column.name in ['rating'] and value %}
+                                            <div>
+                                                {% for i in [0, 1, 2, 3, 4] %}
+                                                    {% if i < value %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-muted"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <small class="ms-1">({{ value }})</small>
+                                            </div>
+                                        {% elif column.name in ['price', 'total_amount', 'amount', 'delivery_fee', 'min_order'] and value %}
+                                            <span class="text-success">₹{{ "%.2f"|format(value) }}</span>
+                                        {% else %}
+                                            {{ value if value != 'NULL' else '' }}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if table_data['pages'] > 1 %}
+                    <div class="d-flex justify-content-center p-3">
+                        <nav>
+                            <ul class="pagination mb-0">
+                                {% if table_data['has_prev'] %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?table={{ current_table }}&page={{ table_data['current_page'] - 1 }}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for page_num in range(1, table_data['pages'] + 1) %}
+                                    {% if page_num == table_data['current_page'] %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% elif page_num <= 3 or page_num > table_data['pages'] - 3 or (page_num >= table_data['current_page'] - 1 and page_num <= table_data['current_page'] + 1) %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?table={{ current_table }}&page={{ page_num }}">{{ page_num }}</a>
+                                    </li>
+                                    {% elif page_num == 4 or page_num == table_data['pages'] - 3 %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if table_data['has_next'] %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?table={{ current_table }}&page={{ table_data['current_page'] + 1 }}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center p-5">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No data found in this table</h5>
+                        <p class="text-muted">This table is currently empty.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
+        
+        // Add click handler for JSON data
+        document.querySelectorAll('.json-data').forEach(function(element) {
+            element.addEventListener('click', function() {
+                const jsonData = this.getAttribute('title');
+                if (jsonData) {
+                    try {
+                        const parsed = JSON.parse(jsonData);
+                        alert(JSON.stringify(parsed, null, 2));
+                    } catch (e) {
+                        alert(jsonData);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

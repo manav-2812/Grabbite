@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Server Error — GrabBite{% endblock %}
+{% block content %}
+<div class="container text-center py-5 mt-5">
+  <div style="font-size:8rem;">⚠️</div>
+  <h1 class="display-1 fw-bold text-warning">500</h1>
+  <h2 class="mb-3">Something Went Wrong</h2>
+  <p class="text-muted mb-4">Our kitchen had a meltdown. Our engineers are on it!<br>Please try again in a moment.</p>
+  <a href="/" class="btn btn-warning btn-lg me-2"><i class="fas fa-home me-2"></i>Go Home</a>
+  <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i>Go Back</a>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Login - GrabBite{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card auth-card">
+                    <div class="auth-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-sign-in-alt me-2"></i>Welcome Back
+                        </h3>
+                        <p class="mb-0 mt-2">Sign in to your account</p>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <form id="login-form" method="POST" action="{{ url_for('account.login_post_route') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Show/hide password" style="border-color: #dee2e6;">
+                                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                <label class="form-check-label" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-danger w-100 mb-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                            </button>
+                            
+                            <div class="text-center mb-2">
+                                <a href="{{ url_for('account.forgot_password') }}" class="text-decoration-none" style="font-size:0.88rem;color:#e53935;">
+                                    🔑 Forgot your password?
+                                </a>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="mb-0">Don't have an account? 
+                                    <a href="{{ url_for('account.signup') }}" class="text-decoration-none text-primary-red">
+                                        Sign up here
+                                    </a>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    // ── Password show/hide toggle ──────────────────────────────────────────
+    const toggleBtn  = document.getElementById('togglePassword');
+    const pwdInput   = document.getElementById('password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+
+    if (toggleBtn && pwdInput) {
+        toggleBtn.addEventListener('click', function () {
+            const isPassword = pwdInput.type === 'password';
+            pwdInput.type = isPassword ? 'text' : 'password';
+            toggleIcon.classList.toggle('fa-eye',       !isPassword);
+            toggleIcon.classList.toggle('fa-eye-slash',  isPassword);
+            pwdInput.focus();
+        });
+    }
+
+    // ── Remember Me — save & restore email + password ─────────────────────
+    const emailInput    = document.getElementById('email');
+    const rememberCheck = document.getElementById('remember');
+    const loginForm     = document.getElementById('login-form');
+    const KEY_EMAIL     = 'grabbite_saved_email';
+    const KEY_PASS      = 'grabbite_saved_pass';
+    const KEY_REMEMBER  = 'grabbite_remember';
+
+    // On page load: if user had checked Remember Me before, autofill both fields
+    if (localStorage.getItem(KEY_REMEMBER) === '1') {
+        const savedEmail = localStorage.getItem(KEY_EMAIL);
+        const savedPass  = localStorage.getItem(KEY_PASS);
+        if (savedEmail && emailInput) emailInput.value = savedEmail;
+        if (savedPass  && pwdInput)   pwdInput.value   = savedPass;
+        if (rememberCheck)            rememberCheck.checked = true;
+    }
+
+    // On submit: save or clear credentials based on checkbox
+    if (loginForm) {
+        loginForm.addEventListener('submit', function () {
+            if (rememberCheck && rememberCheck.checked) {
+                localStorage.setItem(KEY_EMAIL,    emailInput ? emailInput.value.trim() : '');
+                localStorage.setItem(KEY_PASS,     pwdInput   ? pwdInput.value          : '');
+                localStorage.setItem(KEY_REMEMBER, '1');
+            } else {
+                localStorage.removeItem(KEY_EMAIL);
+                localStorage.removeItem(KEY_PASS);
+                localStorage.removeItem(KEY_REMEMBER);
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

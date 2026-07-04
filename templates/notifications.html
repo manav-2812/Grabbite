@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications — GrabBite{% endblock %}
+
+{% block styles %}
+<style>
+  .notif-page-wrap {
+    max-width: 680px;
+    margin: 40px auto;
+    padding: 0 16px 60px;
+  }
+  .notif-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .notif-page-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #222;
+    margin: 0;
+  }
+  .notif-page-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .np-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .np-item:last-child { border-bottom: none; }
+  .np-item:hover { background: #fff8f8; }
+  .np-item.unread { background: #fff8f8; }
+  .np-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: #e53935;
+    border-radius: 0 4px 4px 0;
+  }
+  .np-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .np-icon.order    { background: #fff3cd; color: #e53935; }
+  .np-icon.promo    { background: #d4edda; color: #28a745; }
+  .np-icon.general  { background: #d1ecf1; color: #17a2b8; }
+  .np-icon.system   { background: #e2d9f3; color: #6f42c1; }
+  .np-body { flex: 1; }
+  .np-title {
+    font-weight: 700;
+    font-size: .97rem;
+    color: #222;
+    margin: 0 0 4px;
+  }
+  .np-msg {
+    font-size: .86rem;
+    color: #555;
+    margin: 0 0 6px;
+    line-height: 1.5;
+  }
+  .np-meta {
+    font-size: .75rem;
+    color: #bbb;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .np-badge-new {
+    background: #e53935;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .np-empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: #bbb;
+  }
+  .np-empty i { font-size: 3.5rem; margin-bottom: 16px; display: block; }
+  .np-empty p { font-size: 1rem; margin: 0; }
+  .btn-mark-all {
+    background: none;
+    border: 1px solid #e53935;
+    color: #e53935;
+    font-size: .82rem;
+    padding: 6px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-weight: 600;
+  }
+  .btn-mark-all:hover { background: #e53935; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notif-page-wrap">
+  <div class="notif-page-header">
+    <h2><i class="fas fa-bell me-2" style="color:#e53935;"></i>Notifications</h2>
+    {% if notifications %}
+    <button class="btn-mark-all" onclick="markAllRead()">
+      <i class="fas fa-check-double me-1"></i>Mark all as read
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="notif-page-card">
+    {% if notifications %}
+      {% for n in notifications %}
+        {% set icon_map = {
+          'order':       ('fa-receipt',     'order'),
+          'order_update':('fa-receipt',     'order'),
+          'promo':       ('fa-tag',         'promo'),
+          'promotion':   ('fa-tag',         'promo'),
+          'system':      ('fa-cog',         'system'),
+          'general':     ('fa-info-circle', 'general'),
+        } %}
+        {% set icon_info = icon_map.get(n.type or 'general', ('fa-info-circle', 'general')) %}
+        <div class="np-item {% if not n.is_read %}unread{% endif %}" id="ni-{{ n.id }}">
+          <div class="np-icon {{ icon_info[1] }}">
+            <i class="fas {{ icon_info[0] }}"></i>
+          </div>
+          <div class="np-body">
+            <p class="np-title">{{ n.title }}</p>
+            <p class="np-msg">{{ n.message }}</p>
+            <div class="np-meta">
+              <span>{{ n.created_at.strftime('%b %d, %Y · %I:%M %p') if n.created_at else '' }}</span>
+              {% if not n.is_read %}<span class="np-badge-new">NEW</span>{% endif %}
+            </div>
+          </div>
+          {% if n.link %}
+          <a href="{{ n.link }}" style="align-self:center; color:#e53935; font-size:.8rem; white-space:nowrap;">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="np-empty">
+        <i class="fas fa-bell-slash"></i>
+        <p>No notifications yet. Check back later!</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function markAllRead() {
+  fetch('/api/notifications/read-all', {method:'POST'})
+    .then(() => {
+      document.querySelectorAll('.np-item.unread').forEach(el => {
+        el.classList.remove('unread');
+        el.querySelector('.np-badge-new')?.remove();
+      });
+      const badge = document.getElementById('notif-badge');
+      if (badge) badge.style.display = 'none';
+    });
+}
+</script>
+{% endblock %}

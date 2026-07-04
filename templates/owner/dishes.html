@@ -1,0 +1,124 @@
+{% extends "owner/base.html" %}
+{% block title %}Manage Dishes{% endblock %}
+{% block page_title %}Manage Dishes{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+  <div>
+    <p style="color:#6b7280;font-size:.88rem;margin-top:4px;">
+      {{ dishes.total }} dishes · {{ restaurant.name }}
+    </p>
+  </div>
+  <a href="{{ url_for('owner.add_dish') }}" class="btn-primary">
+    <i class="fas fa-plus"></i> Add Dish
+  </a>
+</div>
+
+<!-- Category filter -->
+{% if categories %}
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+  <a href="{{ url_for('owner.dishes') }}"
+     style="padding:6px 14px;border-radius:999px;font-size:.82rem;font-weight:700;text-decoration:none;
+            {% if not current_category %}background:#e53935;color:#fff{% else %}background:#f3f4f6;color:#374151{% endif %}">
+    All
+  </a>
+  {% for cat in categories %}
+  <a href="{{ url_for('owner.dishes', category=cat) }}"
+     style="padding:6px 14px;border-radius:999px;font-size:.82rem;font-weight:700;text-decoration:none;
+            {% if current_category == cat %}background:#e53935;color:#fff{% else %}background:#f3f4f6;color:#374151{% endif %}">
+    {{ cat }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="section-card">
+  <div class="section-card-body">
+    {% if dishes.items %}
+    <table class="owner-table">
+      <thead>
+        <tr>
+          <th>Dish</th><th>Category</th><th>Price</th>
+          <th>Type</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dish in dishes.items %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:12px;">
+              {% if dish.image %}
+              <img src="{{ food_image_url(dish.image) }}" alt="{{ dish.name }}"
+                   style="width:42px;height:42px;object-fit:cover;border-radius:8px;">
+              {% else %}
+              <div style="width:42px;height:42px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🍽️</div>
+              {% endif %}
+              <div>
+                <strong style="font-size:.9rem;">{{ dish.name }}</strong>
+                {% if dish.is_bestseller %}<span style="font-size:.7rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:999px;margin-left:4px;">★ Best</span>{% endif %}
+                <div style="color:#9ca3af;font-size:.75rem;margin-top:1px;">{{ dish.description[:50] + '…' if dish.description and dish.description|length > 50 else dish.description }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span style="font-size:.8rem;background:#f3f4f6;padding:3px 8px;border-radius:6px;">{{ dish.category or '—' }}</span></td>
+          <td style="font-weight:700;">₹{{ '%.0f'|format(dish.price) }}</td>
+          <td>
+            {% if dish.is_vegetarian %}
+            <span style="color:#16a34a;font-size:.8rem;font-weight:700;">🟢 Veg</span>
+            {% else %}
+            <span style="color:#dc2626;font-size:.8rem;font-weight:700;">🔴 Non-Veg</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if dish.is_available %}
+            <span class="status-badge" style="background:#d1fae5;color:#065f46;">● Available</span>
+            {% else %}
+            <span class="status-badge" style="background:#f3f4f6;color:#6b7280;">○ Unavailable</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:8px;">
+              <a href="{{ url_for('owner.edit_dish', dish_id=dish.id) }}" class="btn-ghost" style="padding:6px 12px;">
+                <i class="fas fa-edit"></i>
+              </a>
+              <form method="POST" action="{{ url_for('owner.delete_dish', dish_id=dish.id) }}"
+                    onsubmit="return confirm('Delete {{ dish.name }}?')">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-danger" style="padding:6px 12px;">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:50px;text-align:center;color:#9ca3af;">
+      <div style="font-size:3rem;margin-bottom:12px;">🍽️</div>
+      <p>No dishes yet. <a href="{{ url_for('owner.add_dish') }}" style="color:#e53935;">Add your first dish</a></p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if dishes.pages > 1 %}
+<div style="display:flex;gap:8px;justify-content:center;margin-top:20px;">
+  {% for p in dishes.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+    {% if p %}
+      <a href="{{ url_for('owner.dishes', page=p, category=current_category) }}"
+         style="padding:8px 14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:.85rem;
+                {% if p == dishes.page %}background:#e53935;color:#fff{% else %}background:#fff;color:#111;border:1px solid #e5e7eb{% endif %}">
+        {{ p }}
+      </a>
+    {% else %}
+      <span style="padding:8px 6px;color:#9ca3af;">…</span>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

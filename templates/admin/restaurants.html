@@ -1,0 +1,782 @@
+{% extends "admin/dashboard.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    /* Restaurant cards */
+    .preview-container {
+        position: relative;
+        display: inline-block;
+    }
+    .preview-container .btn-danger {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        border-radius: 50%;
+        padding: 0.25rem 0.5rem;
+    }
+    .admin-content {
+        min-height: calc(100vh - 80px);
+        background: #2c3e50;
+        color: white;
+        padding-top: 20px;
+    }
+    .admin-sidebar a {
+        color: #ecf0f1;
+        padding: 10px 15px;
+        display: block;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    .admin-sidebar a:hover {
+        background: #34495e;
+    }
+    .admin-sidebar a.active {
+        background: #e53935;
+    }
+    .admin-main {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: calc(100vh - 80px);
+    }
+    .restaurant-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .restaurant-card:hover {
+        transform: translateY(-5px);
+    }
+    .restaurant-image {
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px 8px 0 0;
+    }
+    /* Menu items table */
+    #menuItemsTable {
+        margin-top: 1rem;
+    }
+    
+    .menu-item-image {
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    
+    .menu-item-image:hover {
+        transform: scale(1.5);
+    }
+    
+    /* DataTables customization */
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 1rem;
+    }
+    
+    .dataTables_wrapper .dataTables_length {
+        margin-bottom: 1rem;
+    }
+    
+    /* Form validation */
+    .was-validated .form-control:invalid,
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .was-validated .form-control:valid,
+    .form-control.is-valid {
+        border-color: #28a745;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    /* Form switch customization */
+    .form-check.form-switch {
+        padding-left: 2.5em;
+    }
+    
+    .form-check-input {
+        cursor: pointer;
+    }
+    
+    .form-switch .form-check-input {
+        width: 2em;
+    }
+    
+    .form-switch .form-check-input:checked {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <h5 class="mb-4 ps-3">Admin Panel</h5>
+            <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">
+                <i class="fas fa-users me-2"></i> Users
+            </a>
+            <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if request.endpoint == 'admin.orders' }}">
+                <i class="fas fa-shopping-cart me-2"></i> Orders
+            </a>
+            <a href="{{ url_for('admin.restaurants') }}" class="{{ 'active' if request.endpoint == 'admin.restaurants' }}">
+                <i class="fas fa-utensils me-2"></i> Restaurants
+            </a>
+            <a href="{{ url_for('admin.admin_blogs') }}" class="{{ 'active' if request.endpoint == 'admin.admin_blogs' }}">
+                <i class="fas fa-blog me-2"></i> Blogs
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="{{ 'active' if request.endpoint == 'admin.reviews' }}">
+                <i class="fas fa-star me-2"></i> Reviews
+            </a>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 admin-main">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Restaurant Management</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRestaurantModal">
+                    <i class="fas fa-plus"></i> Add Restaurant
+                </button>
+            </div>
+            
+            <!-- Restaurant Cards -->
+            <div class="row">
+                {% for restaurant in restaurants %}
+                <div class="col-md-4">
+                    <div class="card restaurant-card">
+                        <img src="{{ url_for('static', filename=restaurant.image) }}" class="restaurant-image" alt="{{ restaurant.name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ restaurant.name }}</h5>
+                            <p class="card-text">{{ restaurant.description }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info">{{ restaurant.location }}</span>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-primary" data-action="edit" data-restaurant-id="{{ restaurant.id }}">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-info" data-action="menu" data-restaurant-id="{{ restaurant.id }}">
+                                        <i class="fas fa-utensils"></i> Menu
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" data-action="delete" data-restaurant-id="{{ restaurant.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Restaurant Modal -->
+<div class="modal fade" id="addRestaurantModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Restaurant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRestaurantForm" enctype="multipart/form-data" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Restaurant Name</label>
+                        <input type="text" class="form-control" name="name" data-required="true" minlength="3">
+                        <div class="invalid-feedback">Please enter a restaurant name (minimum 3 characters)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-control" name="location" data-required="true">
+                        <div class="invalid-feedback">Please enter a valid location</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" data-required="true" minlength="10"></textarea>
+                        <div class="invalid-feedback">Please enter a description (minimum 10 characters)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Restaurant Image</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" onchange="previewImage(this, 'restaurantImagePreview')">
+                        <small class="text-muted">Leave empty to keep existing image when editing</small>
+                        <div class="preview-container mt-2">
+                            <img id="restaurantImagePreview" src="" alt="Restaurant preview" style="max-width: 200px; display: none;" class="img-thumbnail">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" onclick="clearImagePreview('restaurantImagePreview')" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitRestaurant()">Add Restaurant</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Menu Management Modal -->
+<div class="modal fade" id="menuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">Menu Items</h6>
+                    <button class="btn btn-sm btn-primary" onclick="menuManager.showAddItemForm()">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+                
+                <!-- Menu Items Table Container -->
+                <div id="menuItemsTable" class="table-responsive mb-4">
+                    <!-- Table will be dynamically inserted here -->
+                </div>
+                
+                <!-- Add/Edit Menu Item Form -->
+                <div id="addItemForm" style="display: none;">
+                    <form id="menuItemForm" class="border rounded p-3 mb-3">
+                        <div class="mb-3">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                            <div class="invalid-feedback">Please enter a valid item name</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input type="number" class="form-control" name="price" step="0.01" required>
+                            <div class="invalid-feedback">Please enter a valid price (greater than 0)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" name="category" required>
+                                <option value="">Select a category</option>
+                                <option value="Appetizers">Appetizers</option>
+                                <option value="Main Course">Main Course</option>
+                                <option value="Desserts">Desserts</option>
+                                <option value="Beverages">Beverages</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Specials">Specials</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a category</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Item Image</label>
+                            <input type="file" class="form-control" name="image" accept="image/*" onchange="AdminUtils.setupImagePreview(this, 'menuItemImagePreview')">
+                            <div class="invalid-feedback">Please select a valid image file (max 5MB)</div>
+                            <small class="text-muted">Leave empty to keep existing image when editing</small>
+                            <div class="preview-container mt-2">
+                                <img id="menuItemImagePreview" src="" alt="Menu item preview" style="max-width: 200px; display: none;" class="img-thumbnail">
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" onclick="menuManager.hideAddItemForm()">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="menuManager.submitMenuItem(this.form)">Add Item</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<!-- Toast container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toastContainer"></div>
+</div>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css"/>
+
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+
+<!-- Admin utilities -->
+<script src="{{ url_for('static', filename='js/admin-utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/menu-manager.js') }}"></script>
+
+<script>
+// Initialize event handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Event delegation for restaurant actions
+    document.querySelector('.admin-main').addEventListener('click', function(event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        
+        const action = button.dataset.action;
+        const restaurantId = button.dataset.restaurantId;
+        
+        switch (action) {
+            case 'edit':
+                editRestaurant(restaurantId);
+                break;
+            case 'menu':
+                manageMenu(restaurantId);
+                break;
+            case 'delete':
+                deleteRestaurant(restaurantId);
+                break;
+        }
+    });
+
+    // Event delegation for menu item actions
+    document.getElementById('menuModal').addEventListener('click', function(event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        
+        const action = button.dataset.action;
+        const itemId = button.dataset.itemId;
+        
+        switch (action) {
+            case 'edit-item':
+                editMenuItem(itemId);
+                break;
+            case 'delete-item':
+                deleteMenuItem(itemId);
+                break;
+        }
+    });
+});
+
+// Toast notification function
+function showToast(message, type = 'success') {
+    const toastContainer = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    
+    const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+
+let currentRestaurantId = null;
+
+function editRestaurant(restaurantId) {
+    fetch(`/admin/api/restaurant/${restaurantId}`)
+    .then(response => response.json())
+    .then(data => {
+        // Reset any previous validation state
+        const form = document.getElementById('addRestaurantForm');
+        form.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
+        
+        // Populate the modal with restaurant data
+        form.querySelector('[name="name"]').value = data.name;
+        form.querySelector('[name="location"]').value = data.location;
+        form.querySelector('[name="description"]').value = data.description;
+        
+        // Store the restaurant ID for the update
+        form.dataset.restaurantId = restaurantId;
+        
+        // Change the modal title and button text
+        document.querySelector('#addRestaurantModal .modal-title').textContent = 'Edit Restaurant';
+        const submitButton = document.querySelector('#addRestaurantModal .modal-footer .btn-primary');
+        submitButton.textContent = 'Save Changes';
+        submitButton.onclick = submitRestaurantEdit;
+        
+        // Show the modal
+        new bootstrap.Modal(document.getElementById('addRestaurantModal')).show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to load restaurant details', 'error');
+    });
+}
+
+function submitRestaurantEdit() {
+    const form = document.getElementById('addRestaurantForm');
+    const restaurantId = form.dataset.restaurantId;
+    const formData = new FormData(form);
+    
+    fetch(`/admin/api/restaurant/${restaurantId}`, {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Restaurant updated successfully', 'success');
+            location.reload();
+        } else {
+            showToast('Failed to update restaurant', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while updating restaurant', 'error');
+    });
+}
+
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const clearButton = preview.parentElement.querySelector('.btn-danger');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            clearButton.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        clearImagePreview(previewId);
+    }
+}
+
+function clearImagePreview(previewId) {
+    const preview = document.getElementById(previewId);
+    const input = preview.closest('.mb-3').querySelector('input[type="file"]');
+    const clearButton = preview.parentElement.querySelector('.btn-danger');
+    
+    preview.src = '';
+    preview.style.display = 'none';
+    clearButton.style.display = 'none';
+    input.value = '';
+}
+
+function manageMenu(restaurantId) {
+    currentRestaurantId = restaurantId;
+    loadMenuItems(restaurantId);
+    new bootstrap.Modal(document.getElementById('menuModal')).show();
+}
+
+function loadMenuItems(restaurantId) {
+    fetch(`/admin/api/restaurant/${restaurantId}/menu`)
+    .then(response => response.json())
+    .then(data => {
+        const menuContainer = document.getElementById('menuItems');
+        menuContainer.innerHTML = data.items.map(item => `
+            <div class="menu-item">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="flex-grow-1">
+                    <h6 class="mb-0">${item.name}</h6>
+                    <small class="text-muted">${item.category}</small>
+                    <div class="mt-1">$${item.price.toFixed(2)}</div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary" data-action="edit-item" data-item-id="${item.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" data-action="delete-item" data-item-id="${item.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to load menu items', 'error');
+    });
+}
+
+function editMenuItem(itemId) {
+    fetch(`/admin/api/menu-item/${itemId}`)
+    .then(response => response.json())
+    .then(data => {
+        const form = document.getElementById('menuItemForm');
+        form.querySelector('[name="name"]').value = data.name;
+        form.querySelector('[name="price"]').value = data.price;
+        form.querySelector('[name="category"]').value = data.category;
+        form.querySelector('[name="description"]').value = data.description || '';
+        form.dataset.itemId = itemId;
+        
+        // Show the form and update button text
+        showAddItemForm();
+        document.querySelector('#addItemForm .btn-primary').textContent = 'Update Item';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to load menu item details', 'error');
+    });
+}
+
+function deleteMenuItem(itemId) {
+    const confirmDelete = confirm('Are you sure you want to delete this menu item?\n\nThis action cannot be undone and will permanently remove the item from the menu.');
+    
+    if (confirmDelete) {
+        // Show loading state
+        const deleteButton = event.target.closest('button');
+        const originalHTML = deleteButton.innerHTML;
+        deleteButton.disabled = true;
+        deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        fetch(`/admin/api/menu-item/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showToast('Menu item deleted successfully', 'success');
+                loadMenuItems(currentRestaurantId);
+            } else {
+                throw new Error(data.message || 'Failed to delete menu item');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast(`Error deleting menu item: ${error.message}`, 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            deleteButton.disabled = false;
+            deleteButton.innerHTML = originalHTML;
+        });
+    }
+}
+
+function showAddItemForm() {
+    document.getElementById('addItemForm').style.display = 'block';
+    // Reset the form and button text when showing
+    document.getElementById('menuItemForm').reset();
+    document.querySelector('#addItemForm .btn-primary').textContent = 'Add Item';
+}
+
+function hideAddItemForm() {
+    document.getElementById('addItemForm').style.display = 'none';
+    document.getElementById('menuItemForm').reset();
+}
+
+function submitMenuItem() {
+    const form = document.getElementById('menuItemForm');
+    
+    // Validate required fields
+    const requiredFields = ['name', 'price', 'category'];
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        const input = form.querySelector(`[name="${field}"]`);
+        if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!isValid) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    const itemId = form.dataset.itemId;
+    const isEdit = !!itemId;
+    
+    if (!isEdit) {
+        formData.append('restaurant_id', currentRestaurantId);
+    }
+    
+    // Handle image upload
+    const imageInput = form.querySelector('[name="image"]');
+    if (imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select a valid image file', 'error');
+            return;
+        }
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Image file size should be less than 5MB', 'error');
+            return;
+        }
+    } else if (isEdit) {
+        formData.delete('image');
+    }
+    
+    const endpoint = isEdit ? `/admin/api/menu-item/${itemId}` : '/admin/api/menu-item';
+    const method = isEdit ? 'PUT' : 'POST';
+    
+    // Show loading state
+    const submitButton = form.querySelector('.btn-primary');
+    const originalText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Processing...';
+    
+    fetch(endpoint, {
+        method: method,
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast(`Menu item ${isEdit ? 'updated' : 'added'} successfully`, 'success');
+            hideAddItemForm();
+            loadMenuItems(currentRestaurantId);
+        } else {
+            throw new Error(data.message || 'Operation failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast(`Failed to ${isEdit ? 'update' : 'add'} menu item: ${error.message}`, 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+    });
+}
+
+function validateForm(form) {
+    let isValid = true;
+    form.querySelectorAll('input, textarea').forEach(field => {
+        field.classList.remove('is-invalid');
+        
+        // Check required fields
+        if (field.dataset.required === 'true' && !field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+            return;
+        }
+        
+        // Check minlength
+        if (field.minLength && field.value.length < field.minLength) {
+            field.classList.add('is-invalid');
+            isValid = false;
+            return;
+        }
+    });
+    return isValid;
+}
+
+function submitRestaurant() {
+    const form = document.getElementById('addRestaurantForm');
+    
+    // Validate form before submission
+    if (!validateForm(form)) {
+        showToast('Please fill in all required fields correctly', 'error');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    const restaurantId = form.dataset.restaurantId;
+    const isEdit = !!restaurantId;
+    
+    const endpoint = isEdit ? `/admin/api/restaurant/${restaurantId}` : '/admin/api/restaurant';
+    const method = isEdit ? 'PUT' : 'POST';
+    
+    // Only include image in formData if a file is selected
+    if (form.querySelector('[name="image"]').files.length === 0 && isEdit) {
+        formData.delete('image');
+    }
+    
+    fetch(endpoint, {
+        method: method,
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Restaurant added successfully', 'success');
+            location.reload();
+        } else {
+            showToast('Failed to add restaurant', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while adding restaurant', 'error');
+    });
+}
+
+function deleteRestaurant(restaurantId) {
+    if (confirm('Are you sure you want to delete this restaurant? This will also delete all menu items and orders associated with it.')) {
+        fetch(`/admin/api/restaurant/${restaurantId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Restaurant deleted successfully', 'success');
+                location.reload();
+            } else {
+                showToast('Failed to delete restaurant', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while deleting restaurant', 'error');
+        });
+    }
+}
+
+// Note: Removed redundant showToast function since we have the proper implementation above
+</script>
+{% endblock %}

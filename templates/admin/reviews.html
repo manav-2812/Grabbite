@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .admin-sidebar {
+        min-height: calc(100vh - 80px);
+        background: #2c3e50;
+        color: white;
+        padding-top: 20px;
+    }
+    .admin-sidebar a {
+        color: #ecf0f1;
+        padding: 10px 15px;
+        display: block;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    .admin-sidebar a:hover {
+        background: #34495e;
+    }
+    .admin-sidebar a.active {
+        background: #e53935;
+    }
+    .admin-main {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: calc(100vh - 80px);
+    }
+    .star-rating {
+        color: #ffc107;
+    }
+    .review-text {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <h5 class="mb-4 ps-3">Admin Panel</h5>
+            <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">
+                <i class="fas fa-users me-2"></i> Users
+            </a>
+            <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if request.endpoint == 'admin.orders' }}">
+                <i class="fas fa-shopping-cart me-2"></i> Orders
+            </a>
+            <a href="{{ url_for('admin.restaurants') }}" class="{{ 'active' if request.endpoint == 'admin.restaurants' }}">
+                <i class="fas fa-utensils me-2"></i> Restaurants
+            </a>
+            <a href="{{ url_for('admin.admin_blogs') }}" class="{{ 'active' if request.endpoint == 'admin.admin_blogs' }}">
+                <i class="fas fa-blog me-2"></i> Blogs
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="{{ 'active' if request.endpoint == 'admin.reviews' }}">
+                <i class="fas fa-star me-2"></i> Reviews
+            </a>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 admin-main">
+            <h2 class="mb-4">Reviews Management</h2>
+            
+            <!-- Reviews Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Restaurant</th>
+                                    <th>Rating</th>
+                                    <th>Review</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for review in reviews %}
+                                <tr>
+                                    <td>{{ review.user.name if review.user else 'Anonymous' }}</td>
+                                    <td>{{ review.restaurant.name if review.restaurant else 'N/A' }}</td>
+                                    <td>
+                                        <div class="star-rating">
+                                            {% for i in range(1, 6) %}
+                                                {% if i <= review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="ms-1">({{ review.rating }})</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="review-text" title="{{ review.comment }}">
+                                            {{ review.comment or 'No comment' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if review.is_approved else 'warning' }}">
+                                            {{ 'Approved' if review.is_approved else 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ review.created_at.strftime('%Y-%m-%d') if review.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            {% if not review.is_approved %}
+                                            <button class="btn btn-sm btn-success" onclick="approveReview('{{ review.id }}')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-info" onclick="viewReview('{{ review.id }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteReview('{{ review.id }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Details Modal -->
+<div class="modal fade" id="reviewDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Review Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reviewDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function approveReview(reviewId) {
+    if (confirm('Are you sure you want to approve this review?')) {
+        alert('Approve review functionality to be implemented');
+    }
+}
+
+function viewReview(reviewId) {
+    alert('View review details functionality to be implemented');
+}
+
+function deleteReview(reviewId) {
+    if (confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
+        alert('Delete review functionality to be implemented');
+    }
+}
+</script>
+{% endblock %}

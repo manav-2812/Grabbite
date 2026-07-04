@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Register Restaurant - GrabBite{% endblock %}
+
+{% block styles %}
+<style>
+.owner-signup-hero {
+  background: linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  padding: 48px 0 32px;
+  text-align: center;
+  color: #fff;
+}
+.owner-signup-hero h1 { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+.owner-signup-hero p  { color: rgba(255,255,255,.72); font-size: 1rem; }
+.signup-card  { background: #fff; border-radius: 18px; border: 1px solid rgba(0,0,0,.08); box-shadow: 0 8px 40px rgba(0,0,0,.1); overflow: hidden; }
+.signup-section-title { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #e53935; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+.signup-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.08); }
+.form-label { font-weight: 700; font-size: .83rem; color: #374151; margin-bottom: 5px; }
+.form-control, .form-select { border: 1.5px solid rgba(0,0,0,.12); border-radius: 10px; padding: 10px 14px; font-size: .9rem; transition: border-color .2s, box-shadow .2s; }
+.form-control:focus, .form-select:focus { border-color: #e53935; box-shadow: 0 0 0 3px rgba(229,57,53,.1); outline: none; }
+.benefit-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.benefit-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(229,57,53,.1); color: #e53935; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem; }
+.step-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: #e53935; color: #fff; border-radius: 50%; font-size: .75rem; font-weight: 800; flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="owner-signup-hero">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+      <span style="background:rgba(229,57,53,.2);border:1px solid rgba(229,57,53,.4);border-radius:999px;padding:6px 18px;font-size:.8rem;font-weight:700;color:#ff8a80;">
+        <i class="fas fa-store me-1"></i> Restaurant Partner
+      </span>
+    </div>
+    <h1><i class="fas fa-utensils me-2 text-danger"></i>List Your Restaurant on GrabBite</h1>
+    <p>Join 10,000+ restaurants. Reach millions of hungry customers every day.</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4 justify-content-center">
+
+    <!-- Benefits sidebar -->
+    <div class="col-lg-4 order-lg-2">
+      <div class="p-4" style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;position:sticky;top:90px;">
+        <h5 style="font-weight:800;margin-bottom:20px;">Why partner with GrabBite?</h5>
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-users"></i></div>
+          <div><strong style="font-size:.9rem;">Reach 8M+ Customers</strong><br><small class="text-muted">Tap into our active user base across 20+ cities.</small></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-chart-bar"></i></div>
+          <div><strong style="font-size:.9rem;">Real-Time Analytics</strong><br><small class="text-muted">Track orders, revenue and top dishes live.</small></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-motorcycle"></i></div>
+          <div><strong style="font-size:.9rem;">We Handle Delivery</strong><br><small class="text-muted">Our delivery fleet — you focus on cooking.</small></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-money-bill-wave"></i></div>
+          <div><strong style="font-size:.9rem;">Weekly Payouts</strong><br><small class="text-muted">Transparent commissions. Paid every week.</small></div>
+        </div>
+        <hr class="my-3">
+        <p style="font-size:.8rem;" class="text-muted mb-2"><strong>How it works:</strong></p>
+        <div class="d-flex align-items-start gap-2 mb-2">
+          <span class="step-badge">1</span><small>Register your account & restaurant below</small>
+        </div>
+        <div class="d-flex align-items-start gap-2 mb-2">
+          <span class="step-badge">2</span><small>Admin reviews & approves your listing (24–48h)</small>
+        </div>
+        <div class="d-flex align-items-start gap-2 mb-2">
+          <span class="step-badge">3</span><small>Add your menu and go live immediately</small>
+        </div>
+        <hr class="my-3">
+        <p class="text-center mb-0" style="font-size:.82rem;">Already registered?
+          <a href="{{ url_for('account.login') }}" class="text-danger fw-bold text-decoration-none">Sign in here</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Sign-up form -->
+    <div class="col-lg-8 order-lg-1">
+      <div class="signup-card">
+        <div class="p-4" style="background:linear-gradient(90deg,#e53935,#c62828);color:#fff;">
+          <h4 class="mb-0 fw-bold"><i class="fas fa-user-plus me-2"></i>Create Your Owner Account</h4>
+          <p class="mb-0 mt-1" style="opacity:.8;font-size:.88rem;">Fill in your details and restaurant info to get started.</p>
+        </div>
+        <div class="p-4">
+          <form method="POST" action="{{ url_for('account.signup_owner_post_route') }}" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+            <!-- ── Owner Account ── -->
+            <p class="signup-section-title"><i class="fas fa-user"></i> Your Account Details</p>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Full Name *</label>
+                <input type="text" name="name" class="form-control" placeholder="Your full name" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address *</label>
+                <input type="email" name="email" class="form-control" placeholder="you@email.com" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone Number *</label>
+                <input type="tel" name="contact" class="form-control" placeholder="+91 98765 43210" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Profile Photo</label>
+                <input type="file" name="profile_photo" class="form-control" accept="image/*">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Password *</label>
+                <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirm Password *</label>
+                <input type="password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
+              </div>
+            </div>
+
+            <!-- ── Restaurant Details ── -->
+            <p class="signup-section-title"><i class="fas fa-store"></i> Restaurant Details</p>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Restaurant Name *</label>
+                <input type="text" name="restaurant_name" class="form-control" placeholder="e.g. Spice Garden" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cuisine Type *</label>
+                <select name="cuisine_type" class="form-select" required>
+                  <option value="">Select cuisine...</option>
+                  {% for c in ['North Indian','South Indian','Chinese','Italian','Fast Food','Biryani','Pizza','Burgers','Beverages','Desserts','Healthy Food','Multi Cuisine','Continental','Mughlai','Street Food','Seafood','Mexican','Japanese','Bakery','Vegan'] %}
+                  <option>{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Restaurant Location / Address *</label>
+                <input type="text" name="restaurant_location" class="form-control" placeholder="e.g. 12, MG Road, Koramangala, Bengaluru" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Restaurant Phone</label>
+                <input type="tel" name="restaurant_phone" class="form-control" placeholder="Landline or mobile">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Restaurant Banner Image</label>
+                <input type="file" name="restaurant_image" class="form-control" accept="image/*">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Short Description</label>
+                <textarea name="restaurant_description" class="form-control" rows="2" placeholder="What makes your restaurant special?"></textarea>
+              </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="form-check mb-4">
+              <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+              <label class="form-check-label" for="terms" style="font-size:.85rem;">
+                I agree to GrabBite's <a href="#" class="text-danger">Partner Terms</a> and
+                <a href="#" class="text-danger">Privacy Policy</a>. I confirm I am authorised to
+                register this restaurant.
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-danger w-100 py-3 fw-bold" style="border-radius:12px;font-size:1rem;">
+              <i class="fas fa-store me-2"></i>Register My Restaurant
+            </button>
+            <p class="text-center text-muted mt-3" style="font-size:.82rem;">
+              Want to order food instead?
+              <a href="{{ url_for('account.signup') }}" class="text-danger fw-bold text-decoration-none">Customer sign up</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

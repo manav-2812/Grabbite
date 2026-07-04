@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}GrabBite - Order Food Online{% endblock %}</title>
+
+    <!-- ── CSRF protection shim ──────────────────────────────────────────────
+         Auto-injects the X-CSRF-Token header (and _csrf JSON field) into every
+         unsafe fetch() / XMLHttpRequest call. Required by the server-side
+         csrf_protect() before_request hook. -->
+    <script>
+    (function () {
+        'use strict';
+        function readToken() {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') || '' : '';
+        }
+        var unsafe = /^(POST|PUT|PATCH|DELETE)$/i;
+        function isSameOrigin(url) {
+            if (!url) return true;
+            if (/^https?:\/\//i.test(url)) {
+                try { var u = new URL(url, location.origin); return u.origin === location.origin; } catch (e) { return false; }
+            }
+            return true;
+        }
+        // Patch fetch
+        if (window.fetch) {
+            var origFetch = window.fetch.bind(window);
+            window.fetch = function (input, init) {
+                init = init || {};
+                var method = (init.method || (input && input.method) || 'GET').toUpperCase();
+                if (unsafe.test(method) && isSameOrigin(typeof input === 'string' ? input : (input && input.url))) {
+                    init.headers = init.headers || {};
+                    // Headers can be a Headers instance, plain object, or array
+                    if (typeof init.headers.set === 'function') {
+                        if (!init.headers.has('X-CSRF-Token')) init.headers.set('X-CSRF-Token', readToken());
+                    } else {
+                        if (!init.headers['X-CSRF-Token']) init.headers['X-CSRF-Token'] = readToken();
+                    }
+                    // For JSON bodies, also embed _csrf so server can pick from either source
+                    var body = init.body;
+                    var ct = (init.headers.get && init.headers.get('Content-Type')) || init.headers['Content-Type'] || '';
+                    if (typeof body === 'string' && body.length && body.charAt(0) === '{') {
+                        try {
+                            var obj = JSON.parse(body);
+                            if (obj && typeof obj === 'object' && obj._csrf === undefined) {
+                                obj._csrf = readToken();
+                                init.body = JSON.stringify(obj);
+                            }
+                        } catch (e) { /* not JSON, skip */ }
+                    } else if (body && typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob)) {
+                        try { if (body._csrf === undefined) body._csrf = readToken(); } catch (e) {}
+                    }
+                }
+                return origFetch(input, init);
+            };
+        }
+        // Patch XMLHttpRequest for older code paths
+        if (window.XMLHttpRequest) {
+            var origOpen = XMLHttpRequest.prototype.open;
+            var origSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function (method, url) {
+                this._gbMethod = (method || 'GET').toUpperCase();
+                this._gbUrl = url;
+                return origOpen.apply(this, arguments);
+            };
+            XMLHttpRequest.prototype.send = function (body) {
+                if (unsafe.test(this._gbMethod) && isSameOrigin(this._gbUrl)) {
+                    try { this.setRequestHeader('X-CSRF-Token', readToken()); } catch (e) {}
+                }
+                return origSend.apply(this, arguments);
+            };
+        }
+    })();
+    </script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Modern Design System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
+    {% block styles %}{% endblock %}
+    
+    <!-- Toast CSS + Notification Panel -->
+    <style>
+      .toast-container {
+        z-index: 9999;
+      }
+      /* ── Notification Panel ─────────────────────────────── */
+      #notif-panel {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 380px;
+        height: 100vh;
+        background: #fff;
+        box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+        z-index: 10000;
+        transition: right 0.32s cubic-bezier(.4,0,.2,1);
+        display: flex;
+        flex-direction: column;
+        border-left: 3px solid #e53935;
+      }
+      #notif-panel.open { right: 0; }
+      #notif-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+      }
+      #notif-overlay.open { display: block; }
+      .notif-header {
+        background: linear-gradient(135deg, #e53935, #c62828);
+        color: #fff;
+        padding: 20px 20px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .notif-header h5 { margin: 0; font-weight: 700; font-size: 1.1rem; }
+      .notif-close-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.2s;
+      }
+      .notif-close-btn:hover { background: rgba(255,255,255,0.4); }
+      .notif-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 0;
+      }
+      .notif-item {
+        display: flex;
+        gap: 12px;
+        padding: 14px 18px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.15s;
+        position: relative;
+      }
+      .notif-item:hover { background: #fff5f5; }
+      .notif-item.unread { background: #fff8f8; border-left: 3px solid #e53935; }
+      .notif-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+      .notif-icon.order    { background: #fff3cd; color: #e53935; }
+      .notif-icon.promo    { background: #d4edda; color: #28a745; }
+      .notif-icon.general  { background: #d1ecf1; color: #17a2b8; }
+      .notif-icon.system   { background: #e2d9f3; color: #6f42c1; }
+      .notif-body { flex: 1; min-width: 0; }
+      .notif-title { font-weight: 600; font-size: .92rem; color: #222; margin: 0 0 3px; }
+      .notif-msg   { font-size: .83rem; color: #666; margin: 0 0 4px; line-height: 1.4; }
+      .notif-time  { font-size: .75rem; color: #aaa; }
+      .notif-unread-dot {
+        width: 8px; height: 8px;
+        background: #e53935;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 5px;
+      }
+      .notif-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: #aaa;
+      }
+      .notif-empty i { font-size: 3rem; margin-bottom: 12px; display: block; }
+      .notif-footer {
+        padding: 12px 18px;
+        border-top: 1px solid #eee;
+        flex-shrink: 0;
+      }
+      /* ── Bell button ──────────────────────────────────────── */
+      #notif-bell-btn {
+        position: relative;
+        background: var(--gb-red-soft, #ffeaea);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 2px;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+      #notif-bell-btn:hover { background: #e53935; }
+      #notif-bell-btn:hover i { color: #fff !important; }
+      #notif-bell-btn i { color: #e53935; font-size: 1.1rem; transition: color 0.2s; }
+      #notif-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        background: #e53935;
+        color: #fff;
+        border-radius: 50%;
+        width: 17px;
+        height: 17px;
+        font-size: 9px;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--bg-card, #fff);
+      }
+      /* ── Login-popup toast style ────────────────────────── */
+      .notif-popup-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        min-width: 300px;
+        max-width: 360px;
+        background: #fff;
+        border-left: 4px solid #e53935;
+        border-radius: 10px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        padding: 16px 18px 14px;
+        z-index: 11000;
+        animation: slideInRight 0.4s ease;
+        cursor: pointer;
+      }
+      @keyframes slideInRight {
+        from { transform: translateX(120%); opacity: 0; }
+        to   { transform: translateX(0);    opacity: 1; }
+      }
+      .notif-popup-toast .npt-title { font-weight: 700; font-size: .95rem; color: #222; margin: 0 0 4px; }
+      .notif-popup-toast .npt-msg   { font-size: .83rem; color: #555; margin: 0; line-height: 1.4; }
+      .notif-popup-toast .npt-close {
+        position: absolute;
+        top: 10px; right: 12px;
+        background: none; border: none;
+        color: #aaa; font-size: 1rem; cursor: pointer;
+      }
+      body {
+        background: #fff;
+        color: #222;
+      }
+      header {
+        background: #fff !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03) !important;
+        min-height: 80px;
+        padding-top: 18px !important;
+        padding-bottom: 18px !important;
+      }
+      .header-brand {
+        color: #e53935 !important;
+        font-size: 2.2rem !important;
+        letter-spacing: 1px;
+      }
+      .header-brand .fa-utensils {
+        color: #e53935 !important;
+        font-size: 2.2rem !important;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        min-width: 0;
+      }
+      .header-location {
+        position: relative;
+        min-width: 210px;
+      }
+      .location-toggle {
+        width: 100%;
+        max-width: 280px;
+        background: #fff7f7;
+        border: 1px solid rgba(229, 57, 53, 0.18);
+        border-radius: 999px;
+        padding: 7px 16px 7px 12px;
+        color: #222;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      }
+      .location-toggle:hover,
+      .location-toggle[aria-expanded="true"] {
+        background: #fff;
+        border-color: rgba(229, 57, 53, 0.45);
+        box-shadow: 0 6px 18px rgba(229, 57, 53, 0.12);
+      }
+      .location-toggle .fa-map-marker-alt {
+        color: #e53935;
+        flex-shrink: 0;
+      }
+      .location-copy {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 1.15;
+      }
+      .location-detail {
+        font-size: 0.68rem;
+        color: #777;
+        font-weight: 500;
+      }
+      .location-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #222;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 190px;
+      }
+      .location-toggle .fa-chevron-down {
+        color: #999;
+        margin-left: auto;
+        font-size: 0.75rem;
+        transition: transform 0.2s;
+      }
+      .location-toggle[aria-expanded="true"] .fa-chevron-down {
+        transform: rotate(180deg);
+      }
+      .location-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        width: min(360px, calc(100vw - 24px));
+        background: #fff;
+        border: 1px solid #f0d5d5;
+        border-radius: 8px;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.16);
+        z-index: 1100;
+        padding: 14px;
+      }
+      .location-dropdown.open {
+        display: block;
+      }
+      .location-dropdown-title {
+        font-weight: 800;
+        color: #222;
+        margin-bottom: 4px;
+      }
+      .location-current-address {
+        font-size: 0.82rem;
+        color: #666;
+        margin-bottom: 12px;
+      }
+      .location-action-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .location-action {
+        flex: 1;
+        border: 1px solid #e53935;
+        background: #fff;
+        color: #e53935;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-weight: 700;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .location-action.primary {
+        background: #e53935;
+        color: #fff;
+      }
+      .location-search-wrap {
+        position: relative;
+      }
+      .location-search-wrap .fa-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+      }
+      .location-search-input {
+        width: 100%;
+        border: 1px solid #e7e7e7;
+        border-radius: 8px;
+        padding: 10px 12px 10px 36px;
+        font-size: 0.92rem;
+        outline: none;
+      }
+      .location-search-input:focus {
+        border-color: #e53935;
+        box-shadow: 0 0 0 0.15rem rgba(229, 57, 53, 0.12);
+      }
+      .location-status {
+        min-height: 18px;
+        margin-top: 8px;
+        font-size: 0.78rem;
+        color: #777;
+      }
+      .location-status.success { color: #168a43; }
+      .location-status.warning { color: #b05a00; }
+      .location-status.loading { color: #e53935; }
+      .location-results {
+        display: none;
+        max-height: 260px;
+        overflow-y: auto;
+        margin-top: 8px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+      }
+      .location-result-item {
+        width: 100%;
+        background: #fff;
+        border: none;
+        border-bottom: 1px solid #f5f5f5;
+        padding: 10px 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        text-align: left;
+        cursor: pointer;
+      }
+      .location-result-item:last-child {
+        border-bottom: none;
+      }
+      .location-result-item:hover {
+        background: #fff6f6;
+      }
+      .location-result-item i {
+        color: #e53935;
+        margin-top: 3px;
+      }
+      .location-result-item strong,
+      .location-result-item small {
+        display: block;
+      }
+      .location-result-item strong {
+        color: #222;
+        font-size: 0.88rem;
+      }
+      .location-result-item small,
+      .location-result-empty {
+        color: #777;
+        font-size: 0.78rem;
+      }
+      .location-result-empty {
+        padding: 12px;
+      }
+      .header-link, .header-link:visited {
+        color: #222 !important;
+        background: #ffeaea;
+        font-size: 1.1rem;
+        font-weight: 500;
+        border-radius: 999px;
+        padding: 8px 24px;
+        margin: 0 4px;
+        box-shadow: none;
+        border: none;
+        transition: background 0.2s, color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none !important;
+      }
+      .header-link .fa, .header-link .fas, .header-link .fa-solid {
+        color: #e53935 !important;
+        font-size: 1.2rem;
+      }
+      .header-link:hover, .header-nav-btn:hover {
+        background: #e53935 !important;
+        color: #fff !important;
+        text-decoration: none !important;
+      }
+      .header-link:hover .fa, .header-link:hover .fas, .header-link:hover .fa-solid {
+        color: #fff !important;
+      }
+      section {
+        color: #222 !important;
+      }
+      section:not(.hero-section-bg):not(.hero-premium) {
+        background: #fff !important;
+      }
+      .hero-section-bg {
+        position: relative;
+        background-image: url('/static/bg1.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        padding: 80px 20px;
+        width: 100%;
+        margin: 0;
+      }
+      .hero-section-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.85);
+        z-index: 2;
+      }
+      .hero-content {
+        position: relative;
+        z-index: 3;
+        text-align: center;
+        max-width: 900px;
+        width: 100%;
+        padding: 20px;
+      }
+      .hero-content h1 {
+        color: #2c3e50;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        margin-bottom: 24px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+      .hero-content p {
+        color: #34495e;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        font-weight: 500;
+        margin-bottom: 40px;
+      }
+      .header-nav-btn {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-left: 8px !important;
+      }
+      .footer-sw {
+        background: #111 !important;
+        color: #fff !important;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1rem;
+      }
+      .footer-sw h6, .footer-sw h5, .footer-sw .fw-bold {
+        color: #fff !important;
+      }
+      .footer-sw ul li, .footer-sw select, .footer-sw .text-white-50 {
+        color: #aaa !important;
+      }
+      .footer-sw a.text-white-50:hover {
+        color: #e53935 !important;
+      }
+      .footer-sw .btn-danger {
+        background: #e53935 !important;
+        border: none;
+      }
+      
+      /* Responsive hero section */
+      @media (max-width: 768px) {
+        header {
+          flex-wrap: wrap;
+          gap: 12px;
+          padding: 14px 16px !important;
+        }
+        .header-left {
+          width: 100%;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .header-brand {
+          font-size: 1.7rem !important;
+        }
+        .header-brand .fa-utensils {
+          font-size: 1.7rem !important;
+        }
+        .header-location {
+          min-width: 0;
+          flex: 1;
+        }
+        .location-toggle {
+          max-width: none;
+          padding: 7px 10px;
+        }
+        .location-label {
+          max-width: 140px;
+        }
+        nav {
+          width: 100%;
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .hero-section-bg {
+          min-height: 500px;
+          padding: 60px 15px;
+        }
+        
+        .hero-content h1 {
+          font-size: 2.8rem;
+          line-height: 1.1;
+        }
+        
+        .hero-content p {
+          font-size: 1.1rem;
+          margin-bottom: 35px;
+        }
+        
+        .hero-content {
+          padding: 15px;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .hero-section-bg {
+          min-height: 450px;
+          padding: 50px 10px;
+        }
+        
+        .hero-content h1 {
+          font-size: 2.2rem;
+        }
+        
+        .hero-content p {
+          font-size: 1rem;
+        }
+      }
+    </style>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div id="gb-scroll-progress"></div>
+
+    <!-- Page Loader -->
+    <div id="gb-page-loader">
+      <div class="loader-logo"><i class="fas fa-utensils me-2"></i>GrabBite</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    </div>
+
+    <!-- Header Start -->
+    <header class="gb-navbar" id="gb-main-navbar">
+
+      <!-- Brand -->
+      <a href="{{ url_for('public.index') }}" class="gb-navbar-brand">
+        <i class="fas fa-utensils"></i>
+        <span>GrabBite</span>
+      </a>
+
+      <!-- Location picker (unchanged functionality) -->
+      <div class="header-location" id="header-location" style="position:relative; flex-shrink:0;">
+        <button type="button" class="gb-location-btn location-toggle" id="location-toggle" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-map-marker-alt"></i>
+          <span class="location-copy">
+            <span class="location-detail" id="location-detail" style="font-size:.66rem;color:var(--gb-muted);display:block;line-height:1;">Deliver to</span>
+            <span class="location-label" id="location-label" style="font-size:.84rem;font-weight:700;color:var(--gb-ink);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">Set location</span>
+          </span>
+          <i class="fas fa-chevron-down" style="font-size:.7rem;color:var(--gb-muted);margin-left:4px;transition:transform .2s;"></i>
+        </button>
+        <div class="location-dropdown" id="location-dropdown">
+          <div class="location-dropdown-title">Select delivery location</div>
+          <div class="location-current-address" id="location-current-address">No delivery location selected yet.</div>
+          <div class="location-action-row">
+            <button type="button" class="location-action primary" id="use-current-location-btn">
+              <i class="fas fa-crosshairs"></i> Use Current Location
+            </button>
+            <button type="button" class="location-action" id="change-location-btn">
+              <i class="fas fa-pen"></i> Change
+            </button>
+          </div>
+          <div class="location-search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" class="location-search-input" id="location-search-input" placeholder="Search area, city or landmark" autocomplete="off">
+          </div>
+          <div class="location-status" id="location-status">Search manually if GPS is unavailable.</div>
+          <div class="location-results" id="location-results"></div>
+        </div>
+      </div>
+
+      <!-- Desktop nav links -->
+      <nav class="gb-nav-links" aria-label="Main navigation">
+        <a href="{{ url_for('public.restaurants') }}" class="gb-nav-link" id="nav-restaurants"><i class="fas fa-store"></i> Restaurants</a>
+        <a href="{{ url_for('public.blogs') }}" class="gb-nav-link" id="nav-blogs"><i class="fas fa-blog"></i> Blogs</a>
+        <a href="{{ url_for('public.gallery') }}" class="gb-nav-link" id="nav-dishes"><i class="fas fa-utensils"></i> Dishes</a>
+        <a href="{{ url_for('account.orders') }}" class="gb-nav-link" id="nav-orders"><i class="fas fa-receipt"></i> Orders</a>
+        <a href="{{ url_for('account.cart') }}" class="gb-nav-link gb-nav-cart-wrap" id="nav-cart">
+          <i class="fas fa-shopping-cart"></i> Cart
+          <span id="cart-badge" class="gb-cart-badge">0</span>
+        </a>
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_administrator() %}
+            <a href="{{ url_for('admin.dashboard') }}" class="gb-nav-link" id="nav-admin"><i class="fas fa-cogs"></i> Admin</a>
+          {% endif %}
+          {% if current_user.is_restaurant_owner() %}
+            <a href="{{ url_for('owner.dashboard') }}" class="gb-nav-link" id="nav-owner"><i class="fas fa-store"></i> My Restaurant</a>
+          {% endif %}
+          <a href="{{ url_for('account.profile') }}" class="gb-nav-link" id="nav-profile" style="gap:7px;">
+            <img src="{{ url_for('static', filename=(('uploads/' + current_user.profile_photo) if current_user.profile_photo and current_user.profile_photo != 'default.jpg' else 'img/profile.jpg')) }}" alt="Profile" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gb-red);">
+            {{ current_user.name }}
+          </a>
+        {% else %}
+          <a href="{{ url_for('account.profile') }}" class="gb-nav-link" id="nav-profile"><i class="fas fa-user"></i> Profile</a>
+        {% endif %}
+      </nav>
+
+      <!-- Notification Bell (always visible when logged in) -->
+      {% if current_user.is_authenticated %}
+      <button id="notif-bell-btn" class="gb-icon-btn" title="Notifications">
+        <i class="fas fa-bell"></i>
+        <span id="notif-badge"></span>
+      </button>
+      {% endif %}
+
+      <!-- Hamburger (mobile only — opens full drawer) -->
+      <button class="gb-hamburger" id="gb-hamburger" aria-label="Open menu">
+        <i class="fas fa-bars"></i>
+      </button>
+
+    </header>
+
+    <!-- Active nav highlight script -->
+    <script>
+      (function() {
+        const path = window.location.pathname;
+        const map = [
+          { id: 'nav-admin',       test: p => p.startsWith('/admin') },
+          { id: 'nav-restaurants', test: p => p.startsWith('/restaurants') || p.startsWith('/restaurant') },
+          { id: 'nav-blogs',       test: p => p.startsWith('/blog') },
+          { id: 'nav-dishes',      test: p => p.startsWith('/gallery') || p.startsWith('/dish') },
+          { id: 'nav-orders',      test: p => p.startsWith('/orders') },
+          { id: 'nav-cart',        test: p => p.startsWith('/cart') },
+          { id: 'nav-profile',     test: p => p.startsWith('/profile') },
+        ];
+        map.forEach(({ id, test }) => {
+          if (test(path)) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('active');
+          }
+        });
+      })();
+    </script>
+    <!-- Header End -->
+
+    <!-- Mobile Drawer Navigation -->
+    <div id="gb-drawer-overlay" class="gb-drawer-overlay"></div>
+    <div id="gb-mobile-drawer" class="gb-mobile-drawer" role="dialog" aria-label="Navigation menu">
+      <div class="gb-drawer-header">
+        <a href="{{ url_for('public.index') }}" style="text-decoration:none;color:var(--gb-red);font-size:1.4rem;font-weight:900;display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-utensils"></i> GrabBite
+        </a>
+        <button class="gb-drawer-close" id="gb-drawer-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="gb-drawer-links">
+        <a href="{{ url_for('public.index') }}" class="gb-drawer-link"><i class="fas fa-home"></i> Home</a>
+        <a href="{{ url_for('public.restaurants') }}" class="gb-drawer-link"><i class="fas fa-store"></i> Restaurants</a>
+        <a href="{{ url_for('public.blogs') }}" class="gb-drawer-link"><i class="fas fa-blog"></i> Blogs</a>
+        <a href="{{ url_for('public.gallery') }}" class="gb-drawer-link"><i class="fas fa-utensils"></i> Dishes</a>
+        <a href="{{ url_for('account.orders') }}" class="gb-drawer-link"><i class="fas fa-receipt"></i> My Orders</a>
+        <a href="{{ url_for('account.cart') }}" class="gb-drawer-link"><i class="fas fa-shopping-cart"></i> Cart</a>
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_administrator() %}
+            <a href="{{ url_for('admin.dashboard') }}" class="gb-drawer-link"><i class="fas fa-cogs"></i> Admin</a>
+          {% endif %}
+          {% if current_user.is_restaurant_owner() %}
+            <a href="{{ url_for('owner.dashboard') }}" class="gb-drawer-link"><i class="fas fa-store"></i> My Restaurant</a>
+          {% endif %}
+          <a href="{{ url_for('account.profile') }}" class="gb-drawer-link"><i class="fas fa-user"></i> {{ current_user.name }}</a>
+          <a href="{{ url_for('public.wishlist') }}" class="gb-drawer-link"><i class="fas fa-heart"></i> Wishlist</a>
+          <a href="{{ url_for('account.address') }}" class="gb-drawer-link"><i class="fas fa-map-marker-alt"></i> Address</a>
+          <a href="{{ url_for('account.logout_route') }}" class="gb-drawer-link" style="color:#e53935;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        {% else %}
+          <a href="{{ url_for('account.login') }}" class="gb-drawer-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+          <a href="{{ url_for('account.signup') }}" class="gb-drawer-link" style="color:var(--gb-red);"><i class="fas fa-user-plus"></i> Sign Up</a>
+        {% endif %}
+        <a href="{{ url_for('public.help') }}" class="gb-drawer-link"><i class="fas fa-question-circle"></i> Help</a>
+      </div>
+    </div>
+
+    <!-- ── Notification Overlay + Panel ─────────────────────── -->
+    <div id="notif-overlay"></div>
+    <div id="notif-panel">
+      <div class="notif-header">
+        <h5><i class="fas fa-bell me-2"></i>Notifications</h5>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="mark-all-read-btn" style="background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:.8rem;padding:4px 10px;border-radius:20px;cursor:pointer;" title="Mark all as read">Mark all read</button>
+          <button class="notif-close-btn" id="notif-close-btn"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div class="notif-list" id="notif-list">
+        <div class="notif-empty" id="notif-empty" style="display:none;">
+          <i class="fas fa-bell-slash"></i>
+          <p>No notifications yet</p>
+        </div>
+      </div>
+      <div class="notif-footer">
+        <a href="/notifications" style="color:#e53935;font-size:.85rem;text-decoration:none;font-weight:600;"><i class="fas fa-list me-1"></i>View all notifications</a>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Floating Back to Home button (shown on all inner pages) -->
+    {% if request.path != '/' %}
+    <a href="{{ url_for('public.index') }}" id="back-home-fab" title="Back to Home">
+      <i class="fas fa-arrow-left"></i>
+      <span>Home</span>
+    </a>
+    <style>
+      #back-home-fab {
+        position: fixed;
+        bottom: 28px;
+        left: 24px;
+        z-index: 1050;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #fff;
+        color: #e53935;
+        border: 2px solid #e53935;
+        border-radius: 999px;
+        padding: 10px 20px 10px 16px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        text-decoration: none;
+        box-shadow: 0 6px 24px rgba(229,57,53,0.22);
+        transition: background 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
+        letter-spacing: 0.2px;
+      }
+      #back-home-fab:hover {
+        background: #e53935;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(229,57,53,0.32);
+      }
+      #back-home-fab i { font-size: 0.85rem; }
+    </style>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="gb-footer position-relative">
+
+      <style>
+        .footer-link {
+          display: block;
+          color: #aaa;
+          text-decoration: none;
+          font-size: .85rem;
+          padding: 3px 0;
+          transition: color .18s, padding-left .18s;
+          background: none;
+          border: none;
+          cursor: pointer;
+          text-align: left;
+          line-height: 1.7;
+        }
+        .footer-link:hover { color: #e53935; padding-left: 5px; }
+        .footer-heading {
+          font-size: .75rem;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 1.4px;
+          text-transform: uppercase;
+          margin-bottom: 0;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #e53935;
+          display: inline-block;
+        }
+        .social-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px; height: 36px;
+          border-radius: 50%;
+          color: #fff !important;
+          text-decoration: none;
+          font-size: .95rem;
+          transition: transform .18s, box-shadow .18s;
+        }
+        .social-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+        .footer-store-btn { transition: border-color .2s !important; }
+        .footer-store-btn:hover { border-color: #e53935 !important; }
+        .footer-badge-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: #1a1a1a;
+          border: 1px solid #2a2a2a;
+          border-radius: 6px;
+          padding: 4px 10px;
+          font-size: .72rem;
+          color: #888;
+        }
+      </style>
+
+      <!-- Newsletter Bar -->
+      <div style="background: linear-gradient(90deg,#e53935,#c62828); padding: 22px 0;">
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-md-5 mb-3 mb-md-0">
+              <h5 class="mb-1 fw-bold text-white"><i class="fas fa-bolt me-2"></i>Stay in the Loop!</h5>
+              <p class="mb-0 small" style="color:rgba(255,255,255,.75);">Exclusive deals, new restaurants &amp; food stories.</p>
+            </div>
+            <div class="col-md-7">
+              <form id="newsletter-form" class="d-flex gap-2">
+                <input type="email" id="newsletter-email" class="form-control"
+                  placeholder="Enter your email address"
+                  style="border-radius:999px; border:none; padding:10px 20px;" required>
+                <button type="submit" class="btn btn-light fw-bold px-4"
+                  style="border-radius:999px; color:#e53935; white-space:nowrap;">
+                  <span id="nl-btn-text"><i class="fas fa-paper-plane me-1"></i>Subscribe</span>
+                </button>
+              </form>
+              <p id="newsletter-msg" class="mt-2 mb-0 small" style="display:none; color:rgba(255,255,255,.85);"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Footer Body -->
+      <div class="container py-5">
+        <div class="row g-5">
+
+          <!-- Brand Column -->
+          <div class="col-lg-3 col-md-6">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <i class="fas fa-utensils" style="color:#e53935; font-size:1.4rem;"></i>
+              <span style="font-size:1.7rem; font-weight:800; color:#fff; letter-spacing:-0.5px;">GrabBite</span>
+            </div>
+            <p style="color:#888; font-size:.86rem; line-height:1.8; max-width:230px;">
+              India's fastest-growing food delivery platform. Fresh food from your favourite restaurants, delivered to your door.
+            </p>
+            <div style="font-size:.82rem; display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+              <div style="color:#888;">&#128205; Bengaluru, Karnataka, India</div>
+              <div><a href="mailto:support@grabbite.com" style="color:#e53935; text-decoration:none;">&#128231; support@grabbite.com</a></div>
+              <div><a href="tel:+918000123456" style="color:#e53935; text-decoration:none;">&#128222; +91 80001 23456</a></div>
+            </div>
+            <div class="d-flex gap-2 mt-4 flex-wrap">
+              <a href="https://www.instagram.com" target="_blank" rel="noopener" class="social-btn" title="Instagram" style="background:#E1306C;"><i class="fab fa-instagram"></i></a>
+              <a href="https://www.facebook.com" target="_blank" rel="noopener" class="social-btn" title="Facebook" style="background:#1877F2;"><i class="fab fa-facebook-f"></i></a>
+              <a href="https://twitter.com" target="_blank" rel="noopener" class="social-btn" title="X" style="background:#222;"><i class="fab fa-x-twitter"></i></a>
+              <a href="https://www.linkedin.com" target="_blank" rel="noopener" class="social-btn" title="LinkedIn" style="background:#0A66C2;"><i class="fab fa-linkedin-in"></i></a>
+              <a href="https://www.youtube.com" target="_blank" rel="noopener" class="social-btn" title="YouTube" style="background:#FF0000;"><i class="fab fa-youtube"></i></a>
+            </div>
+            <div class="d-flex gap-3 mt-3">
+              <div class="text-center"><div style="font-size:.95rem;font-weight:700;color:#FFD700;">4.5 &#11088;</div><div style="font-size:.65rem;color:#666;">Play Store</div></div>
+              <div class="text-center"><div style="font-size:.95rem;font-weight:700;color:#FFD700;">4.7 &#11088;</div><div style="font-size:.65rem;color:#666;">App Store</div></div>
+            </div>
+          </div>
+
+          <!-- Company -->
+          <div class="col-lg-2 col-6">
+            <div class="footer-heading">Company</div>
+            <ul class="list-unstyled mt-3 mb-0">
+              <li><a href="/about" class="footer-link">About Us</a></li>
+              <li><a href="/about" class="footer-link">Our Team</a></li>
+              <li><a href="{{ url_for('public.blogs') }}" class="footer-link">Blog &amp; News</a></li>
+              <li><button class="footer-link" onclick="openModal('investorModal')">Investor Relations</button></li>
+              <li><a href="/help" class="footer-link">Press &amp; Media</a></li>
+              <li><button class="footer-link" onclick="openModal('partnerModal')">Partner with Us <span style="background:#e53935;color:#fff;font-size:.58rem;padding:1px 6px;border-radius:999px;margin-left:4px;vertical-align:middle;">New</span></button></li>
+            </ul>
+          </div>
+
+          <!-- Explore -->
+          <div class="col-lg-2 col-6">
+            <div class="footer-heading">Explore</div>
+            <ul class="list-unstyled mt-3 mb-0">
+              <li><a href="{{ url_for('public.restaurants') }}" class="footer-link">Restaurants</a></li>
+              <li><a href="{{ url_for('public.gallery') }}" class="footer-link">All Dishes</a></li>
+              <li><a href="{{ url_for('public.blogs') }}" class="footer-link">Food Blogs</a></li>
+              <li><a href="{{ url_for('account.orders') }}" class="footer-link">My Orders</a></li>
+              <li><a href="{{ url_for('public.wishlist') }}" class="footer-link">My Wishlist</a></li>
+              <li><a href="{{ url_for('account.cart') }}" class="footer-link">My Cart</a></li>
+              <li><a href="{{ url_for('account.profile') }}" class="footer-link">My Account</a></li>
+            </ul>
+          </div>
+
+          <!-- Available In -->
+          <div class="col-lg-2 col-6">
+            <div class="footer-heading">Available In</div>
+            <ul class="list-unstyled mt-3 mb-0">
+              <li><a href="{{ url_for('public.restaurants') }}?city=Bangalore" class="footer-link">Bangalore</a></li>
+              <li><a href="{{ url_for('public.restaurants') }}?city=Delhi" class="footer-link">Delhi</a></li>
+              <li><a href="{{ url_for('public.restaurants') }}?city=Mumbai" class="footer-link">Mumbai</a></li>
+              <li><a href="{{ url_for('public.restaurants') }}?city=Hyderabad" class="footer-link">Hyderabad</a></li>
+              <li><a href="{{ url_for('public.restaurants') }}?city=Pune" class="footer-link">Pune</a></li>
+              <li><a href="{{ url_for('public.restaurants') }}?city=Chennai" class="footer-link">Chennai</a></li>
+              <li><a href="{{ url_for('public.restaurants') }}?city=Kolkata" class="footer-link">Kolkata</a></li>
+            </ul>
+          </div>
+
+          <!-- Legal + App Download -->
+          <div class="col-lg-3 col-6">
+            <div class="footer-heading">Legal</div>
+            <ul class="list-unstyled mt-3 mb-0">
+              <li><button class="footer-link" onclick="openModal('termsModal')">Terms &amp; Conditions</button></li>
+              <li><button class="footer-link" onclick="openModal('privacyModal')">Privacy Policy</button></li>
+              <li><button class="footer-link" onclick="openModal('cookieModal')">Cookie Policy</button></li>
+              <li><button class="footer-link" onclick="openModal('refundModal')">Refund Policy</button></li>
+              <li><a href="/help" class="footer-link">FAQ &amp; Help Centre</a></li>
+              <li><button class="footer-link" onclick="openModal('contactModal')">Contact Us</button></li>
+            </ul>
+
+            <div class="footer-heading mt-4">Download App</div>
+            <div class="d-flex flex-column gap-2 mt-3">
+              <a href="https://play.google.com/store" target="_blank" rel="noopener"
+                 class="footer-store-btn d-flex align-items-center gap-2 px-3 py-2"
+                 style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;text-decoration:none;color:#fff;width:fit-content;">
+                <i class="fab fa-google-play" style="font-size:1.2rem;color:#4CAF50;"></i>
+                <div><div style="font-size:.58rem;color:#777;line-height:1;">GET IT ON</div><div style="font-size:.85rem;font-weight:600;color:#fff;">Google Play</div></div>
+              </a>
+              <a href="https://www.apple.com/app-store/" target="_blank" rel="noopener"
+                 class="footer-store-btn d-flex align-items-center gap-2 px-3 py-2"
+                 style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;text-decoration:none;color:#fff;width:fit-content;">
+                <i class="fab fa-apple" style="font-size:1.4rem;color:#fff;"></i>
+                <div><div style="font-size:.58rem;color:#777;line-height:1;">DOWNLOAD ON THE</div><div style="font-size:.85rem;font-weight:600;color:#fff;">App Store</div></div>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Bar -->
+        <hr style="border-color:#1e1e1e;margin-top:48px;margin-bottom:20px;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3" style="font-size:.78rem;color:#555;">
+          <div>
+            Made with &#10084;&#65039; in India &nbsp;|&nbsp; &copy; 2025 GrabBite Pvt. Ltd. &nbsp;|&nbsp;
+            <button class="footer-link d-inline" style="font-size:.78rem;padding:0;color:#666;" onclick="openModal('termsModal')">Terms</button>
+            &nbsp;|&nbsp;
+            <button class="footer-link d-inline" style="font-size:.78rem;padding:0;color:#666;" onclick="openModal('privacyModal')">Privacy</button>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="footer-badge-item">&#128274; SSL Secured</span>
+            <span class="footer-badge-item">&#128179; PCI Compliant</span>
+            <span class="footer-badge-item">&#128737; Data Protected</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- END Footer -->
+
+
+    <!-- Toast notification container (legacy Bootstrap toasts) -->
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;"></div>
+    <!-- Modern toast zone -->
+    <div id="gb-toast-zone"></div>
+
+    <!-- data attribute for JS login check -->
+    {% if current_user.is_authenticated %}
+    <div id="user-logged-in-indicator" data-user-logged-in="true" style="display:none;"></div>
+    {% endif %}
+
+    {% block extra_css %}{% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/location-manager.js') }}"></script>
+    
+    <!-- Cart Badge & Global Utils -->
+    <script>
+    // ── Global cart badge update ──────────────────────────────────────────────
+    window.updateCartBadge = function() {
+        fetch('/api/cart/count')
+            .then(r => r.json())
+            .then(data => {
+                const badge = document.getElementById('cart-badge');
+                const bottomBadge = document.getElementById('gb-bottom-cart-badge');
+                const count = data.count || 0;
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.classList.add('visible');
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.classList.remove('visible');
+                        badge.style.display = 'none';
+                    }
+                }
+                if (bottomBadge) {
+                    if (count > 0) {
+                        bottomBadge.textContent = count;
+                        bottomBadge.classList.add('show');
+                    } else {
+                        bottomBadge.classList.remove('show');
+                    }
+                }
+            })
+            .catch(() => {});
+    };
+
+    // ── Global toast utility ─────────────────────────────────────────────────
+    window.showToast = function(message, type) {
+        type = type || 'info';
+        // Use modern gbToast if available, fall back to Bootstrap toast
+        if (window.gbToast) {
+            window.gbToast(message, type === 'error' ? 'error' : type);
+            return;
+        }
+        const bgMap = {
+            success: 'bg-success', error: 'bg-danger',
+            warning: 'bg-warning text-dark', info: 'bg-primary'
+        };
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white ${bgMap[type] || 'bg-primary'} border-0 show`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button>
+            </div>`;
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    };
+
+    // ── Global addToCart ─────────────────────────────────────────────────────
+    // Unified add-to-cart used from EVERY page
+    window.addToCart = function(foodItemId, restaurantId) {
+        const btn = document.querySelector(`[data-food-id="${foodItemId}"]`);
+        const originalHTML = btn ? btn.innerHTML : '';
+        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...'; btn.disabled = true; }
+
+        fetch('/api/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ food_item_id: parseInt(foodItemId), quantity: 1 })
+        })
+        .then(r => {
+            if (r.status === 401) {
+                return r.json().then(d => {
+                    window.showToast(d.message || 'Please login to add items to cart', 'warning');
+                    setTimeout(() => window.location.href = '/login', 1500);
+                    throw new Error('unauthenticated');
+                });
+            }
+            return r.json();
+        })
+        .then(data => {
+            if (data && data.success) {
+                window.showToast(data.message || 'Item added to cart!', 'success');
+                window.updateCartBadge();
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
+                    btn.classList.replace('btn-outline-danger', 'btn-success');
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.replace('btn-success', 'btn-outline-danger');
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } else if (data) {
+                throw new Error(data.message || 'Failed to add item');
+            }
+        })
+        .catch(err => {
+            if (err.message !== 'unauthenticated') {
+                window.showToast(err.message || 'Error adding to cart', 'error');
+            }
+            if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+        });
+    };
+
+    // ── Initialise on DOM ready ───────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        window.updateCartBadge();
+
+        // Delegate clicks to .add-to-cart-btn from any page
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.add-to-cart-btn');
+            if (btn) {
+                e.preventDefault();
+                window.addToCart(btn.dataset.foodId, btn.dataset.restaurantId);
+            }
+        });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // NOTIFICATION SYSTEM
+    // ═══════════════════════════════════════════════════════════
+    {% if current_user.is_authenticated %}
+    (function() {
+      const panel    = document.getElementById('notif-panel');
+      const overlay  = document.getElementById('notif-overlay');
+      const bellBtn  = document.getElementById('notif-bell-btn');
+      const badge    = document.getElementById('notif-badge');
+      const listEl   = document.getElementById('notif-list');
+      const emptyEl  = document.getElementById('notif-empty');
+      const closeBtn = document.getElementById('notif-close-btn');
+      const markAllBtn = document.getElementById('mark-all-read-btn');
+
+      let allNotifs = [];
+
+      // Icon map by notification type
+      const iconMap = {
+        order:       {icon: 'fa-receipt',    cls: 'order'},
+        order_update:{icon: 'fa-receipt',    cls: 'order'},
+        promo:       {icon: 'fa-tag',         cls: 'promo'},
+        promotion:   {icon: 'fa-tag',         cls: 'promo'},
+        system:      {icon: 'fa-cog',         cls: 'system'},
+        general:     {icon: 'fa-info-circle', cls: 'general'},
+      };
+
+      function getIconInfo(type) {
+        return iconMap[type] || iconMap.general;
+      }
+
+      function timeAgo(isoStr) {
+        const d = new Date(isoStr);
+        const diff = Math.floor((Date.now() - d) / 1000);
+        if (diff < 60)   return 'Just now';
+        if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+        if (diff < 86400)return Math.floor(diff/3600) + 'h ago';
+        return Math.floor(diff/86400) + 'd ago';
+      }
+
+      function renderNotifs(notifs) {
+        // Remove existing items (keep empty placeholder)
+        listEl.querySelectorAll('.notif-item').forEach(el => el.remove());
+        if (!notifs || notifs.length === 0) {
+          emptyEl.style.display = 'block';
+          return;
+        }
+        emptyEl.style.display = 'none';
+        notifs.forEach(n => {
+          const info = getIconInfo(n.type);
+          const item = document.createElement('div');
+          item.className = 'notif-item' + (n.is_read ? '' : ' unread');
+          item.dataset.id = n.id;
+          item.innerHTML = `
+            <div class="notif-icon ${info.cls}"><i class="fas ${info.icon}"></i></div>
+            <div class="notif-body">
+              <p class="notif-title">${n.title}</p>
+              <p class="notif-msg">${n.message}</p>
+              <span class="notif-time">${timeAgo(n.created_at)}</span>
+            </div>
+            ${!n.is_read ? '<div class="notif-unread-dot"></div>' : ''}
+          `;
+          item.addEventListener('click', () => {
+            markRead(n.id);
+            if (n.link) window.location.href = n.link;
+          });
+          listEl.appendChild(item);
+        });
+      }
+
+      function updateBadge(count) {
+        if (count > 0) {
+          badge.textContent = count > 99 ? '99+' : count;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      function fetchNotifs() {
+        fetch('/api/notifications')
+          .then(r => r.json())
+          .then(data => {
+            allNotifs = data.notifications || [];
+            renderNotifs(allNotifs);
+            updateBadge(data.unread_count || 0);
+          })
+          .catch(() => {});
+      }
+
+      function markRead(id) {
+        fetch('/api/notifications/read', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({id: id})
+        }).then(() => {
+          const item = listEl.querySelector(`.notif-item[data-id="${id}"]`);
+          if (item) {
+            item.classList.remove('unread');
+            item.querySelector('.notif-unread-dot')?.remove();
+          }
+          // update badge
+          const remaining = listEl.querySelectorAll('.notif-item.unread').length;
+          updateBadge(remaining);
+        }).catch(() => {});
+      }
+
+      function markAllRead() {
+        fetch('/api/notifications/read-all', {method: 'POST'})
+          .then(() => {
+            listEl.querySelectorAll('.notif-item').forEach(el => {
+              el.classList.remove('unread');
+              el.querySelector('.notif-unread-dot')?.remove();
+            });
+            updateBadge(0);
+          }).catch(() => {});
+      }
+
+      function openPanel() {
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        fetchNotifs();
+      }
+
+      function closePanel() {
+        panel.classList.remove('open');
+        overlay.classList.remove('open');
+      }
+
+      bellBtn?.addEventListener('click', openPanel);
+      closeBtn?.addEventListener('click', closePanel);
+      overlay?.addEventListener('click', closePanel);
+      markAllBtn?.addEventListener('click', markAllRead);
+
+      // Fetch badge count on load
+      fetchNotifs();
+
+      // Show popup toasts for unread notifications — only once per login session
+      // We key by user id so that logging out + back in re-triggers the popups
+      const NOTIF_KEY = 'notif_popup_shown_{{ current_user.id }}';
+      const justLoggedIn = sessionStorage.getItem(NOTIF_KEY);
+      if (!justLoggedIn) {
+        sessionStorage.setItem(NOTIF_KEY, '1');
+        setTimeout(() => {
+          fetch('/api/notifications?unread_only=1')
+            .then(r => r.json())
+            .then(data => {
+              const unread = (data.notifications || []).slice(0, 3); // max 3 popups
+              unread.forEach((n, idx) => {
+                setTimeout(() => showNotifPopup(n), idx * 600);
+              });
+            }).catch(() => {});
+        }, 1200);
+      }
+
+      function showNotifPopup(n) {
+        const toast = document.createElement('div');
+        toast.className = 'notif-popup-toast';
+        toast.innerHTML = `
+          <button class="npt-close" onclick="this.closest('.notif-popup-toast').remove()">&times;</button>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <i class="fas fa-bell" style="color:#e53935;font-size:1.2rem;margin-top:2px;"></i>
+            <div>
+              <p class="npt-title">${n.title}</p>
+              <p class="npt-msg">${n.message}</p>
+            </div>
+          </div>
+        `;
+        toast.style.bottom = (24 + document.querySelectorAll('.notif-popup-toast').length * 100) + 'px';
+        toast.addEventListener('click', function(e) {
+          if (!e.target.classList.contains('npt-close')) {
+            markRead(n.id);
+            toast.remove();
+            if (n.link) window.location.href = n.link;
+          }
+        });
+        document.body.appendChild(toast);
+        // Auto-dismiss after 6s
+        setTimeout(() => toast.remove(), 6000);
+      }
+    })();
+    {% endif %}
+    </script>
+
+    <!-- Modern JS -->
+    <script src="{{ url_for('static', filename='js/modern.js') }}"></script>
+
+    {% block extra_js %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+
+    <!-- Back to Top -->
+    <button id="gb-back-top" aria-label="Back to top"><i class="fas fa-arrow-up"></i></button>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="gb-bottom-nav" aria-label="Mobile navigation">
+      <a href="{{ url_for('public.index') }}" class="gb-bottom-nav-item" title="Home">
+        <i class="fas fa-home"></i><span>Home</span>
+      </a>
+      <a href="{{ url_for('public.restaurants') }}" class="gb-bottom-nav-item" title="Restaurants">
+        <i class="fas fa-store"></i><span>Eat</span>
+      </a>
+      <a href="{{ url_for('public.gallery') }}" class="gb-bottom-nav-item" title="Dishes">
+        <i class="fas fa-utensils"></i><span>Dishes</span>
+      </a>
+      <a href="{{ url_for('account.cart') }}" class="gb-bottom-nav-item" title="Cart" style="position:relative;">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="gb-bottom-cart-badge" class="gb-bottom-badge"></span>
+        <span>Cart</span>
+      </a>
+      <a href="{{ url_for('account.profile') }}" class="gb-bottom-nav-item" title="Profile">
+        <i class="fas fa-user"></i><span>Me</span>
+      </a>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         POLICY MODALS — Terms, Privacy, Cookie, Refund, Contact,
+         Partner, Investor, Ride
+    ═══════════════════════════════════════════════════════════ -->
+    <style>
+      .policy-modal-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.65); z-index: 99990;
+        backdrop-filter: blur(4px); align-items: center; justify-content: center;
+        padding: 16px;
+      }
+      .policy-modal-overlay.open { display: flex; }
+      .policy-modal-box {
+        background: #fff; border-radius: 16px;
+        max-width: 700px; width: 100%;
+        max-height: 88vh; display: flex; flex-direction: column;
+        box-shadow: 0 24px 72px rgba(0,0,0,.4);
+        animation: modalIn .22s ease;
+      }
+      @keyframes modalIn { from { transform:scale(.95); opacity:0; } to { transform:scale(1); opacity:1; } }
+      .policy-modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        flex-shrink: 0;
+      }
+      .policy-modal-header h4 { margin: 0; font-weight: 800; font-size: 1.2rem; color: #1a1a1a; }
+      .policy-modal-close {
+        width: 34px; height: 34px; border-radius: 50%; border: none;
+        background: #f5f5f5; cursor: pointer; font-size: 1rem; color: #555;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .15s;
+      }
+      .policy-modal-close:hover { background: #e53935; color: #fff; }
+      .policy-modal-body {
+        padding: 24px; overflow-y: auto; line-height: 1.8;
+        font-size: .91rem; color: #333;
+      }
+      .policy-modal-body h5 {
+        font-weight: 700; font-size: 1rem; color: #e53935;
+        margin: 22px 0 8px; border-left: 3px solid #e53935; padding-left: 10px;
+      }
+      .policy-modal-body h5:first-child { margin-top: 0; }
+      .policy-modal-body p { margin-bottom: 10px; }
+      .policy-modal-body ul { padding-left: 20px; margin-bottom: 10px; }
+      .policy-modal-body ul li { margin-bottom: 5px; }
+      .policy-modal-footer {
+        padding: 14px 24px; border-top: 1px solid #f0f0f0;
+        display: flex; justify-content: flex-end; flex-shrink: 0;
+      }
+      .policy-modal-footer button {
+        background: #e53935; color: #fff; border: none;
+        border-radius: 999px; padding: 9px 28px;
+        font-weight: 700; cursor: pointer; font-size: .9rem;
+        transition: background .15s;
+      }
+      .policy-modal-footer button:hover { background: #c62828; }
+      .policy-last-updated { font-size: .78rem; color: #999; margin-bottom: 20px; }
+    </style>
+
+    <!-- ── Terms & Conditions ─────────────────────────────────────── -->
+    <div id="termsModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-file-contract me-2" style="color:#e53935;"></i>Terms &amp; Conditions</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('termsModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <p class="policy-last-updated">Last updated: June 2025 &nbsp;|&nbsp; GrabBite Pvt. Ltd.</p>
+          <h5>1. Acceptance of Terms</h5>
+          <p>By accessing or using the GrabBite platform (website, mobile application, or any related service), you agree to be bound by these Terms &amp; Conditions. If you do not agree with any part of these terms, you may not use our services. GrabBite reserves the right to update these terms at any time, and your continued use constitutes acceptance of any changes.</p>
+          <h5>2. Services Provided</h5>
+          <p>GrabBite is an online food aggregator and delivery platform that connects customers with partner restaurants. We provide a technology platform that facilitates the discovery, ordering and delivery of food. GrabBite does not prepare the food; all food items are prepared by independent restaurant partners.</p>
+          <h5>3. User Accounts</h5>
+          <p>You must register and maintain an accurate, complete user account to place orders. You are responsible for all activity that occurs under your account. You must not share your login credentials with others. GrabBite reserves the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity.</p>
+          <h5>4. Orders &amp; Payments</h5>
+          <p>Orders are confirmed only upon receipt of payment. Prices are set by restaurant partners and may vary. GrabBite charges a platform fee and delivery fee as disclosed at checkout. All payments are processed securely through our payment partners. GrabBite is not responsible for errors in pricing caused by restaurant partners.</p>
+          <h5>5. Cancellations</h5>
+          <p>Orders may be cancelled before they are accepted by the restaurant. Once accepted, cancellation may not be possible. Refunds for eligible cancellations are processed according to our Refund Policy. GrabBite may cancel orders in cases of unavailability, payment failure, or safety concerns.</p>
+          <h5>6. Delivery</h5>
+          <p>Estimated delivery times are indicative and may vary due to traffic, weather, restaurant preparation time and delivery partner availability. GrabBite is not liable for delays beyond our reasonable control. If your order is significantly delayed, contact our support team for assistance.</p>
+          <h5>7. Prohibited Conduct</h5>
+          <ul>
+            <li>Using the platform for any unlawful purpose</li>
+            <li>Submitting false or fraudulent orders or reviews</li>
+            <li>Attempting to hack, reverse-engineer or compromise our systems</li>
+            <li>Harassing restaurant partners, delivery partners or GrabBite staff</li>
+            <li>Creating multiple accounts to abuse promotional offers</li>
+          </ul>
+          <h5>8. Intellectual Property</h5>
+          <p>All content on GrabBite — including logos, text, images, software and design — is the property of GrabBite Pvt. Ltd. or its licensors. You may not copy, reproduce or distribute any content without prior written permission.</p>
+          <h5>9. Limitation of Liability</h5>
+          <p>GrabBite's liability is limited to the value of your order in any given transaction. We are not liable for indirect, incidental, consequential or punitive damages arising from use of our platform. Nothing in these terms excludes liability for death or personal injury caused by our negligence.</p>
+          <h5>10. Governing Law</h5>
+          <p>These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of Bengaluru, Karnataka, India.</p>
+          <h5>11. Contact</h5>
+          <p>For questions about these terms, contact us at <a href="mailto:legal@grabbite.com" style="color:#e53935;">legal@grabbite.com</a>.</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('termsModal'))">I Understand</button></div>
+      </div>
+    </div>
+
+    <!-- ── Privacy Policy ─────────────────────────────────────────── -->
+    <div id="privacyModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-shield-alt me-2" style="color:#e53935;"></i>Privacy Policy</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('privacyModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <p class="policy-last-updated">Last updated: June 2025 &nbsp;|&nbsp; GrabBite Pvt. Ltd.</p>
+          <h5>1. Information We Collect</h5>
+          <p>We collect information you provide directly: name, email address, phone number, delivery address, and payment details. We also automatically collect device information, IP address, browser type, and usage data when you use our platform.</p>
+          <h5>2. How We Use Your Information</h5>
+          <ul>
+            <li>To process and fulfil your food orders</li>
+            <li>To send order confirmations, delivery updates and receipts</li>
+            <li>To personalise your experience and recommend restaurants</li>
+            <li>To send promotional offers and newsletters (with your consent)</li>
+            <li>To improve our platform, detect fraud and ensure safety</li>
+            <li>To comply with legal obligations</li>
+          </ul>
+          <h5>3. Sharing Your Information</h5>
+          <p>We share your information only where necessary: with restaurant partners to fulfil your order (name, address, phone), with delivery partners to complete delivery, and with payment processors to handle transactions. We do not sell your personal data to third parties.</p>
+          <h5>4. Data Security</h5>
+          <p>We implement industry-standard security measures including SSL encryption, PCI-DSS compliant payment processing, and regular security audits. While we strive to protect your data, no internet transmission is 100% secure. Report suspected security issues to <a href="mailto:security@grabbite.com" style="color:#e53935;">security@grabbite.com</a>.</p>
+          <h5>5. Cookies</h5>
+          <p>We use cookies to maintain your session, remember preferences and analyse usage. See our Cookie Policy for full details. You can control cookie settings in your browser.</p>
+          <h5>6. Your Rights</h5>
+          <ul>
+            <li><strong>Access:</strong> Request a copy of your personal data</li>
+            <li><strong>Correction:</strong> Update inaccurate information via your profile</li>
+            <li><strong>Deletion:</strong> Request deletion of your account and data</li>
+            <li><strong>Opt-out:</strong> Unsubscribe from marketing at any time</li>
+            <li><strong>Portability:</strong> Request your data in a portable format</li>
+          </ul>
+          <h5>7. Data Retention</h5>
+          <p>We retain your data for as long as your account is active and for up to 5 years after account closure for legal and financial compliance purposes. Order history is retained for 7 years as required by Indian tax law.</p>
+          <h5>8. Children's Privacy</h5>
+          <p>GrabBite is not intended for users under 13 years of age. We do not knowingly collect personal data from children. If you believe a child has created an account, contact us immediately.</p>
+          <h5>9. Contact</h5>
+          <p>For privacy inquiries or to exercise your rights, contact our Data Protection Officer at <a href="mailto:privacy@grabbite.com" style="color:#e53935;">privacy@grabbite.com</a>.</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('privacyModal'))">Got It</button></div>
+      </div>
+    </div>
+
+    <!-- ── Cookie Policy ──────────────────────────────────────────── -->
+    <div id="cookieModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-cookie-bite me-2" style="color:#e53935;"></i>Cookie Policy</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('cookieModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <p class="policy-last-updated">Last updated: June 2025 &nbsp;|&nbsp; GrabBite Pvt. Ltd.</p>
+          <h5>What Are Cookies?</h5>
+          <p>Cookies are small text files stored on your device when you visit a website. They help websites remember your preferences, keep you logged in and understand how you interact with the site.</p>
+          <h5>Types of Cookies We Use</h5>
+          <ul>
+            <li><strong>Essential Cookies:</strong> Required for the platform to function. These include session cookies that keep you logged in and security tokens that protect your account. These cannot be disabled.</li>
+            <li><strong>Preference Cookies:</strong> Remember your settings such as delivery address, language preference and notification options.</li>
+            <li><strong>Analytics Cookies:</strong> Help us understand how users navigate our platform, which pages are most visited and where users encounter issues. We use anonymised data from these cookies to improve our service.</li>
+            <li><strong>Marketing Cookies:</strong> Allow us to show you relevant promotions and offers based on your browsing behaviour. These are only set with your consent.</li>
+          </ul>
+          <h5>Third-Party Cookies</h5>
+          <p>We use third-party services including Google Analytics (analytics), Razorpay (payments) and Google Maps (delivery tracking) that may set their own cookies. These parties have their own privacy policies governing cookie use.</p>
+          <h5>Managing Cookies</h5>
+          <p>You can control cookies through your browser settings. Most browsers allow you to block, delete or receive alerts when cookies are set. Note that disabling essential cookies will prevent GrabBite from functioning correctly — you will not be able to log in or place orders.</p>
+          <p>To opt out of analytics cookies, visit <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" style="color:#e53935;">Google Analytics Opt-out</a>.</p>
+          <h5>Cookie Retention</h5>
+          <p>Session cookies are deleted when you close your browser. Persistent cookies remain for up to 12 months or until you delete them. You can clear all cookies at any time through your browser settings.</p>
+          <h5>Contact</h5>
+          <p>Questions about our use of cookies? Email <a href="mailto:privacy@grabbite.com" style="color:#e53935;">privacy@grabbite.com</a>.</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('cookieModal'))">Got It</button></div>
+      </div>
+    </div>
+
+    <!-- ── Refund Policy ──────────────────────────────────────────── -->
+    <div id="refundModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-undo-alt me-2" style="color:#e53935;"></i>Refund Policy</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('refundModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <p class="policy-last-updated">Last updated: June 2025 &nbsp;|&nbsp; GrabBite Pvt. Ltd.</p>
+          <h5>1. Eligibility for Refunds</h5>
+          <p>You may be eligible for a refund if:</p>
+          <ul>
+            <li>Your order was not delivered within 90 minutes of placement</li>
+            <li>Items were missing from your order</li>
+            <li>Food received was significantly different from what was described</li>
+            <li>Food arrived in an inedible or spoiled condition</li>
+            <li>You were charged incorrectly (duplicate charges, wrong amount)</li>
+            <li>The restaurant cancelled your order after payment was collected</li>
+          </ul>
+          <h5>2. Non-Refundable Situations</h5>
+          <ul>
+            <li>Change of mind after the order is placed and accepted</li>
+            <li>Incorrect delivery address provided by the customer</li>
+            <li>Customer unavailable at delivery address after 2 delivery attempts</li>
+            <li>Dissatisfaction with taste (subjective preference)</li>
+            <li>Delays caused by extreme weather or circumstances beyond our control</li>
+          </ul>
+          <h5>3. How to Request a Refund</h5>
+          <p>To request a refund, raise a complaint within <strong>24 hours</strong> of order delivery or expected delivery time through:</p>
+          <ul>
+            <li>The "My Orders" section — select the order and tap "Report Issue"</li>
+            <li>Email: <a href="mailto:support@grabbite.com" style="color:#e53935;">support@grabbite.com</a> with your order ID and photos</li>
+            <li>Phone: +91 80001 23456 (available 8 AM – 10 PM)</li>
+          </ul>
+          <h5>4. Refund Processing Time</h5>
+          <ul>
+            <li><strong>GrabBite Wallet:</strong> Instant (within 30 minutes)</li>
+            <li><strong>UPI / Net Banking:</strong> 1–3 business days</li>
+            <li><strong>Credit / Debit Card:</strong> 5–7 business days</li>
+            <li><strong>EMI transactions:</strong> 7–10 business days</li>
+          </ul>
+          <h5>5. Partial Refunds</h5>
+          <p>In cases where only some items are affected (e.g. one item missing from a multi-item order), GrabBite will process a partial refund equivalent to the value of the missing or incorrect item, including any applicable taxes on that item.</p>
+          <h5>6. Promotions &amp; Coupons</h5>
+          <p>If a refund is processed for an order where a coupon was used, the refunded amount reflects the discounted price paid, not the original price. Coupons are not reinstated after a refund.</p>
+          <h5>7. Escalation</h5>
+          <p>If your refund request is denied and you believe this is incorrect, you may escalate to our Grievance Officer at <a href="mailto:grievance@grabbite.com" style="color:#e53935;">grievance@grabbite.com</a>. We commit to responding within 48 hours.</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('refundModal'))">Got It</button></div>
+      </div>
+    </div>
+
+    <!-- ── Contact Us ─────────────────────────────────────────────── -->
+    <div id="contactModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-envelope me-2" style="color:#e53935;"></i>Contact Us</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('contactModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <h5>Customer Support</h5>
+          <p>Our support team is available daily from <strong>8 AM to 10 PM IST</strong>.</p>
+          <ul>
+            <li>📧 Email: <a href="mailto:support@grabbite.com" style="color:#e53935;">support@grabbite.com</a></li>
+            <li>📞 Phone: <a href="tel:+918000123456" style="color:#e53935;">+91 80001 23456</a></li>
+            <li>💬 Live chat: Available in the app (tap the chat icon)</li>
+          </ul>
+          <h5>For Orders &amp; Deliveries</h5>
+          <p>For missing items, wrong orders, or delivery issues — go to <strong>My Orders → Report an Issue</strong>. This is the fastest way to get help, with an average resolution time of under 30 minutes.</p>
+          <h5>Restaurant Partners</h5>
+          <p>If you're a restaurant owner interested in joining GrabBite: <a href="mailto:partners@grabbite.com" style="color:#e53935;">partners@grabbite.com</a></p>
+          <h5>Delivery Partners</h5>
+          <p>Interested in delivering with GrabBite: <a href="mailto:riders@grabbite.com" style="color:#e53935;">riders@grabbite.com</a></p>
+          <h5>Press &amp; Media</h5>
+          <p>For media queries, interviews or press releases: <a href="mailto:press@grabbite.com" style="color:#e53935;">press@grabbite.com</a></p>
+          <h5>Head Office</h5>
+          <p>GrabBite Pvt. Ltd.<br>123, Food Street, Koramangala<br>Bengaluru, Karnataka 560034<br>India</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('contactModal'))">Close</button></div>
+      </div>
+    </div>
+
+    <!-- ── Partner with Us ────────────────────────────────────────── -->
+    <div id="partnerModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-handshake me-2" style="color:#e53935;"></i>Partner with GrabBite</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('partnerModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <h5>Why Partner with GrabBite?</h5>
+          <ul>
+            <li>🚀 Reach millions of hungry customers across India</li>
+            <li>📊 Real-time analytics dashboard to track performance</li>
+            <li>📸 Free professional photography for your menu</li>
+            <li>💸 Weekly payouts with transparent reporting</li>
+            <li>🎯 Targeted promotions to boost your visibility</li>
+            <li>🤝 Dedicated account manager for every partner</li>
+          </ul>
+          <h5>How It Works</h5>
+          <p><strong>1. Apply:</strong> Fill in the form at partners.grabbite.com or email <a href="mailto:partners@grabbite.com" style="color:#e53935;">partners@grabbite.com</a></p>
+          <p><strong>2. Onboard:</strong> Our team verifies your FSSAI licence, menu and bank details within 48 hours.</p>
+          <p><strong>3. Go Live:</strong> Your restaurant appears on GrabBite. Start receiving orders immediately.</p>
+          <p><strong>4. Earn:</strong> We handle delivery and customer support. You focus on cooking great food.</p>
+          <h5>Commission Structure</h5>
+          <p>GrabBite charges a platform commission of 15–25% depending on your category and agreement tier. Delivery is handled by GrabBite at no additional cost to you. Promotional features are available at nominal rates.</p>
+          <h5>Contact our Partnerships Team</h5>
+          <p>📧 <a href="mailto:partners@grabbite.com" style="color:#e53935;">partners@grabbite.com</a><br>📞 +91 80001 23457 (Mon–Fri, 10 AM – 6 PM)</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('partnerModal'))">Close</button></div>
+      </div>
+    </div>
+
+    <!-- ── Investor Relations ─────────────────────────────────────── -->
+    <div id="investorModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-chart-line me-2" style="color:#e53935;"></i>Investor Relations</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('investorModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <h5>About GrabBite</h5>
+          <p>GrabBite is India's fastest-growing food delivery and discovery platform, serving 20+ cities with over 10,000 restaurant partners. Founded in 2021, GrabBite has delivered over 50 million orders and maintains a 4.6-star customer satisfaction rating.</p>
+          <h5>Key Metrics</h5>
+          <ul>
+            <li>🏙️ <strong>20+ cities</strong> across India</li>
+            <li>🍽️ <strong>10,000+ restaurant partners</strong></li>
+            <li>📦 <strong>50M+ orders</strong> delivered to date</li>
+            <li>👥 <strong>8M+ registered users</strong></li>
+            <li>⭐ <strong>4.6 average rating</strong> on app stores</li>
+            <li>🛵 <strong>25,000+ delivery partners</strong></li>
+          </ul>
+          <h5>Investment Highlights</h5>
+          <ul>
+            <li>Strong unit economics with improving margin trajectory</li>
+            <li>Proprietary AI-driven demand forecasting and routing</li>
+            <li>Expanding cloud kitchen infrastructure</li>
+            <li>Loyal customer base with 60%+ repeat order rate</li>
+            <li>Strategic expansion into Tier-2 cities</li>
+          </ul>
+          <h5>Contact Investor Relations</h5>
+          <p>For investor enquiries, financial reports or media kit requests:</p>
+          <p>📧 <a href="mailto:investors@grabbite.com" style="color:#e53935;">investors@grabbite.com</a><br>📞 +91 80001 23458</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('investorModal'))">Close</button></div>
+      </div>
+    </div>
+
+    <!-- ── Ride with Us ───────────────────────────────────────────── -->
+    <div id="rideModal" class="policy-modal-overlay" onclick="closeModal(this)">
+      <div class="policy-modal-box" onclick="event.stopPropagation()">
+        <div class="policy-modal-header">
+          <h4><i class="fas fa-motorcycle me-2" style="color:#e53935;"></i>Ride with GrabBite</h4>
+          <button class="policy-modal-close" onclick="closeModal(document.getElementById('rideModal'))">&times;</button>
+        </div>
+        <div class="policy-modal-body">
+          <h5>Deliver with GrabBite — Earn on Your Terms</h5>
+          <p>Join 25,000+ delivery partners earning with GrabBite across India. Set your own hours, earn competitive pay and get benefits designed for gig workers.</p>
+          <h5>Why Deliver with GrabBite?</h5>
+          <ul>
+            <li>💰 Earn ₹500–₹1,200 per day depending on hours and city</li>
+            <li>🕐 Completely flexible hours — work when you want</li>
+            <li>📱 Simple app with navigation, earnings tracker and support</li>
+            <li>⚡ Weekly payouts directly to your bank account</li>
+            <li>🏥 Access to health insurance and accident cover</li>
+            <li>🎓 Free training and onboarding support</li>
+          </ul>
+          <h5>Requirements</h5>
+          <ul>
+            <li>Age 18 or above</li>
+            <li>Valid driving licence (2-wheeler)</li>
+            <li>A smartphone with Android 8+ or iOS 13+</li>
+            <li>PAN card and Aadhaar card</li>
+            <li>Active bank account</li>
+          </ul>
+          <h5>How to Apply</h5>
+          <p><strong>1.</strong> Email <a href="mailto:riders@grabbite.com" style="color:#e53935;">riders@grabbite.com</a> with your name, city and phone number.<br>
+          <strong>2.</strong> Attend a 2-hour onboarding session at your nearest GrabBite hub.<br>
+          <strong>3.</strong> Download the GrabBite Partner app and start earning!</p>
+          <h5>Support for Delivery Partners</h5>
+          <p>📧 <a href="mailto:riders@grabbite.com" style="color:#e53935;">riders@grabbite.com</a><br>📞 +91 80001 23459 (Rider Support, 6 AM – 11 PM)</p>
+        </div>
+        <div class="policy-modal-footer"><button onclick="closeModal(document.getElementById('rideModal'))">Apply Now</button></div>
+      </div>
+    </div>
+
+    <!-- ── openModal / closeModal JS ─────────────────────────────── -->
+    <script>
+      function openModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeModal(el) {
+        if (el) el.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+      // Close on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.policy-modal-overlay.open').forEach(m => closeModal(m));
+        }
+      });
+    </script>
+
+</body>
+</html>

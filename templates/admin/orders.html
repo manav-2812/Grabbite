@@ -1,0 +1,543 @@
+{% extends "admin/dashboard.html" %}
+
+{% block styles %}
+{{ super() }}
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" type="text/css"
+    href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css" />
+
+<style>
+    .admin-sidebar {
+        min-height: calc(100vh - 80px);
+        background: #2c3e50;
+        color: white;
+        padding-top: 20px;
+    }
+
+    .admin-sidebar a {
+        color: #ecf0f1;
+        padding: 10px 15px;
+        display: block;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .admin-sidebar a:hover {
+        background: #34495e;
+    }
+
+    .admin-sidebar a.active {
+        background: #e53935;
+    }
+
+    .admin-main {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: calc(100vh - 80px);
+    }
+
+    .order-filters {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .order-table th {
+        background: #2c3e50;
+        color: white;
+    }
+
+    .order-details {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .status-placed {
+        background: #ffeeba;
+        color: #856404;
+    }
+
+    .status-confirmed {
+        background: #b8daff;
+        color: #004085;
+    }
+
+    .status-preparing {
+        background: #c3e6cb;
+        color: #155724;
+    }
+
+    .status-delivering {
+        background: #bee5eb;
+        color: #0c5460;
+    }
+
+    .status-delivered {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #f5c6cb;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <h5 class="mb-4 ps-3">Admin Panel</h5>
+            <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">
+                <i class="fas fa-users me-2"></i> Users
+            </a>
+            <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if request.endpoint == 'admin.orders' }}">
+                <i class="fas fa-shopping-cart me-2"></i> Orders
+            </a>
+            <a href="{{ url_for('admin.restaurants') }}"
+                class="{{ 'active' if request.endpoint == 'admin.restaurants' }}">
+                <i class="fas fa-utensils me-2"></i> Restaurants
+            </a>
+            <a href="{{ url_for('admin.admin_blogs') }}"
+                class="{{ 'active' if request.endpoint == 'admin.admin_blogs' }}">
+                <i class="fas fa-blog me-2"></i> Blogs
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="{{ 'active' if request.endpoint == 'admin.reviews' }}">
+                <i class="fas fa-star me-2"></i> Reviews
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 admin-main">
+            <h2 class="mb-4">Order Management</h2>
+
+            <!-- Filters -->
+            <div class="order-filters">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Filter by Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="placed">Placed</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="delivering">Out for Delivery</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Date Range</label>
+                            <input type="date" class="form-control" id="dateFilter">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" id="searchOrder"
+                                placeholder="Search by order ID, customer name, or email">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">All Orders</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr data-order-id="{{ order.id }}">
+                                    <td>#{{ order.id }}</td>
+                                    <td>
+                                        <div>{{ order.user.name }}</div>
+                                        <small class="text-muted">{{ order.user.email }}</small>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="popover"
+                                            data-bs-html="true" data-bs-content="
+                                                    <ul class='list-unstyled mb-0'>
+                                                        {% for item in order.items %}
+                                                        <li class='mb-2'>
+                                                            <div><strong>{{ item.name }}</strong></div>
+                                                            <div>{{ item.quantity }}x @ ₹{{ '%.2f'|format(item.price) }}</div>
+                                                        </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                ">
+                                            {{ order.items|length }} item{{ 's' if order.items|length != 1 }}
+                                        </button>
+                                    </td>
+                                    <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                                    <td>
+                                        <span class="badge order-status bg-{{ {
+                                            'placed': 'warning',
+                                            'confirmed': 'info',
+                                            'preparing': 'primary',
+                                            'delivering': 'info',
+                                            'delivered': 'success',
+                                            'cancelled': 'danger'
+                                        }[order.status] }}">
+                                            {{ order.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'success' if order.payment_status == 'completed' else 'warning' }}">
+                                            {{ 'Paid' if order.payment_status == 'completed' else 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td data-order="{{ order.created_at.isoformat() if order.created_at else '' }}">
+                                        {{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else 'N/A' }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#orderDetailsModal" data-order-id="{{ order.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger"
+                                                onclick="orderManager.deleteOrder('{{ order.id }}')" {% if order.status
+                                                in ['preparing', 'delivering' ] %}disabled{% endif %} {% if order.status
+                                                in ['preparing', 'delivering' ] %} data-bs-toggle="tooltip"
+                                                title="Cannot delete orders in progress" {% endif %}>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- Orders Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover order-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.user.name }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-link" data-bs-toggle="collapse"
+                                            data-bs-target="#items-{{ order.id }}">
+                                            View Items ({{ order.items|length }})
+                                        </button>
+                                        <div id="items-{{ order.id }}" class="collapse order-details">
+                                            <ul class="list-unstyled mb-0">
+                                                {% for item in order.items %}
+                                                <li>{{ item.quantity }}x {{ item.name }} - ${{ "%.2f"|format(item.price)
+                                                    }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                                    <td>
+                                        <select class="form-select form-select-sm status-select"
+                                            data-order-id="{{ order.id }}"
+                                            onchange="updateOrderStatus(this.dataset.orderId, this.value)">
+                                            <option value="placed" {% if order.status=='placed' %}selected{% endif %}>
+                                                Placed</option>
+                                            <option value="confirmed" {% if order.status=='confirmed' %}selected{% endif
+                                                %}>Confirmed</option>
+                                            <option value="preparing" {% if order.status=='preparing' %}selected{% endif
+                                                %}>Preparing</option>
+                                            <option value="delivering" {% if order.status=='delivering' %}selected{%
+                                                endif %}>Delivering</option>
+                                            <option value="delivered" {% if order.status=='delivered' %}selected{% endif
+                                                %}>Delivered</option>
+                                            <option value="cancelled" {% if order.status=='cancelled' %}selected{% endif
+                                                %}>Cancelled</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'success' if order.payment_status == 'completed' else 'warning' }}">
+                                            {{ order.payment_status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" data-order-id="{{ order.id }}"
+                                            onclick="viewOrderDetails(this.dataset.orderId)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" data-order-id="{{ order.id }}"
+                                            onclick="deleteOrder(this.dataset.orderId)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex align-items-center w-100">
+                    <div class="me-auto">
+                        <select class="form-select" id="modalOrderStatusSelect">
+                            <option value="placed">Placed</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="preparing">Preparing</option>
+                            <option value="delivering">Delivering</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary ms-2" onclick="updateModalOrderStatus()">Update
+                        Status</button>
+                    <button type="button" class="btn btn-secondary ms-2" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Order Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Order Information</h6>
+                        <div class="mb-2">
+                            <strong>Order ID:</strong>
+                            <span id="modalOrderId"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Order Date:</strong>
+                            <span id="modalOrderDate"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Order Status:</strong>
+                            <div class="mt-2">
+                                <select class="form-select" id="modalOrderStatus">
+                                    <option value="placed">Placed</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="preparing">Preparing</option>
+                                    <option value="delivering">Out for Delivery</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Customer Details</h6>
+                        <div class="mb-2">
+                            <strong>Name:</strong>
+                            <span id="modalCustomerName"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Email:</strong>
+                            <span id="modalCustomerEmail"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Phone:</strong>
+                            <span id="modalCustomerPhone"></span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Delivery Address:</strong>
+                            <p class="mb-0" id="modalDeliveryAddress"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <h6 class="text-muted mb-3">Order Items</h6>
+                <div class="table-responsive">
+                    <table class="table" id="modalOrderItems">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Order Timeline -->
+                <h6 class="text-muted mb-3">Order Timeline</h6>
+                <div class="timeline" id="modalOrderTimeline"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="orderManager.updateOrderStatus()">Update
+                    Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function () {
+        let orderManager;
+        // Initialize Bootstrap popovers
+        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                trigger: 'hover',
+                placement: 'auto'
+            });
+        });
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize DataTables
+        const ordersTable = new DataTable('#ordersTable', {
+            order: [[0, 'desc']],
+            pageLength: 25,
+            responsive: true,
+            language: {
+                search: "",
+                searchPlaceholder: "Search orders..."
+            },
+            columnDefs: [
+                { orderable: false, targets: [-1] }, // Disable sorting on actions column
+                { type: 'natural', targets: 0 },     // Natural sort for order IDs
+                { type: 'date', targets: 6 }         // Date sort for created_at column
+            ]
+        });
+
+        // Initialize OrderManager
+        orderManager = new OrderManager({
+            tableId: 'ordersTable',
+            statusFilterId: 'statusFilter',
+            dateFilterId: 'dateFilter',
+            searchInputId: 'searchOrder',
+            detailsModalId: 'orderDetailsModal'
+        });
+
+        // Set up filter event listeners
+        document.getElementById('statusFilter').addEventListener('change', function () {
+            ordersTable.draw();
+        });
+
+        document.getElementById('dateFilter').addEventListener('change', function () {
+            ordersTable.draw();
+        });
+
+        // Custom search function
+        document.getElementById('searchOrder').addEventListener('keyup', function () {
+            ordersTable.search(this.value).draw();
+        });
+
+        // Custom filtering logic
+        DataTable.ext.search.push(function (settings, data, dataIndex) {
+            // Only apply to orders table
+            if (settings.nTable.id !== 'ordersTable') return true;
+
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const status = data[4]; // Status column
+            const date = data[6];   // Date column
+
+            // Status filter
+            if (statusFilter && !status.toLowerCase().includes(statusFilter.toLowerCase())) {
+                return false;
+            }
+
+            // Date filter
+            if (dateFilter) {
+                const orderDate = new Date(date).toLocaleDateString();
+                const filterDate = new Date(dateFilter).toLocaleDateString();
+                if (orderDate !== filterDate) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

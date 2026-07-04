@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Addresses - GrabBite{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary">Manage Addresses</h1>
+                <p class="lead text-muted">Add and manage your delivery addresses</p>
+            </div>
+
+            <!-- Add New Address Button -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Your Addresses</h3>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                    <i class="fas fa-plus me-2"></i>Add New Address
+                </button>
+            </div>
+
+            <!-- Saved Addresses -->
+            <div id="addressList">
+                <!-- Default Address -->
+                <div class="card mb-3 border-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <h5 class="mb-0 me-2">Home</h5>
+                                    <span class="badge bg-primary">Default</span>
+                                </div>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    {{ current_user.address if current_user.is_authenticated and current_user.address else '123 Main Street, Downtown, City - 123456' }}
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-phone me-2"></i>
+                                    {{ current_user.contact if current_user.is_authenticated and current_user.contact else '+91 9876543210' }}
+                                </p>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editAddress(1)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteAddress(1)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Address 2 -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-2">Office</h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    456 Business Park, Tech City, State - 654321
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-phone me-2"></i>
+                                    +91 8765432109
+                                </p>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-success btn-sm" onclick="setDefaultAddress(2)">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="editAddress(2)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteAddress(2)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State (hidden by default) -->
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No addresses saved</h4>
+                    <p class="text-muted">Add your first delivery address to get started</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                        <i class="fas fa-plus me-2"></i>Add Address
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add New Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <input type="hidden" id="addressId" value="">
+                    
+                    <div class="mb-3">
+                        <label for="addressLabel" class="form-label">Address Label</label>
+                        <select class="form-select" id="addressLabel" required>
+                            <option value="">Select label</option>
+                            <option value="Home">Home</option>
+                            <option value="Office">Office</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="customLabelDiv" style="display: none;">
+                        <label for="customLabel" class="form-label">Custom Label</label>
+                        <input type="text" class="form-control" id="customLabel" placeholder="Enter custom label">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fullAddress" class="form-label">Full Address</label>
+                        <textarea class="form-control" id="fullAddress" rows="3" placeholder="House/Flat No, Building, Street, Area" required></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" placeholder="Enter city" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="pincode" class="form-label">Pincode</label>
+                            <input type="text" class="form-control" id="pincode" placeholder="Enter pincode" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="contactNumber" class="form-label">Contact Number</label>
+                        <input type="tel" class="form-control" id="contactNumber" placeholder="Enter contact number" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="landmark" class="form-label">Landmark (Optional)</label>
+                        <input type="text" class="form-control" id="landmark" placeholder="Nearby landmark">
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="setAsDefault">
+                        <label class="form-check-label" for="setAsDefault">
+                            Set as default address
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveAddress()">
+                    <i class="fas fa-save me-2"></i>Save Address
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide custom label input
+document.getElementById('addressLabel').addEventListener('change', function() {
+    const customLabelDiv = document.getElementById('customLabelDiv');
+    if (this.value === 'Other') {
+        customLabelDiv.style.display = 'block';
+        document.getElementById('customLabel').required = true;
+    } else {
+        customLabelDiv.style.display = 'none';
+        document.getElementById('customLabel').required = false;
+        document.getElementById('customLabel').value = '';
+    }
+});
+
+function saveAddress() {
+    const form = document.getElementById('addressForm');
+    const formData = new FormData(form);
+    
+    // Basic validation
+    const requiredFields = ['addressLabel', 'fullAddress', 'city', 'pincode', 'contactNumber'];
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (!element.value.trim()) {
+            element.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            element.classList.remove('is-invalid');
+        }
+    });
+    
+    if (document.getElementById('addressLabel').value === 'Other' && !document.getElementById('customLabel').value.trim()) {
+        document.getElementById('customLabel').classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Here you would typically send the data to your backend
+    const addressData = {
+        id: document.getElementById('addressId').value,
+        label: document.getElementById('addressLabel').value === 'Other' ? 
+               document.getElementById('customLabel').value : 
+               document.getElementById('addressLabel').value,
+        fullAddress: document.getElementById('fullAddress').value,
+        city: document.getElementById('city').value,
+        pincode: document.getElementById('pincode').value,
+        contactNumber: document.getElementById('contactNumber').value,
+        landmark: document.getElementById('landmark').value,
+        isDefault: document.getElementById('setAsDefault').checked
+    };
+    
+    console.log('Saving address:', addressData);
+    
+    // Show success message
+    alert('Address saved successfully!');
+    
+    // Close modal and reset form
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
+    modal.hide();
+    form.reset();
+    document.getElementById('addressId').value = '';
+    document.getElementById('customLabelDiv').style.display = 'none';
+    
+    // Refresh address list (in a real app, you'd reload from server)
+    // location.reload();
+}
+
+function editAddress(addressId) {
+    // In a real app, you'd fetch the address data from server
+    document.getElementById('modalTitle').textContent = 'Edit Address';
+    document.getElementById('addressId').value = addressId;
+    
+    // Sample data for demo
+    if (addressId === 1) {
+        document.getElementById('addressLabel').value = 'Home';
+        document.getElementById('fullAddress').value = '{{ current_user.address if current_user.is_authenticated and current_user.address else "123 Main Street, Downtown" }}';
+        document.getElementById('city').value = 'City';
+        document.getElementById('pincode').value = '123456';
+        document.getElementById('contactNumber').value = '{{ current_user.contact if current_user.is_authenticated and current_user.contact else "+91 9876543210" }}';
+        document.getElementById('setAsDefault').checked = true;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('addAddressModal'));
+    modal.show();
+}
+
+function deleteAddress(addressId) {
+    if (confirm('Are you sure you want to delete this address?')) {
+        // Here you would typically send delete request to backend
+        console.log('Deleting address:', addressId);
+        alert('Address deleted successfully!');
+        // Refresh address list
+        // location.reload();
+    }
+}
+
+function setDefaultAddress(addressId) {
+    // Here you would typically send request to backend
+    console.log('Setting default address:', addressId);
+    alert('Default address updated successfully!');
+    // Refresh address list
+    // location.reload();
+}
+
+// Reset modal when it's closed
+document.getElementById('addAddressModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('modalTitle').textContent = 'Add New Address';
+    document.getElementById('addressForm').reset();
+    document.getElementById('addressId').value = '';
+    document.getElementById('customLabelDiv').style.display = 'none';
+    
+    // Remove validation classes
+    document.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlist - GrabBite{% endblock %}
+
+{% block styles %}
+<style>
+    .wishlist-hero {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 60px 0 40px;
+        margin-bottom: 0;
+    }
+
+    .wishlist-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        overflow: hidden;
+    }
+
+    .wishlist-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    }
+
+    .wishlist-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .wishlist-card .rating-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.75);
+        color: #ffd700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .remove-wishlist-btn {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .remove-wishlist-btn:hover {
+        background: #dc3545;
+        transform: scale(1.1);
+    }
+
+    .empty-wishlist {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-wishlist .icon-circle {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        box-shadow: 0 10px 30px rgba(238, 90, 36, 0.3);
+    }
+
+    .cuisine-badge {
+        background: rgba(220,53,69,0.1);
+        color: #dc3545;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="wishlist-hero">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            <div style="background:rgba(255,255,255,0.15);border-radius:50%;width:54px;height:54px;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-heart fa-lg text-white"></i>
+            </div>
+            <div>
+                <h1 class="mb-1 fw-bold">My Wishlist</h1>
+                <p class="mb-0 opacity-75">
+                    {{ wishlist_items|length }} saved restaurant{{ 's' if wishlist_items|length != 1 else '' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container py-5">
+    {% if wishlist_items %}
+    <div class="row" id="wishlist-grid">
+        {% for item in wishlist_items %}
+        {% set restaurant = item.restaurant %}
+        <div class="col-lg-4 col-md-6 mb-4 wishlist-item" id="wishlist-item-{{ restaurant.id }}">
+            <div class="card wishlist-card h-100">
+                <div class="position-relative">
+                    <img src="{{ restaurant.image or 'https://images.pexels.com/photos/1581384/pexels-photo-1581384.jpeg' }}"
+                         class="card-img-top"
+                         alt="{{ restaurant.name }}"
+                         onerror="this.onerror=null;this.src='https://images.pexels.com/photos/1581384/pexels-photo-1581384.jpeg';"
+                         loading="lazy">
+                    <span class="rating-badge">
+                        <i class="fas fa-star"></i> {{ restaurant.rating or '—' }}
+                    </span>
+                    <button class="remove-wishlist-btn"
+                            data-restaurant-id="{{ restaurant.id }}"
+                            onclick="removeFromWishlist(parseInt(this.dataset.restaurantId), this)"
+                            title="Remove from wishlist">
+                        <i class="fas fa-heart-broken"></i>
+                    </button>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-2">
+                        {% if restaurant.cuisine_type %}
+                        <span class="cuisine-badge">{{ restaurant.cuisine_type }}</span>
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title fw-bold mb-1">{{ restaurant.name }}</h5>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt me-1 text-danger"></i>{{ restaurant.location }}
+                    </p>
+                    {% if restaurant.description %}
+                    <p class="card-text text-muted small mb-3" style="line-height:1.5;flex-grow:1;">
+                        {{ restaurant.description[:100] }}{% if restaurant.description|length > 100 %}…{% endif %}
+                    </p>
+                    {% endif %}
+                    <div class="row text-center mb-3 border-top pt-3">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Delivery</small>
+                            <span class="fw-semibold text-success small">
+                                {{ restaurant.delivery_time or '30-45' }} min
+                            </span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Min Order</small>
+                            <span class="fw-semibold small">₹{{ restaurant.min_order or 200 }}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Del. Fee</small>
+                            <span class="fw-semibold text-danger small">
+                                {% if restaurant.delivery_fee and restaurant.delivery_fee > 0 %}
+                                ₹{{ restaurant.delivery_fee }}
+                                {% else %}
+                                Free
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('public.restaurant_menu', restaurant_id=restaurant.id) }}"
+                       class="btn btn-danger w-100 fw-semibold">
+                        <i class="fas fa-utensils me-2"></i>View Menu & Order
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-wishlist">
+        <div class="icon-circle">
+            <i class="fas fa-heart-broken fa-3x text-white"></i>
+        </div>
+        <h3 class="fw-bold mb-2">Your wishlist is empty</h3>
+        <p class="text-muted mb-4" style="max-width:400px;margin:0 auto;">
+            Save your favourite restaurants here so you can find them quickly next time you're hungry!
+        </p>
+        <a href="{{ url_for('public.restaurants') }}" class="btn btn-danger btn-lg px-5">
+            <i class="fas fa-utensils me-2"></i>Explore Restaurants
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function removeFromWishlist(restaurantId, btn) {
+    const card = document.getElementById('wishlist-item-' + restaurantId);
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+        const resp = await fetch('/api/wishlist/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurant_id: restaurantId }),
+        });
+        const data = await resp.json();
+        if (data.success && !data.wishlisted) {
+            card.style.transition = 'all 0.35s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                card.remove();
+                const remaining = document.querySelectorAll('.wishlist-item').length;
+                if (remaining === 0) location.reload();
+            }, 350);
+            if (window.showToast) showToast('Removed from wishlist', 'info');
+        }
+    } catch (e) {
+        btn.innerHTML = '<i class="fas fa-heart-broken"></i>';
+        btn.disabled = false;
+        if (window.showToast) showToast('Error removing from wishlist', 'error');
+    }
+}
+</script>
+{% endblock %}

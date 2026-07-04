@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Support - GrabBite{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary">Help & Support</h1>
+                <p class="lead text-muted">We're here to help you with any questions or issues</p>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    How do I place an order?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Browse restaurants in your area</li>
+                                        <li>Select a restaurant and choose your items</li>
+                                        <li>Add items to cart and proceed to checkout</li>
+                                        <li>Enter delivery address and payment details</li>
+                                        <li>Confirm your order</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    What payment methods do you accept?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    We accept various payment methods including:
+                                    <ul>
+                                        <li>Cash on Delivery (COD)</li>
+                                        <li>Credit/Debit Cards</li>
+                                        <li>UPI (PhonePe, Google Pay, Paytm)</li>
+                                        <li>Digital Wallets</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                    How long does delivery take?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Delivery times vary by location and restaurant, but typically:
+                                    <ul>
+                                        <li>Standard delivery: 30-45 minutes</li>
+                                        <li>Peak hours: 45-60 minutes</li>
+                                        <li>Weather conditions may affect delivery times</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                                    Can I cancel my order?
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes, you can cancel your order:
+                                    <ul>
+                                        <li>Within 2 minutes of placing the order - Full refund</li>
+                                        <li>After restaurant confirms - Cancellation charges may apply</li>
+                                        <li>Once food is prepared - No cancellation allowed</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Support -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="fas fa-headset me-2"></i>Contact Support</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <i class="fas fa-phone fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">Call Us</h5>
+                                    <p class="mb-0 text-muted">+91 1800-123-4567</p>
+                                    <small class="text-muted">24/7 Support</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <i class="fas fa-envelope fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">Email Us</h5>
+                                    <p class="mb-0 text-muted">support@grabbite.com</p>
+                                    <small class="text-muted">Response within 24 hours</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <i class="fas fa-comments fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">Live Chat</h5>
+                                    <p class="mb-0 text-muted">Chat with our support team</p>
+                                    <small class="text-muted">Available 9 AM - 11 PM</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <i class="fab fa-whatsapp fa-2x text-success me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">WhatsApp</h5>
+                                    <p class="mb-0 text-muted">+91 9876543210</p>
+                                    <small class="text-muted">Quick support</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report an Issue -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Report an Issue</h3>
+                </div>
+                <div class="card-body">
+                    <form id="issueForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="issueType" class="form-label">Issue Type</label>
+                                <select class="form-select" id="issueType" required>
+                                    <option value="">Select issue type</option>
+                                    <option value="order">Order Related</option>
+                                    <option value="payment">Payment Issue</option>
+                                    <option value="delivery">Delivery Problem</option>
+                                    <option value="food">Food Quality</option>
+                                    <option value="app">App/Website Issue</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="orderNumber" class="form-label">Order Number (if applicable)</label>
+                                <input type="text" class="form-control" id="orderNumber" placeholder="Enter order number">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="issueDescription" class="form-label">Describe your issue</label>
+                            <textarea class="form-control" id="issueDescription" rows="4" placeholder="Please provide details about your issue..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Issue
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0"><i class="fas fa-link me-2"></i>Quick Links</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <a href="/orders" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-receipt me-2"></i>My Orders
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="/profile" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user me-2"></i>My Profile
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="/address" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-map-marker-alt me-2"></i>Manage Addresses
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('issueForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const issueType = document.getElementById('issueType').value;
+    const orderNumber = document.getElementById('orderNumber').value;
+    const description = document.getElementById('issueDescription').value;
+    
+    if (!issueType || !description) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Here you would typically send the data to your backend
+    alert('Thank you for reporting the issue. Our support team will contact you soon.');
+    
+    // Reset form
+    this.reset();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+# ─── Python ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ─── Virtualenv ───────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Flask / instance ─────────────────────────────────────────────────────
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Environment / secrets ────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── IDE / OS ─────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Logs / uploads (keep folder, ignore contents) ───────────────────────
+*.log
+logs/
+newsletters.txt
+enquiries.txt
+uploads/.gitkeep
+
+# ─── User-uploaded files (runtime data, not source code) ─────────────────
+static/uploads/*
+!static/uploads/.gitkeep
+
+# ─── Backup files (editor-created snapshots) ─────────────────────────────
+*.backup
+*.bak
+
+# ─── Dev screenshots / scratch images ────────────────────────────────────
+static/Screenshot_*.jpg
+static/Screenshot_*.jpeg
+static/Screenshot_*.png
+
+# ─── Build / cache ────────────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

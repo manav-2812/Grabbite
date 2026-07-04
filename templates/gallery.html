@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% block title %}Dishes Gallery – GrabBite{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ────────────────────────────────────────────────── -->
+<section class="hero-section-bg position-relative">
+    <div class="position-absolute w-100 h-100" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)); z-index: 2;"></div>
+    <div class="hero-content text-center position-relative" style="z-index: 3;">
+        <div class="container py-5">
+            <span class="badge bg-danger mb-3 px-3 py-2" style="font-size:.95rem;letter-spacing:1px;">
+                <i class="fas fa-utensils me-1"></i> ALL DISHES
+            </span>
+            <h1 class="display-3 fw-bold text-white mb-3" style="text-shadow:2px 2px 10px rgba(0,0,0,0.5);">
+                Explore Every<br>Flavour We Offer
+            </h1>
+            <p class="lead text-white mb-4" style="max-width:560px;margin:0 auto 1.5rem;opacity:.9;">
+                Click any dish to discover its story, ingredients and restaurant.
+            </p>
+            <div class="mx-auto search-wrap d-flex align-items-center">
+                <i class="fas fa-search text-muted me-3"></i>
+                <input type="text" id="searchInput" class="border-0 flex-grow-1 bg-transparent"
+                       placeholder="Search any dish, category or restaurant…" style="outline:none;font-size:1.05rem;">
+                <span class="badge bg-danger ms-2 px-3 py-2" id="dish-count" style="font-size:.85rem;white-space:nowrap;">
+                    {{ total }} Dishes
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ── Sticky Category Filter ────────────────────────────────────── -->
+<div class="category-strip" id="categoryStrip">
+    <div class="container">
+        <div class="d-flex gap-2 flex-nowrap overflow-auto py-2" id="catTabs" style="scrollbar-width:none;">
+            <button class="cat-btn active" data-cat="all" onclick="filterCat(this)">
+                <i class="fas fa-border-all me-1"></i> All
+            </button>
+            {% for cat_name, meta in grouped.items() %}
+            <button class="cat-btn" data-cat="{{ cat_name }}" onclick="filterCat(this)">
+                <i class="fas {{ meta.icon }} me-1"></i> {{ cat_name }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Dishes Grid ────────────────────────────────────────────────── -->
+<div class="container py-5" id="galleryContainer">
+
+    {% for cat_name, meta in grouped.items() %}
+    {% if meta.dishes %}
+    <section class="cat-section mb-5" data-section="{{ cat_name }}">
+        <!-- Section Header -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="cat-icon-circle" style="background:{{ meta.color }}20;color:{{ meta.color }};">
+                <i class="fas {{ meta.icon }}"></i>
+            </div>
+            <div>
+                <h2 class="cat-heading mb-0">{{ cat_name }}</h2>
+                <small class="text-muted">{{ meta.dishes|length }} item{{ 's' if meta.dishes|length != 1 else '' }}</small>
+            </div>
+            <div class="section-line flex-grow-1" style="background:{{ meta.color }};"></div>
+        </div>
+
+        <!-- Dishes row -->
+        <div class="row g-4">
+            {% for dish in meta.dishes %}
+            <div class="col-xl-3 col-lg-4 col-md-6 dish-item"
+                 data-cat="{{ cat_name }}"
+                 data-name="{{ dish.name|lower }}"
+                 data-rest="{{ dish.restaurant|lower }}">
+                <a href="/dish/{{ dish.id }}" class="dish-link text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm dish-card">
+                        <div class="dish-img-wrapper position-relative overflow-hidden">
+                            <img src="{{ dish.image }}" class="dish-img" alt="{{ dish.name }}"
+                                 onerror="this.src='/static/img/placeholder-food.jpg'">
+                            <div class="dish-overlay">
+                                <span class="view-btn">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </span>
+                            </div>
+                            <span class="cat-badge" style="background:{{ meta.color }};">{{ cat_name }}</span>
+                        </div>
+                        <div class="card-body pb-0">
+                            <h5 class="fw-bold mb-1 text-dark" style="font-size:.98rem;">{{ dish.name }}</h5>
+                            <p class="text-muted small mb-2 dish-desc">{{ dish.desc }}</p>
+                        </div>
+                        <div class="card-footer bg-white border-0 pt-1 pb-3 px-3 d-flex align-items-center justify-content-between">
+                            <span class="small text-muted">
+                                <i class="fas fa-store me-1" style="color:{{ meta.color }};"></i>{{ dish.restaurant }}
+                            </span>
+                            <span class="text-danger fw-semibold small">
+                                <i class="fas fa-arrow-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+
+    <!-- No results -->
+    <div id="no-results" class="text-center py-5" style="display:none;">
+        <i class="fas fa-search fa-4x text-muted mb-3 d-block"></i>
+        <h4 class="text-muted">No dishes found</h4>
+        <p class="text-muted">Try a different search term or category.</p>
+        <button class="btn btn-outline-danger mt-2" onclick="resetAll()">Show All Dishes</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Hero (uses global .hero-section-bg) ───────────── */
+.search-wrap {
+    background: rgba(255,255,255,.95);
+    border-radius: 50px;
+    padding: 10px 20px;
+    max-width: 640px;
+    margin: 0 auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,.2);
+}
+
+/* ── Category strip ─────────────────────────────── */
+.category-strip {
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 56px;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.cat-btn {
+    background: #f5f5f5;
+    border: 1.5px solid transparent;
+    border-radius: 30px;
+    padding: 7px 18px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .2s;
+}
+.cat-btn:hover  { background:#fff0f0; color:#e53935; border-color:#fca5a5; }
+.cat-btn.active { background:#e53935; color:#fff; border-color:#e53935; }
+
+/* ── Section headers ────────────────────────────── */
+.cat-icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.cat-heading {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+.section-line {
+    height: 3px;
+    border-radius: 3px;
+    opacity: .3;
+}
+
+/* ── Cards ──────────────────────────────────────── */
+.dish-link { display: block; height: 100%; }
+.dish-card {
+    border-radius: 16px !important;
+    transition: transform .3s ease, box-shadow .3s ease;
+    overflow: hidden;
+    cursor: pointer;
+}
+.dish-link:hover .dish-card {
+    transform: translateY(-7px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.13) !important;
+}
+.dish-img-wrapper { height: 200px; border-radius: 16px 16px 0 0; }
+.dish-img {
+    width:100%; height:100%; object-fit:cover;
+    transition: transform .45s ease;
+    display: block;
+}
+.dish-link:hover .dish-img { transform: scale(1.06); }
+.dish-overlay {
+    position:absolute; inset:0;
+    background: linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.1) 100%);
+    display:flex; align-items:flex-end; justify-content:center;
+    padding-bottom:14px;
+    opacity:0; transition:opacity .3s;
+}
+.dish-link:hover .dish-overlay { opacity:1; }
+.view-btn {
+    background:#fff; color:#e53935;
+    font-weight:700; font-size:.85rem;
+    padding:6px 18px; border-radius:30px;
+    box-shadow:0 4px 14px rgba(0,0,0,.15);
+}
+.cat-badge {
+    position:absolute; top:10px; left:10px;
+    color:#fff; font-size:.65rem; font-weight:700;
+    padding:3px 10px; border-radius:20px;
+    letter-spacing:.3px; text-transform:uppercase;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dish-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+@media(max-width:767px){
+    .gallery-hero { min-height:260px; }
+    .cat-heading { font-size:1.1rem; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const allItems    = document.querySelectorAll('.dish-item');
+const allSections = document.querySelectorAll('.cat-section');
+const noResults   = document.getElementById('no-results');
+const countBadge  = document.getElementById('dish-count');
+let currentCat    = 'all';
+let currentSearch = '';
+
+function filterCat(btn) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = btn.dataset.cat;
+    applyFilters();
+    if (currentCat !== 'all') {
+        const target = document.querySelector('.cat-section[data-section="' + currentCat + '"]');
+        if (target) setTimeout(() => target.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
+    }
+}
+
+function applyFilters() {
+    let visible = 0;
+    allSections.forEach(section => {
+        const secCat    = section.dataset.section;
+        const catMatch  = (currentCat === 'all' || secCat === currentCat);
+        let secVisible  = 0;
+        section.querySelectorAll('.dish-item').forEach(item => {
+            const textMatch = !currentSearch ||
+                item.dataset.name.includes(currentSearch) ||
+                item.dataset.rest.includes(currentSearch) ||
+                item.dataset.cat.toLowerCase().includes(currentSearch);
+            const show = catMatch && textMatch;
+            item.style.display = show ? '' : 'none';
+            if (show) { secVisible++; visible++; }
+        });
+        section.style.display = (catMatch && secVisible > 0) ? '' : 'none';
+    });
+    countBadge.textContent = visible + ' ' + (visible === 1 ? 'Dish' : 'Dishes');
+    noResults.style.display = visible === 0 ? 'block' : 'none';
+}
+
+function resetAll() {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.cat-btn[data-cat="all"]').classList.add('active');
+    document.getElementById('searchInput').value = '';
+    currentCat = 'all'; currentSearch = '';
+    applyFilters();
+}
+
+document.getElementById('searchInput').addEventListener('input', function() {
+    currentSearch = this.value.toLowerCase().trim();
+    applyFilters();
+});
+</script>
+{% endblock %}

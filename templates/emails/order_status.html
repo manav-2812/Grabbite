@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Update — GrabBite</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#f4f4f7; font-family:'Segoe UI',Arial,sans-serif; color:#333; }
+    .wrapper { max-width:600px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .header { background:linear-gradient(135deg,#e53935,#c62828); padding:32px; text-align:center; }
+    .header .logo { font-size:1.6rem; font-weight:900; color:#fff; }
+    .status-icon { font-size:3rem; display:block; margin:12px 0 4px; }
+    .header h1 { color:#fff; font-size:1.3rem; font-weight:800; }
+    .body { padding:36px 32px; }
+    .text { font-size:0.96rem; color:#555; line-height:1.7; margin-bottom:16px; }
+    .status-card { border-radius:14px; padding:24px; margin:20px 0; text-align:center; }
+    .status-card.delivered { background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border:1px solid #a5d6a7; }
+    .status-card.on_the_way { background:linear-gradient(135deg,#e3f2fd,#bbdefb); border:1px solid #90caf9; }
+    .status-card.preparing { background:linear-gradient(135deg,#fff8e1,#ffecb3); border:1px solid #ffd54f; }
+    .status-card.accepted { background:linear-gradient(135deg,#fce4ec,#f8bbd0); border:1px solid #f48fb1; }
+    .status-card.cancelled { background:linear-gradient(135deg,#ffebee,#ffcdd2); border:1px solid #ef9a9a; }
+    .status-card.default { background:#f5f5f5; border:1px solid #e0e0e0; }
+    .status-label { font-size:1.4rem; font-weight:900; color:#1a1a1a; margin-bottom:6px; }
+    .order-meta { display:flex; gap:12px; flex-wrap:wrap; margin:20px 0; }
+    .meta-chip { background:#f8f8f8; border-radius:8px; padding:10px 14px; font-size:0.85rem; flex:1; min-width:120px; }
+    .meta-chip .label { color:#aaa; font-size:0.75rem; display:block; margin-bottom:3px; }
+    .meta-chip .val { font-weight:700; color:#1a1a1a; }
+    .cta-btn { display:inline-block; background:#e53935; color:#fff !important; text-decoration:none; font-weight:800; padding:14px 32px; border-radius:50px; font-size:0.95rem; margin:12px 0; }
+    .footer { background:#f8f8f8; padding:20px 32px; text-align:center; font-size:0.78rem; color:#aaa; }
+    .footer a { color:#e53935; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">🍽️ GrabBite</div>
+      <span class="status-icon">
+        {% if new_status == 'delivered' %}🎉
+        {% elif new_status == 'on_the_way' %}🚴
+        {% elif new_status == 'picked' %}🏍️
+        {% elif new_status == 'preparing' %}👨‍🍳
+        {% elif new_status == 'accepted' %}👍
+        {% elif new_status == 'cancelled' %}❌
+        {% elif new_status == 'refunded' %}💰
+        {% else %}📦{% endif %}
+      </span>
+      <h1>Order #{{ order.id }} — {{ label }}</h1>
+    </div>
+    <div class="body">
+      <p class="text">
+        Hi <strong>{{ user.name }}</strong>! Here's a quick update on your GrabBite order.
+      </p>
+
+      <div class="status-card {{ new_status if new_status in ['delivered','on_the_way','preparing','accepted','cancelled'] else 'default' }}">
+        <div class="status-label">{{ label }}</div>
+        <p style="font-size:0.88rem;color:#555;margin:0;">
+          {% if new_status == 'accepted' %}The restaurant has accepted your order and will start preparing it shortly.
+          {% elif new_status == 'preparing' %}Your food is being freshly prepared. Hang tight!
+          {% elif new_status == 'ready' %}Your order is packed and ready for pickup by a delivery partner.
+          {% elif new_status == 'picked' %}A delivery partner has picked up your order.
+          {% elif new_status == 'on_the_way' %}Your food is on its way to you. Should be there soon!
+          {% elif new_status == 'delivered' %}Your order has been delivered. Enjoy your meal! 😋
+          {% elif new_status == 'cancelled' %}Your order has been cancelled. If you paid online, a refund will be initiated within 3–5 business days.
+          {% elif new_status == 'refunded' %}Your refund has been initiated and will reflect in 3–5 business days.
+          {% else %}Your order status has been updated.{% endif %}
+        </p>
+      </div>
+
+      <div class="order-meta">
+        <div class="meta-chip">
+          <span class="label">Order ID</span>
+          <span class="val">#{{ order.id }}</span>
+        </div>
+        <div class="meta-chip">
+          <span class="label">Total</span>
+          <span class="val">₹{{ order.total_amount | round(0) | int }}</span>
+        </div>
+        <div class="meta-chip">
+          <span class="label">Payment</span>
+          <span class="val">{{ order.payment_method | upper }}</span>
+        </div>
+      </div>
+
+      {% if new_status == 'delivered' %}
+      <div style="background:#fff8e1;border-radius:12px;padding:20px;margin:20px 0;border:1px solid #ffe082;">
+        <p style="font-weight:800;font-size:0.92rem;color:#7a5c00;">⭐ How was your experience?</p>
+        <p style="font-size:0.85rem;color:#7a5c00;margin:8px 0 12px;">Your rating helps GrabBite improve and helps other food lovers discover great places!</p>
+        <a href="{{ url_for('account.orders', _external=True) }}" style="display:inline-block;background:#ffb300;color:#fff;text-decoration:none;font-weight:800;padding:10px 24px;border-radius:50px;font-size:0.88rem;">⭐ Rate This Order</a>
+      </div>
+      {% endif %}
+
+      <div style="text-align:center;">
+        <a href="{{ url_for('account.orders', _external=True) }}" class="cta-btn">
+          📦 View Order Details
+        </a>
+      </div>
+    </div>
+    <div class="footer">
+      © 2026 GrabBite · 
+      <a href="{{ url_for('public.index', _external=True) }}">Website</a> · 
+      <a href="{{ url_for('public.help', _external=True) }}">Support</a>
+    </div>
+  </div>
+</body>
+</html>

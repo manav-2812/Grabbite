@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Payment Successful — GrabBite{% endblock %}
+
+{% block content %}
+<style>
+  .success-wrap {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0d1117 0%, #0f2027 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .success-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(46,213,115,0.2);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    max-width: 520px; width: 100%;
+    text-align: center;
+    animation: popIn .5s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(46,213,115,0.1);
+  }
+  @keyframes popIn {
+    from { opacity:0; transform: scale(0.8) translateY(20px); }
+    to   { opacity:1; transform: scale(1) translateY(0); }
+  }
+  .success-icon {
+    width: 90px; height: 90px;
+    background: radial-gradient(circle, rgba(46,213,115,0.2), rgba(46,213,115,0.05));
+    border: 2px solid rgba(46,213,115,0.4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; margin: 0 auto 1.5rem;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(46,213,115,0.3); }
+    50%      { box-shadow: 0 0 0 15px rgba(46,213,115,0); }
+  }
+  .success-title {
+    font-size: 1.8rem; font-weight: 800; color: #2ed573;
+    margin-bottom: 0.5rem;
+  }
+  .success-sub { color: #888; font-size: 0.9rem; margin-bottom: 2rem; }
+
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  .info-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 1rem;
+  }
+  .info-label { color: #666; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .8px; }
+  .info-val   { color: #fff; font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem; }
+  .info-val.green { color: #2ed573; }
+  .info-val.orange { color: #ffa502; }
+
+  .order-items-mini {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 1rem;
+    margin-bottom: 1.5rem; text-align: left;
+  }
+  .order-items-mini-title {
+    color: #aaa; font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: .8px; margin-bottom: 0.75rem;
+  }
+  .mini-item {
+    display: flex; justify-content: space-between;
+    padding: 0.3rem 0; color: #ccc; font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .mini-item:last-child { border-bottom: none; }
+
+  .action-btns { display: flex; gap: 0.75rem; }
+  .btn-track {
+    flex: 1; padding: 0.85rem;
+    background: linear-gradient(135deg, #ff4757, #ff6b35);
+    border: none; border-radius: 12px;
+    color: #fff; font-weight: 700; cursor: pointer;
+    text-decoration: none; display: flex;
+    align-items: center; justify-content: center; gap: 0.4rem;
+    transition: opacity .2s;
+  }
+  .btn-track:hover { opacity: .85; color: #fff; }
+  .btn-home {
+    flex: 1; padding: 0.85rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    color: #ddd; font-weight: 700; cursor: pointer;
+    text-decoration: none; display: flex;
+    align-items: center; justify-content: center; gap: 0.4rem;
+    transition: all .2s;
+  }
+  .btn-home:hover { border-color: #ff4757; color: #ff4757; }
+
+  .confetti {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute; top: -10px;
+    width: 8px; height: 14px; border-radius: 2px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+
+<!-- Confetti -->
+<div class="confetti" id="confetti"></div>
+
+<div class="success-wrap" style="position:relative;z-index:1;">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Payment Successful!</div>
+    <div class="success-sub">Your order is being prepared. Get ready to enjoy your meal!</div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-label">Order ID</div>
+        <div class="info-val">#{{ order.id }}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Amount Paid</div>
+        <div class="info-val green">₹{{ '%.2f'|format(order.total_amount) }}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Payment Method</div>
+        <div class="info-val">
+          {% if order.payment_method == 'cod' %}💵 Cash on Delivery
+          {% elif order.payment_method == 'upi' %}📱 UPI
+          {% elif order.payment_method in ('card','debitcard') %}💳 Card
+          {% elif order.payment_method == 'netbanking' %}🏦 Net Banking
+          {% elif order.payment_method == 'wallet' %}👛 Wallet
+          {% else %}{{ order.payment_method | upper }}{% endif %}
+        </div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Status</div>
+        <div class="info-val orange">🍳 Preparing</div>
+      </div>
+    </div>
+
+    {% if payment and payment.gateway_payment_id %}
+    <div class="info-box mb-3" style="text-align:left;">
+      <div class="info-label">Transaction ID</div>
+      <div class="info-val" style="font-size:.8rem;word-break:break-all;">{{ payment.gateway_payment_id }}</div>
+    </div>
+    {% endif %}
+
+    {% if order.order_items %}
+    <div class="order-items-mini">
+      <div class="order-items-mini-title">Items Ordered</div>
+      {% for item in order.order_items %}
+      <div class="mini-item">
+        <span>{{ item.name }} × {{ item.quantity }}</span>
+        <span>₹{{ '%.0f'|format(item.total) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="action-btns">
+      <a href="{{ url_for('account.orders') }}" class="btn-track">
+        <i class="fas fa-map-marker-alt"></i> Track Order
+      </a>
+      <a href="{{ url_for('public.index') }}" class="btn-home">
+        <i class="fas fa-home"></i> Home
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Confetti
+(function() {
+  const colors = ['#ff4757','#2ed573','#ffa502','#1e90ff','#ff6b35','#a29bfe'];
+  const container = document.getElementById('confetti');
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    el.style.animationDelay = (Math.random() * 1.5) + 's';
+    el.style.transform = `rotate(${Math.random()*360}deg)`;
+    container.appendChild(el);
+  }
+  setTimeout(() => container.style.display = 'none', 5000);
+})();
+</script>
+{% endblock %}

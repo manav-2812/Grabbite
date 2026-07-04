@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - GrabBite{% endblock %}
+
+{% block styles %}
+<style>
+    .search-result-card { transition: transform 0.2s; }
+    .search-result-card:hover { transform: translateY(-5px); }
+    .restaurant-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-4">Search Results for "{{ query }}"</h2>
+            <div class="search-box mb-4">
+                <form id="search-form" action="{{ url_for('public.search_page') }}" method="get" class="d-flex">
+                    <input type="text" name="q" id="search-input" class="form-control form-control-lg" 
+                           placeholder="Search for restaurants, food, or blogs..." value="{{ query }}" required>
+                    <input type="hidden" name="type" id="search-type" value="{{ search_type }}">
+                    <button type="submit" class="btn btn-danger ms-2">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary filter-btn {{ 'active' if search_type == 'all' else '' }}" 
+                        data-filter="all">All</button>
+                <button type="button" class="btn btn-outline-secondary filter-btn {{ 'active' if search_type == 'restaurants' else '' }}" 
+                        data-filter="restaurants">Restaurants</button>
+                <button type="button" class="btn btn-outline-secondary filter-btn {{ 'active' if search_type == 'food' else '' }}" 
+                        data-filter="food">Food Items</button>
+                <button type="button" class="btn btn-outline-secondary filter-btn {{ 'active' if search_type == 'blogs' else '' }}" 
+                        data-filter="blogs">Blogs</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="row" id="search-results">
+        <!-- Results will be loaded here via JavaScript -->
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Searching for "{{ query }}"...</p>
+        </div>
+    </div>
+
+    <!-- No Results Message (initially hidden) -->
+    <div id="no-results" class="row d-none">
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+            <h3>No results found for "{{ query }}"</h3>
+            <p class="text-muted">Try different keywords or check out our popular restaurants</p>
+            <a href="{{ url_for('public.restaurants') }}" class="btn btn-primary">Browse Restaurants</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || '';
+        let searchType = urlParams.get('type') || 'all';
+        const searchResults = document.getElementById('search-results');
+        const noResults = document.getElementById('no-results');
+        const loadingMore = document.getElementById('loading-more');
+        let isLoading = false;
+        let currentPage = 1;
+        let hasMore = true;
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Function to perform search
+        async function performSearch(query, append = false) {
+            if ((!query || query.length < 2) && !append) return;
+            if (isLoading || (!append && !hasMore)) return;
+            
+            isLoading = true;
+            
+            if (!append) {
+                searchResults.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Searching for "${escapeHtml(query)}"...</p>
+                    </div>
+                `;
+                noResults.classList.add('d-none');
+                currentPage = 1;
+                hasMore = true;
+            } else {
+                loadingMore.classList.remove('d-none');
+            }
+
+            try {
+                const url = `/api/search?q=${encodeURIComponent(query)}&page=${currentPage}&type=${searchType}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Search failed');
+                }
+                
+                if (data.results.length === 0) {
+                    if (!append) {
+                        noResults.classList.remove('d-none');
+                        searchResults.innerHTML = '';
+                    }
+                    hasMore = false;
+                } else {
+                    if (append) {
+                        appendResults(data.results);
+                    } else {
+                        renderResults(data.results);
+                    }
+                    currentPage++;
+                    
+                    // Check if we have more results
+                    if (data.results.length < 10) {
+                        hasMore = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                if (!append) {
+                    searchResults.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                An error occurred while searching. Please try again.
+                            </div>
+                        </div>
+                    `;
+                }
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Function to render search results
+        function renderResults(results) {
+            if (!results || results.length === 0) {
+                noResults.classList.remove('d-none');
+                searchResults.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            results.forEach(item => {
+                html += getResultItemHtml(item);
+            });
+
+            searchResults.innerHTML = html;
+        }
+        
+        // Function to append more results
+        function appendResults(results) {
+            if (!results || results.length === 0) return;
+            
+            let html = '';
+            results.forEach(item => {
+                html += getResultItemHtml(item);
+            });
+            
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            while (temp.firstChild) {
+                searchResults.appendChild(temp.firstChild);
+            }
+        }
+        
+        // Function to get HTML for a single result item
+        function getResultItemHtml(item) {
+            if (item.type === 'restaurant') {
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4 result-item" data-type="restaurant">
+                        <div class="card search-result-card h-100">
+                            <div class="position-relative">
+                                <img src="${item.image || '/static/img/restaurant-default.jpg'}" 
+                                     class="card-img-top" alt="${escapeHtml(item.name)}">
+                                <span class="restaurant-badge">Restaurant</span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">${escapeHtml(item.name)}</h5>
+                                <p class="card-text text-muted">${escapeHtml(item.cuisine || 'Various cuisines')}</p>
+                                <p class="card-text">
+                                    <i class="fas fa-map-marker-alt text-danger me-1"></i> ${escapeHtml(item.location || 'N/A')}<br>
+                                    <i class="fas fa-star text-warning me-1"></i> ${item.rating ? item.rating.toFixed(1) : 'N/A'}
+                                </p>
+                                <a href="/restaurant/${item.id}" class="btn btn-outline-danger w-100">View Menu</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (item.type === 'food') {
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4 result-item" data-type="food">
+                        <div class="card search-result-card h-100">
+                            <div class="position-relative">
+                                <img src="${item.image ? (item.image.startsWith('http') ? item.image : (item.image.startsWith('uploads/') ? '/static/' + item.image : '/static/img/' + item.image)) : '/static/img/placeholder-food.jpg'}" 
+                                     class="card-img-top" alt="${escapeHtml(item.name)}"
+                                     onerror="this.onerror=null;this.src='/static/img/placeholder-food.jpg';"
+                                     style="height:180px;object-fit:cover;">
+                                <span class="restaurant-badge">Food Item</span>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">${escapeHtml(item.name)}</h5>
+                                <p class="card-text text-muted">${escapeHtml(item.category || 'Food Item')}</p>
+                                <div class="mt-auto">
+                                    <p class="card-text mb-2">
+                                        <strong>₹${item.price ? item.price.toFixed(2) : '0.00'}</strong><br>
+                                        <small class="text-muted">From ${escapeHtml(item.restaurant_name || 'Restaurant')}</small>
+                                    </p>
+                                    <button class="btn btn-danger w-100 add-to-cart-btn"
+                                            data-food-id="${item.id}"
+                                            data-restaurant-id="${item.restaurant_id || ''}"
+                                            data-name="${escapeHtml(item.name)}">
+                                        <i class="fas fa-plus me-1"></i> Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (item.type === 'blog') {
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4 result-item" data-type="blog">
+                        <div class="card search-result-card h-100">
+                            <img src="${item.image || '/static/img/blog-default.jpg'}" 
+                                 class="card-img-top" alt="${escapeHtml(item.title || 'Blog Post')}">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">${escapeHtml(item.title || 'Blog Post')}</h5>
+                                <p class="card-text text-muted">By ${escapeHtml(item.author || 'Grabbite Team')}</p>
+                                <p class="card-text">${escapeHtml(item.excerpt || '')}</p>
+                                <div class="mt-auto">
+                                    <a href="/blog/${item.id}" class="btn btn-outline-primary w-100">Read More</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        // Handle filter button clicks
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                searchType = filter;
+                document.getElementById('search-type').value = filter;
+                
+                // Update active state
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Perform new search
+                performSearch(query);
+            });
+        });
+        
+        // Handle infinite scroll
+        let isScrolling = false;
+        window.addEventListener('scroll', () => {
+            if (isScrolling || isLoading || !hasMore) return;
+            
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const pageHeight = document.documentElement.scrollHeight - 100; // 100px from bottom
+            
+            if (scrollPosition >= pageHeight) {
+                isScrolling = true;
+                performSearch(query, true).finally(() => {
+                    isScrolling = false;
+                });
+            }
+        });
+        
+        // Handle search form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = document.getElementById('search-input').value.trim();
+            if (query.length >= 2) {
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            } else {
+                alert('Please enter at least 2 characters to search');
+            }
+        });
+
+        // Initialize the page
+        if (query) {
+            performSearch(query);
+        }
+    });
+</script>
+{% endblock %}

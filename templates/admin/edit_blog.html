@@ -1,0 +1,124 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Edit Blog Post - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Blog Post</h2>
+    <hr>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="mb-3">
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control" + (' is-invalid' if form.title.errors else '')) }}
+            {% for error in form.title.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.slug.label(class="form-label") }}
+            {{ form.slug(class="form-control" + (' is-invalid' if form.slug.errors else '')) }}
+            <div class="form-text">URL-friendly version of the title (auto-generated if left blank)</div>
+            {% for error in form.slug.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.content.label(class="form-label") }}
+            {{ form.content(class="form-control" + (' is-invalid' if form.content.errors else ''), rows=10) }}
+            {% for error in form.content.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.category.label(class="form-label") }}
+                {{ form.category(class="form-select" + (' is-invalid' if form.category.errors else '')) }}
+                {% for error in form.category.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                {{ form.status.label(class="form-label") }}
+                {{ form.status(class="form-select" + (' is-invalid' if form.status.errors else '')) }}
+                {% for error in form.status.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            {{ form.featured_image.label(class="form-label") }}
+            {{ form.featured_image(class="form-control" + (' is-invalid' if form.featured_image.errors else '')) }}
+            {% if blog.image and blog.image != 'blog_default.jpg' %}
+                <div class="mt-2">
+                    <img src="{{ url_for('static', filename='uploads/' + blog.image) }}" alt="Current featured image" class="img-thumbnail" style="max-height: 200px;">
+                </div>
+            {% endif %}
+            {% for error in form.featured_image.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.excerpt.label(class="form-label") }}
+            {{ form.excerpt(class="form-control" + (' is-invalid' if form.excerpt.errors else ''), rows=3) }}
+            <div class="form-text">A short summary of the blog post (optional)</div>
+            {% for error in form.excerpt.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3 form-check">
+            {{ form.featured(class="form-check-input" + (' is-invalid' if form.featured.errors else '')) }}
+            {{ form.featured.label(class="form-check-label") }}
+            {% for error in form.featured.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{{ url_for('admin.admin_blogs') }}" class="btn btn-secondary me-md-2">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Update Blog Post
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- CKEditor for rich text editing -->
+<script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
+<script>
+    // Initialize CKEditor on the content textarea
+    CKEDITOR.replace('content', {
+        toolbar: [
+            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
+            { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Blockquote'] },
+            { name: 'links', items: ['Link', 'Unlink'] },
+            { name: 'insert', items: ['Image', 'Table', 'HorizontalRule'] },
+            { name: 'styles', items: ['Format', 'FontSize'] },
+            { name: 'colors', items: ['TextColor', 'BGColor'] },
+            { name: 'document', items: ['Source'] }
+        ]
+    });
+    
+    // Auto-generate slug from title
+    document.getElementById('title').addEventListener('input', function() {
+        const slugInput = document.getElementById('slug');
+        if (!slugInput.value || slugInput.value === '{{ blog.slug }}') {  // Only auto-generate if slug is empty or matches the current one
+            const slug = this.value
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '')  // Remove special chars
+                .replace(/\s+/g, '-')       // Replace spaces with -
+                .replace(/--+/g, '-');      // Replace multiple - with single -
+            slugInput.value = slug;
+        }
+    });
+</script>
+{% endblock %}

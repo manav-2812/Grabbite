@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}About Us — GrabBite{% endblock %}
+{% block styles %}
+<style>
+  .about-hero {
+    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    color: #fff;
+    padding: 80px 0 60px;
+    text-align: center;
+  }
+  .about-hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 16px; }
+  .about-hero p  { font-size: 1.1rem; opacity: .9; max-width: 600px; margin: 0 auto; }
+  .stat-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px 24px;
+    text-align: center;
+    transition: transform .2s;
+  }
+  .stat-card:hover { transform: translateY(-4px); }
+  .stat-num { font-size: 2.4rem; font-weight: 800; color: #e53935; }
+  .stat-lbl { font-size: .9rem; color: #666; margin-top: 4px; }
+  .value-card {
+    background: #fff8f8;
+    border-left: 4px solid #e53935;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .value-card h6 { color: #e53935; font-weight: 700; margin-bottom: 4px; }
+  .team-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    padding: 28px 20px;
+    text-align: center;
+    transition: transform .2s;
+  }
+  .team-card:hover { transform: translateY(-4px); }
+  .team-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="about-hero">
+  <div class="container">
+    <h1><i class="fas fa-utensils me-3"></i>About GrabBite</h1>
+    <p>India's fastest-growing food delivery platform, connecting hungry people with their favourite restaurants since 2021.</p>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="container py-5">
+  <div class="row g-4">
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num">1M+</div><div class="stat-lbl">Orders Delivered</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num">679</div><div class="stat-lbl">Cities Served</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num">50K+</div><div class="stat-lbl">Restaurant Partners</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num">4.6 ⭐</div><div class="stat-lbl">Average Rating</div></div></div>
+  </div>
+</div>
+
+<!-- Story -->
+<div class="container pb-5">
+  <div class="row align-items-center g-5">
+    <div class="col-md-6">
+      <h2 class="fw-bold mb-3">Our Story</h2>
+      <p class="text-muted" style="line-height:1.8;">GrabBite was founded in Bengaluru in 2021 with one simple mission: make great food accessible to everyone, fast. What started as a small team of 5 passionate foodies has grown into India's most loved food delivery app.</p>
+      <p class="text-muted" style="line-height:1.8;">We believe food is more than sustenance — it's culture, comfort, and community. Every day, we connect millions of people with the meals they crave, while helping thousands of restaurant partners grow their business.</p>
+      <a href="/restaurants" class="btn btn-danger px-4 py-2 mt-2 fw-bold" style="border-radius:10px;">
+        <i class="fas fa-utensils me-2"></i>Explore Restaurants
+      </a>
+    </div>
+    <div class="col-md-6">
+      <div style="background:linear-gradient(135deg,#fff8f8,#ffe8e8); border-radius:20px; padding:40px; text-align:center;">
+        <i class="fas fa-heart" style="font-size:5rem; color:#e53935; opacity:.2;"></i>
+        <div style="margin-top:-60px;">
+          <i class="fas fa-motorcycle" style="font-size:3rem; color:#e53935;"></i>
+          <h4 class="fw-bold mt-3" style="color:#c62828;">Fast. Fresh. Favourite.</h4>
+          <p class="text-muted">Average delivery time: <strong style="color:#e53935;">28 minutes</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Values -->
+<div style="background:#f8f9fa; padding:60px 0;">
+  <div class="container">
+    <h2 class="fw-bold text-center mb-5">Our Values</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="value-card"><h6><i class="fas fa-bolt me-2"></i>Speed</h6><p class="text-muted mb-0 small">We obsess over delivery times. Our real-time tracking ensures your food arrives hot and on time, every time.</p></div>
+        <div class="value-card"><h6><i class="fas fa-shield-alt me-2"></i>Safety</h6><p class="text-muted mb-0 small">Every restaurant partner is verified. Food quality and hygiene standards are non-negotiable.</p></div>
+      </div>
+      <div class="col-md-4">
+        <div class="value-card"><h6><i class="fas fa-users me-2"></i>Community</h6><p class="text-muted mb-0 small">We support local restaurants, create delivery jobs, and build stronger food communities across India.</p></div>
+        <div class="value-card"><h6><i class="fas fa-leaf me-2"></i>Sustainability</h6><p class="text-muted mb-0 small">Eco-friendly packaging, electric delivery fleet, and zero food waste initiatives are at our core.</p></div>
+      </div>
+      <div class="col-md-4">
+        <div class="value-card"><h6><i class="fas fa-smile me-2"></i>Customer First</h6><p class="text-muted mb-0 small">Every decision we make starts with a simple question: does this make the customer experience better?</p></div>
+        <div class="value-card"><h6><i class="fas fa-chart-line me-2"></i>Innovation</h6><p class="text-muted mb-0 small">From AI-powered ETAs to smart restaurant discovery, we never stop improving the platform.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Team -->
+<div class="container py-5" id="team">
+  <h2 class="fw-bold text-center mb-2">Leadership Team</h2>
+  <p class="text-center text-muted mb-5">The people building the future of food delivery</p>
+  <div class="row g-4">
+    {% set leaders = [
+      ('RK', '#e53935', 'Rahul Kumar', 'Co-Founder & CEO', 'Former Head of Ops at Swiggy. IIT Delhi alumni.'),
+      ('PS', '#c62828', 'Priya Sharma', 'Co-Founder & CTO', 'Ex-Google engineer. Built systems at scale for 100M+ users.'),
+      ('AM', '#ff5252', 'Arjun Mehta', 'Chief Product Officer', 'Product leader with 12 years in food-tech and e-commerce.'),
+      ('NR', '#e57373', 'Nisha Reddy', 'VP Marketing', 'Brand strategist who scaled two unicorns from zero to hero.'),
+    ] %}
+    {% for initials, color, name, role, bio in leaders %}
+    <div class="col-6 col-md-3">
+      <div class="team-card">
+        <div class="team-avatar" style="background:{{ color }};">{{ initials }}</div>
+        <div class="fw-bold">{{ name }}</div>
+        <div style="font-size:.8rem; color:#e53935; margin-bottom:8px;">{{ role }}</div>
+        <div style="font-size:.78rem; color:#888;">{{ bio }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- CTA -->
+<div style="background:linear-gradient(135deg,#e53935,#c62828); padding:60px 0; text-align:center; color:#fff;">
+  <div class="container">
+    <h2 class="fw-bold mb-3">Join the GrabBite Family</h2>
+    <p class="mb-4" style="opacity:.9;">Whether you're hungry, a restaurant owner, or a rider — there's a place for you here.</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="/restaurants" class="btn btn-light fw-bold px-4" style="border-radius:10px; color:#e53935;"><i class="fas fa-utensils me-2"></i>Order Food</a>
+      <a href="/careers" class="btn btn-outline-light fw-bold px-4" style="border-radius:10px;" onclick="openModal('partnerModal'); return false;"><i class="fas fa-handshake me-2"></i>Partner with Us</a>
+      <a href="/careers" class="btn btn-outline-light fw-bold px-4" style="border-radius:10px;"><i class="fas fa-briefcase me-2"></i>Work with Us</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,759 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout — GrabBite{% endblock %}
+
+{% block content %}
+<style>
+  .checkout-wrap {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #16213e 100%);
+    padding: 2rem 0 4rem;
+  }
+  .checkout-heading {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #ff4757, #ff6b35);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+  }
+  .checkout-sub {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Cards ─────────────────────────────────────────── */
+  .co-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    backdrop-filter: blur(10px);
+  }
+  .co-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .co-card-title i { color: #ff4757; }
+
+  /* ── Order Items ────────────────────────────────────── */
+  .order-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .order-item:last-child { border-bottom: none; }
+  .order-item img {
+    width: 60px; height: 60px;
+    object-fit: cover; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .order-item-name { color: #fff; font-weight: 600; font-size: 0.9rem; }
+  .order-item-rest { color: #888; font-size: 0.78rem; }
+  .order-item-qty  { color: #aaa; font-size: 0.82rem; }
+  .order-item-price{ color: #ff4757; font-weight: 700; margin-left: auto; white-space: nowrap; }
+
+  /* ── Address form ───────────────────────────────────── */
+  .co-input {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+    color: #fff !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem;
+    transition: border-color .2s;
+  }
+  .co-input:focus {
+    outline: none;
+    border-color: #ff4757 !important;
+    box-shadow: 0 0 0 3px rgba(255,71,87,0.15) !important;
+    background: rgba(255,255,255,0.08) !important;
+  }
+  .co-input::placeholder { color: #555 !important; }
+  .co-label { color: #bbb; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; }
+
+  /* ── Coupon ─────────────────────────────────────────── */
+  .coupon-row { display: flex; gap: 0.5rem; }
+  .coupon-row input { flex: 1; }
+  .btn-coupon {
+    background: linear-gradient(135deg, #ff4757, #ff6b35);
+    border: none; border-radius: 10px;
+    color: #fff; font-weight: 700;
+    padding: 0 1.25rem; font-size: 0.85rem;
+    cursor: pointer; transition: opacity .2s;
+    white-space: nowrap;
+  }
+  .btn-coupon:hover { opacity: .85; }
+  .coupon-msg { font-size: 0.8rem; margin-top: 0.4rem; min-height: 1.2em; }
+
+  /* ── Payment Method Cards ───────────────────────────── */
+  .pm-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+  @media(max-width: 575px) { .pm-grid { grid-template-columns: repeat(2, 1fr); } }
+  .pm-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 1rem 0.75rem;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.25,.8,.25,1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+  .pm-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,71,87,0.15), rgba(255,107,53,0.05));
+    opacity: 0; transition: opacity .25s;
+  }
+  .pm-card:hover { border-color: rgba(255,71,87,0.4); transform: translateY(-2px); }
+  .pm-card:hover::before { opacity: 1; }
+  .pm-card.selected {
+    border-color: #ff4757;
+    background: rgba(255,71,87,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255,71,87,0.25);
+  }
+  .pm-card.selected::before { opacity: 1; }
+  .pm-card .check {
+    position: absolute; top: 8px; right: 8px;
+    width: 18px; height: 18px;
+    background: #ff4757; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff;
+    opacity: 0; transform: scale(0);
+    transition: all .2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .pm-card.selected .check { opacity: 1; transform: scale(1); }
+  .pm-icon { font-size: 1.75rem; margin-bottom: 0.4rem; display: block; }
+  .pm-name { font-size: 0.78rem; font-weight: 700; color: #ddd; }
+  .pm-sub  { font-size: 0.68rem; color: #888; margin-top: 0.15rem; }
+
+  /* ── UPI sub-apps ───────────────────────────────────── */
+  .upi-apps {
+    display: none;
+    flex-wrap: wrap; gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    animation: fadeIn .3s ease;
+  }
+  .upi-apps.show { display: flex; }
+  .upi-app {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 0.4rem 0.8rem;
+    font-size: 0.78rem; color: #ddd;
+    cursor: pointer; transition: all .2s;
+  }
+  .upi-app:hover { border-color: #ff4757; color: #ff4757; }
+  .upi-app img { width: 20px; height: 20px; object-fit: contain; border-radius: 4px; }
+
+  /* ── Price Summary ──────────────────────────────────── */
+  .price-row {
+    display: flex; justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    color: #bbb; font-size: 0.88rem;
+  }
+  .price-row.total {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 0.5rem; padding-top: 1rem;
+    font-size: 1.15rem; font-weight: 800; color: #fff;
+  }
+  .price-row.total .val { color: #ff4757; }
+  .price-row .val { font-weight: 600; color: #fff; }
+  .price-row .discount-val { color: #2ed573; font-weight: 600; }
+  .price-row .free-tag { color: #2ed573; font-weight: 700; }
+
+  /* ── Place Order Button ─────────────────────────────── */
+  .btn-place {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ff4757 0%, #ff6b35 100%);
+    border: none; border-radius: 14px;
+    color: #fff; font-size: 1.05rem; font-weight: 800;
+    cursor: pointer;
+    transition: all .2s cubic-bezier(.25,.8,.25,1);
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    letter-spacing: .5px;
+    box-shadow: 0 6px 24px rgba(255,71,87,0.35);
+    margin-top: 1.25rem;
+  }
+  .btn-place:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255,71,87,0.5);
+  }
+  .btn-place:disabled {
+    opacity: .7; cursor: not-allowed; transform: none;
+  }
+
+  /* ── Security Badge ─────────────────────────────────── */
+  .secure-badge {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.4rem; color: #555; font-size: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .secure-badge i { color: #2ed573; }
+
+  /* ── Toast ──────────────────────────────────────────── */
+  .co-toast {
+    position: fixed; bottom: 2rem; left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #1a1a2e; border: 1px solid rgba(255,71,87,0.3);
+    border-radius: 12px; padding: 0.75rem 1.5rem;
+    color: #fff; font-size: 0.88rem; font-weight: 600;
+    z-index: 9999; opacity: 0;
+    transition: all .3s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    white-space: nowrap;
+  }
+  .co-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .co-toast.success { border-color: rgba(46,213,115,0.4); }
+  .co-toast.error   { border-color: rgba(255,71,87,0.4); }
+
+  /* ── Animations ─────────────────────────────────────── */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  .co-card { animation: fadeIn .4s ease both; }
+</style>
+
+<div class="checkout-wrap">
+  <div class="container" style="max-width:980px;">
+    <h1 class="checkout-heading"><i class="fas fa-shopping-bag me-2"></i>Checkout</h1>
+    <p class="checkout-sub">Review your order and choose a payment method</p>
+
+    <div class="row g-4">
+
+      <!-- LEFT COLUMN ─────────────────────────────────── -->
+      <div class="col-lg-7">
+
+        <!-- Order Items -->
+        <div class="co-card" style="animation-delay:.05s">
+          <div class="co-card-title">
+            <i class="fas fa-utensils"></i> Your Order
+            <span style="margin-left:auto;font-size:.78rem;color:#888;">
+              {{ cart_items|length }} item{{ 's' if cart_items|length != 1 }}
+              from <span style="color:#ff4757;">{{ cart_items[0][2].name if cart_items else '' }}</span>
+            </span>
+          </div>
+          {% for cart, food, restaurant in cart_items %}
+          <div class="order-item">
+            <img src="{{ food_image_url(food.image) }}"
+                 alt="{{ food.name }}"
+                 onerror="this.src='/static/img/placeholder-food.jpg'">
+            <div style="flex:1;min-width:0;">
+              <div class="order-item-name">{{ food.name }}</div>
+              <div class="order-item-rest">{{ restaurant.name }}</div>
+              <div class="order-item-qty">Qty: {{ cart.quantity }}</div>
+            </div>
+            <div class="order-item-price">₹{{ '%.0f'|format(food.price * cart.quantity) }}</div>
+          </div>
+          {% endfor %}
+          <div class="d-flex justify-content-between mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,0.05);">
+            <span style="color:#888;font-size:.82rem;">Est. delivery</span>
+            <span style="color:#2ed573;font-size:.82rem;font-weight:700;">
+              <i class="fas fa-clock me-1"></i>
+              {{ cart_items[0][2].delivery_time if cart_items else 30 }}–{{ (cart_items[0][2].delivery_time + 10) if cart_items else 40 }} mins
+            </span>
+          </div>
+        </div>
+
+        <!-- Delivery Address -->
+        <div class="co-card" style="animation-delay:.1s">
+          <div class="co-card-title">
+            <i class="fas fa-map-marker-alt"></i> Delivery Details
+          </div>
+          <div class="mb-3">
+            <label class="co-label">Full Delivery Address *</label>
+            <textarea id="delivery-address" class="co-input w-100" rows="3"
+              placeholder="House/Flat no., Street, Area, City..."></textarea>
+          </div>
+          <div>
+            <label class="co-label">Phone Number *</label>
+            <input type="tel" id="delivery-phone" class="co-input w-100"
+              placeholder="10-digit mobile number" maxlength="10"
+              value="{{ current_user.phone or '' }}">
+          </div>
+        </div>
+
+        <!-- Coupon -->
+        <div class="co-card" style="animation-delay:.15s">
+          <div class="co-card-title"><i class="fas fa-tag"></i> Coupon / Promo Code</div>
+          <div class="coupon-row">
+            <input type="text" id="coupon-input" class="co-input"
+              placeholder="Enter coupon code (e.g. GRAB50)" style="text-transform:uppercase;">
+            <button class="btn-coupon" onclick="applyCoupon()">Apply</button>
+          </div>
+          <div id="coupon-msg" class="coupon-msg"></div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="co-card" style="animation-delay:.2s">
+          <div class="co-card-title"><i class="fas fa-credit-card"></i> Payment Method</div>
+
+          <div class="pm-grid">
+            <!-- UPI -->
+            <div class="pm-card selected" data-method="upi" onclick="selectPayment(this)">
+              <span class="check"><i class="fas fa-check"></i></span>
+              <span class="pm-icon">📱</span>
+              <div class="pm-name">UPI</div>
+              <div class="pm-sub">GPay · PhonePe · Paytm</div>
+            </div>
+            <!-- Credit Card -->
+            <div class="pm-card" data-method="card" onclick="selectPayment(this)">
+              <span class="check"><i class="fas fa-check"></i></span>
+              <span class="pm-icon">💳</span>
+              <div class="pm-name">Credit Card</div>
+              <div class="pm-sub">Visa · MC · Amex</div>
+            </div>
+            <!-- Debit Card -->
+            <div class="pm-card" data-method="debitcard" onclick="selectPayment(this)">
+              <span class="check"><i class="fas fa-check"></i></span>
+              <span class="pm-icon">🏧</span>
+              <div class="pm-name">Debit Card</div>
+              <div class="pm-sub">All Indian banks</div>
+            </div>
+            <!-- Net Banking -->
+            <div class="pm-card" data-method="netbanking" onclick="selectPayment(this)">
+              <span class="check"><i class="fas fa-check"></i></span>
+              <span class="pm-icon">🏦</span>
+              <div class="pm-name">Net Banking</div>
+              <div class="pm-sub">All major banks</div>
+            </div>
+            <!-- Wallet -->
+            <div class="pm-card" data-method="wallet" onclick="selectPayment(this)">
+              <span class="check"><i class="fas fa-check"></i></span>
+              <span class="pm-icon">👛</span>
+              <div class="pm-name">Wallet</div>
+              <div class="pm-sub">Paytm · Amazon Pay</div>
+            </div>
+            <!-- COD -->
+            <div class="pm-card" data-method="cod" onclick="selectPayment(this)">
+              <span class="check"><i class="fas fa-check"></i></span>
+              <span class="pm-icon">💵</span>
+              <div class="pm-name">Cash on Delivery</div>
+              <div class="pm-sub">Pay at door</div>
+            </div>
+          </div>
+
+          <!-- UPI Apps (shown when UPI selected) -->
+          <div class="upi-apps show" id="upi-apps">
+            <div class="upi-app"><span>🟢</span> Google Pay</div>
+            <div class="upi-app"><span>🟣</span> PhonePe</div>
+            <div class="upi-app"><span>🔵</span> Paytm</div>
+            <div class="upi-app"><span>🟠</span> BHIM UPI</div>
+            <div class="upi-app"><span>⚡</span> Any UPI App</div>
+          </div>
+
+          <!-- Payment error banner (shown if gateway not configured) -->
+          <div id="payment-banner" style="display:none;margin-top:1rem;padding:1rem 1.25rem;
+            background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);
+            border-radius:12px;animation:fadeIn .3s ease;">
+            <div id="payment-banner-title" style="font-weight:700;font-size:.9rem;color:#ffa502;margin-bottom:.35rem;"></div>
+            <div id="payment-banner-body" style="font-size:.82rem;color:#ccc;line-height:1.5;"></div>
+          </div>
+        </div>
+
+      </div><!-- /LEFT -->
+
+      <!-- RIGHT COLUMN ────────────────────────────────── -->
+      <div class="col-lg-5">
+        <div style="position:sticky;top:1.5rem;">
+
+          <!-- Price Breakdown -->
+          <div class="co-card" style="animation-delay:.25s">
+            <div class="co-card-title"><i class="fas fa-receipt"></i> Order Summary</div>
+
+            <div class="price-row">
+              <span>Subtotal</span>
+              <span class="val">₹{{ '%.2f'|format(subtotal) }}</span>
+            </div>
+            <div class="price-row">
+              <span>GST (18%)</span>
+              <span class="val">₹{{ '%.2f'|format(tax) }}</span>
+            </div>
+            <div class="price-row">
+              <span>Delivery Fee</span>
+              {% if delivery_fee > 0 %}
+                <span class="val">₹{{ '%.2f'|format(delivery_fee) }}</span>
+              {% else %}
+                <span class="free-tag">FREE</span>
+              {% endif %}
+            </div>
+            <div class="price-row">
+              <span>Platform Fee</span>
+              <span class="val">₹5.00</span>
+            </div>
+            <div class="price-row" id="discount-row" style="display:none;">
+              <span>Coupon Discount</span>
+              <span class="discount-val" id="discount-display">-₹0.00</span>
+            </div>
+
+            <div class="price-row total">
+              <span>Total Payable</span>
+              <span class="val" id="total-display">
+                ₹{{ '%.2f'|format(total + 5) }}
+              </span>
+            </div>
+
+            <button class="btn-place" id="place-btn" onclick="placeOrder()">
+              <i class="fas fa-lock me-1"></i>
+              <span id="place-btn-text">Pay Securely</span>
+            </button>
+
+            <div class="secure-badge">
+              <i class="fas fa-shield-alt"></i>
+              100% Secure Payments powered by Razorpay
+            </div>
+          </div>
+
+          <!-- Info box -->
+          <div class="co-card" style="animation-delay:.3s;padding:1rem 1.25rem;">
+            <div style="color:#888;font-size:.78rem;line-height:1.6;">
+              <div class="mb-1"><i class="fas fa-check-circle text-success me-1"></i> Free cancellation within 60 seconds</div>
+              <div class="mb-1"><i class="fas fa-check-circle text-success me-1"></i> Refund within 5–7 business days</div>
+              <div><i class="fas fa-check-circle text-success me-1"></i> End-to-end encrypted payment</div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /RIGHT -->
+
+    </div><!-- /row -->
+  </div><!-- /container -->
+</div>
+
+<!-- Toast -->
+<div id="co-toast" class="co-toast"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+(function () {
+  // ── State ─────────────────────────────────────────────────────────────────
+  const BASE_TOTAL    = Number("{{ total + 5 }}");
+  let   discountAmt   = 0;
+  let   couponCode    = '';
+  let   selectedMethod = 'upi';
+
+  // ── Payment method selection ───────────────────────────────────────────────
+  window.selectPayment = function(card) {
+    document.querySelectorAll('.pm-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedMethod = card.dataset.method;
+
+    const upiApps = document.getElementById('upi-apps');
+    upiApps.classList.toggle('show', selectedMethod === 'upi');
+
+    // Hide any previous payment error banner
+    document.getElementById('payment-banner').style.display = 'none';
+
+    const btn = document.getElementById('place-btn-text');
+    btn.textContent = (selectedMethod === 'cod') ? 'Place Order (COD)' : 'Pay Securely';
+  };
+
+  // ── Coupon ────────────────────────────────────────────────────────────────
+  window.applyCoupon = function() {
+    const code = document.getElementById('coupon-input').value.trim().toUpperCase();
+    const msg  = document.getElementById('coupon-msg');
+    if (!code) {
+      // HIGH-2 cleanup: use createElement so this never regresses if a variable
+      // is ever interpolated into the error message.
+      const s = document.createElement('span');
+      s.style.color = '#ff4757';
+      s.textContent = 'Enter a coupon code';
+      msg.replaceChildren(s);
+      return;
+    }
+
+    {
+      const s = document.createElement('span');
+      s.style.color = '#888';
+      s.textContent = 'Checking...';
+      msg.replaceChildren(s);
+    }
+    fetch('/api/coupon/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, subtotal: Number("{{ subtotal }}") })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        discountAmt = d.discount;
+        couponCode  = code;
+        document.getElementById('discount-row').style.display = 'flex';
+        document.getElementById('discount-display').textContent = '-₹' + d.discount.toFixed(2);
+        document.getElementById('total-display').textContent   = '₹' + (BASE_TOTAL - d.discount).toFixed(2);
+        // HIGH-2 fix: build the span with textContent to avoid XSS — d.message is
+        // server-controlled and must never be inserted via innerHTML.
+        const okSpan = document.createElement('span');
+        okSpan.style.color = '#2ed573';
+        okSpan.innerHTML = '<i class="fas fa-check-circle me-1"></i>';  // static icon only
+        const okText = document.createTextNode(d.message || 'Coupon applied!');
+        okSpan.appendChild(okText);
+        msg.replaceChildren(okSpan);
+      } else {
+        discountAmt = 0; couponCode = '';
+        document.getElementById('discount-row').style.display = 'none';
+        document.getElementById('total-display').textContent  = '₹' + BASE_TOTAL.toFixed(2);
+        // HIGH-2 fix: same — use textContent for the error message from the server.
+        const errSpan = document.createElement('span');
+        errSpan.style.color = '#ff4757';
+        errSpan.textContent = d.message || 'Invalid coupon';
+        msg.replaceChildren(errSpan);
+      }
+    })
+    .catch(() => {
+      // HIGH-2 cleanup: build with createElement instead of innerHTML. The string
+      // is static today, but using innerHTML here would silently regress if anyone
+      // ever interpolates a variable into it.
+      const errSpan = document.createElement('span');
+      errSpan.style.color = '#ff4757';
+      errSpan.textContent = 'Could not validate coupon';
+      msg.replaceChildren(errSpan);
+    });
+  };
+
+  // ── Validation ────────────────────────────────────────────────────────────
+  function validate() {
+    const addr  = document.getElementById('delivery-address').value.trim();
+    const phone = document.getElementById('delivery-phone').value.trim();
+    if (!addr)  { toast('Please enter your delivery address', 'error');  return false; }
+    if (!phone) { toast('Please enter your phone number', 'error');      return false; }
+    if (!/^\d{10}$/.test(phone)) { toast('Enter a valid 10-digit phone number', 'error'); return false; }
+    return true;
+  }
+
+  function getOrderPayload() {
+    const loc = window.GrabBiteLocation ? window.GrabBiteLocation.getSavedLocation() : null;
+    return {
+      delivery_address: document.getElementById('delivery-address').value.trim(),
+      delivery_phone:   document.getElementById('delivery-phone').value.trim(),
+      payment_method:   selectedMethod,
+      coupon_code:      couponCode,
+      delivery_location: loc,
+    };
+  }
+
+  function setLoading(yes) {
+    const btn = document.getElementById('place-btn');
+    if (yes) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fas fa-lock me-1"></i><span id="place-btn-text">${selectedMethod==='cod' ? 'Place Order (COD)' : 'Pay Securely'}</span>`;
+    }
+  }
+
+  // ── Main entry point ──────────────────────────────────────────────────────
+  window.placeOrder = function() {
+    if (!validate()) return;
+
+    if (selectedMethod === 'cod') {
+      placeCOD();
+    } else {
+      initiateRazorpay();
+    }
+  };
+
+  // ── COD ───────────────────────────────────────────────────────────────────
+  function placeCOD() {
+    setLoading(true);
+    fetch('/api/payment/cod', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getOrderPayload()),
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        toast('Order placed! Redirecting...', 'success');
+        setTimeout(() => window.location.href = d.redirect, 800);
+      } else {
+        toast(d.message || 'Failed to place order', 'error');
+        setLoading(false);
+      }
+    })
+    .catch(() => { toast('Network error. Please try again.', 'error'); setLoading(false); });
+  }
+
+  // ── Online Payment via Razorpay ───────────────────────────────────────────
+  function initiateRazorpay() {
+    setLoading(true);
+    fetch('/api/payment/create-razorpay-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getOrderPayload()),
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.success) {
+        setLoading(false);
+        if (d.fallback_cod) {
+          // Show a visible inline banner — do NOT silently switch to COD
+          showPaymentBanner(
+            '⚠️ Online payments are not configured yet.',
+            'To enable UPI / Card / Wallet payments, add your Razorpay API keys to the .env file. You can still place your order using <strong>Cash on Delivery</strong>.',
+            'warning'
+          );
+        } else {
+          toast(d.message || 'Could not initiate payment', 'error');
+        }
+        return;
+      }
+
+      // Build Razorpay config — enable all methods, pre-select chosen one
+      const rzOptions = {
+        key:         d.razorpay_key,
+        amount:      d.amount,
+        currency:    d.currency,
+        name:        'GrabBite',
+        description: 'Food Order #' + d.order_id,
+        image:       '/static/img/logo.png',
+        order_id:    d.razorpay_order_id,
+        prefill:     d.prefill,
+        theme:       { color: '#ff4757', hide_topbar: false },
+        // Explicitly enable all payment methods
+        config: {
+          display: {
+            blocks: {
+              upi:  { name: 'Pay via UPI',        instruments: [{ method: 'upi' }] },
+              card: { name: 'Pay via Card',        instruments: [{ method: 'card' }] },
+              nb:   { name: 'Net Banking',         instruments: [{ method: 'netbanking' }] },
+              emi:  { name: 'EMI',                 instruments: [{ method: 'emi' }] },
+              wallet: { name: 'Wallets',           instruments: [{ method: 'wallet' }] },
+            },
+            sequence: ['block.upi', 'block.card', 'block.nb', 'block.wallet', 'block.emi'],
+            preferences: { show_default_blocks: true },
+          },
+        },
+        modal: {
+          ondismiss: function() {
+            toast('Payment cancelled', 'error');
+            setLoading(false);
+          },
+          backdropclose: false,
+          escape: true,
+          animation: true,
+        },
+        handler: function(response) {
+          verifyPayment(response, d.order_id);
+        },
+      };
+
+      // Pre-open on the selected method tab if possible
+      const methodMap = {
+        upi:        'upi',
+        card:       'card',
+        debitcard:  'card',
+        netbanking: 'netbanking',
+        wallet:     'wallet',
+      };
+      if (methodMap[selectedMethod]) {
+        rzOptions.method = methodMap[selectedMethod];
+      }
+
+      const rzp = new Razorpay(rzOptions);
+      rzp.on('payment.failed', function(resp) {
+        toast('Payment failed: ' + (resp.error.description || 'Unknown error'), 'error');
+        setLoading(false);
+        window.location.href = '/payment/failed?order_id=' + d.order_id;
+      });
+      rzp.open();
+      setLoading(false);
+    })
+    .catch(() => { toast('Network error. Please try again.', 'error'); setLoading(false); });
+  }
+
+  // ── Verify payment ────────────────────────────────────────────────────────
+  function verifyPayment(response, orderId) {
+    setLoading(true);
+    toast('Verifying payment...', 'success');
+    fetch('/api/payment/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        razorpay_order_id:   response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature:  response.razorpay_signature,
+        order_id:            orderId,
+      }),
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        toast('Payment verified! ✅', 'success');
+        setTimeout(() => window.location.href = d.redirect, 600);
+      } else {
+        toast(d.message || 'Verification failed', 'error');
+        setLoading(false);
+      }
+    })
+    .catch(() => { toast('Verification error. Please contact support.', 'error'); setLoading(false); });
+  }
+
+  // ── Payment banner (for gateway config errors) ──────────────────────────
+  // HIGH-3 fix: `body` is a developer-controlled string (not user/server data)
+  // but we sanitize it via a DocumentFragment to limit the HTML surface to only
+  // what this function is called with (currently just a <strong> tag).
+  // If the call site ever changes to use user data, this is already safe.
+  function showPaymentBanner(title, body, type) {
+    const banner = document.getElementById('payment-banner');
+    document.getElementById('payment-banner-title').textContent = title;
+    // Parse the trusted body HTML into a fragment; this is safe because `body`
+    // is a literal string defined in this file, not from user or server input.
+    const bodyEl = document.getElementById('payment-banner-body');
+    const frag = document.createRange().createContextualFragment(body);
+    bodyEl.replaceChildren(frag);
+    const color = type === 'warning' ? 'rgba(255,165,0,' : 'rgba(255,71,87,';
+    banner.style.background  = color + '0.1)';
+    banner.style.borderColor = color + '0.3)';
+    document.getElementById('payment-banner-title').style.color =
+      type === 'warning' ? '#ffa502' : '#ff4757';
+    banner.style.display = 'block';
+    banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── Toast helper ──────────────────────────────────────────────────────────
+  function toast(msg, type='info') {
+    const el = document.getElementById('co-toast');
+    el.textContent = msg;
+    el.className = 'co-toast show ' + type;
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.classList.remove('show'); }, 3500);
+  }
+
+  // ── Pre-fill address from profile ─────────────────────────────────────────
+  (function prefillAddress() {
+    const saved = localStorage.getItem('grabbite_delivery_address');
+    if (saved) document.getElementById('delivery-address').value = saved;
+  })();
+
+  document.getElementById('delivery-address').addEventListener('change', function() {
+    localStorage.setItem('grabbite_delivery_address', this.value);
+  });
+})();
+</script>
+{% endblock %}

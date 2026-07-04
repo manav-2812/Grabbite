@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - GrabBite{% endblock %}
+
+{% block styles %}
+<style>
+    .order-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .order-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .order-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .order-status {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .status-placed {
+        background-color: #ffd700;
+        color: #000;
+    }
+
+    .status-confirmed {
+        background-color: #1e90ff;
+        color: #fff;
+    }
+
+    .status-preparing {
+        background-color: #ff8c00;
+        color: #fff;
+    }
+
+    .status-on-way {
+        background-color: #32cd32;
+        color: #fff;
+    }
+
+    .status-delivered {
+        background-color: #228b22;
+        color: #fff;
+    }
+
+    .status-cancelled {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    .order-items {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .order-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .payment-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .payment-pending {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .payment-completed {
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    .payment-failed {
+        background-color: #dc3545;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">My Orders</h2>
+
+    {% if orders %}
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-lg-6 mb-4">
+            <div class="card order-card">
+                <div class="order-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Order #{{ order.id }}</h5>
+                        <small>{{ order.created_at.strftime('%B %d, %Y %I:%M %p') }}</small>
+                    </div>
+                    <span class="order-status status-{{ order.status }}">
+                        {{ order.status.replace('-', ' ').title() }}
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <div class="order-items mb-3">
+                        {% for item in order.items %}
+                        <div class="order-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ item.name }}</h6>
+                                <small class="text-muted">Quantity: {{ item.quantity }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold">₹{{ "%.2f"|format(item.price * item.quantity) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="border-top pt-3">
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <span class="payment-badge payment-{{ order.payment_status }}">
+                                    Payment: {{ order.payment_status.title() }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ order.payment_method }}</small>
+                            </div>
+                            <div class="col-6 text-end">
+                                <small class="text-muted">Total Amount</small>
+                                <h5 class="mb-0">₹{{ "%.2f"|format(order.total_amount) }}</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if order.delivery_address %}
+                    <div class="mt-3">
+                        <small class="text-muted d-block">Delivery Address:</small>
+                        <span>{{ order.delivery_address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-bag fa-3x mb-3 text-muted"></i>
+        <h4>No orders yet</h4>
+        <p class="text-muted">Start exploring restaurants and place your first order!</p>
+        <a href="{{ url_for('public.restaurants') }}" class="btn btn-primary">
+            Browse Restaurants
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

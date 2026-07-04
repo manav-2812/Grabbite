@@ -1,0 +1,108 @@
+{% extends "owner/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Stats Row -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fef3c7;">🧾</div>
+    <div class="stat-val">{{ total_orders }}</div>
+    <div class="stat-label">Total Orders</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fee2e2;">🔔</div>
+    <div class="stat-val">{{ pending_orders }}</div>
+    <div class="stat-label">Pending Orders</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#d1fae5;">📦</div>
+    <div class="stat-val">{{ today_orders }}</div>
+    <div class="stat-label">Orders Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#ede9fe;">💰</div>
+    <div class="stat-val">₹{{ '%.0f'|format(week_revenue) }}</div>
+    <div class="stat-label">Revenue (7 days)</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+  <!-- Recent Orders -->
+  <div class="section-card">
+    <div class="section-card-header">
+      <h3>Recent Orders</h3>
+      <a href="{{ url_for('owner.orders') }}" style="font-size:.82rem;color:#e53935;font-weight:700;text-decoration:none;">View all →</a>
+    </div>
+    <div class="section-card-body">
+      {% if recent_orders %}
+      <table class="owner-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Customer</th><th>Amount</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td><strong>#{{ order.id }}</strong></td>
+            <td>{{ order.user.name if order.user else '—' }}</td>
+            <td>₹{{ '%.0f'|format(order.total_amount) }}</td>
+            <td>
+              <span class="status-badge status-{{ order.status }}">
+                {{ order.status.replace('_',' ').title() }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="padding:30px;text-align:center;color:#9ca3af;">No orders yet</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Top Dishes + Quick Actions -->
+  <div style="display:flex;flex-direction:column;gap:18px;">
+    <div class="section-card">
+      <div class="section-card-header">
+        <h3>Quick Actions</h3>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:10px;">
+        <a href="{{ url_for('owner.orders', status='placed') }}" class="btn-primary">
+          <i class="fas fa-bell"></i> View Pending Orders ({{ pending_orders }})
+        </a>
+        <a href="{{ url_for('owner.add_dish') }}" class="btn-ghost">
+          <i class="fas fa-plus"></i> Add New Dish
+        </a>
+        <a href="{{ url_for('owner.profile') }}" class="btn-ghost">
+          <i class="fas fa-store"></i> Edit Restaurant Profile
+        </a>
+      </div>
+    </div>
+
+    {% if top_dishes %}
+    <div class="section-card">
+      <div class="section-card-header"><h3>Top Dishes</h3></div>
+      <div class="section-card-body">
+        <table class="owner-table">
+          <thead><tr><th>Dish</th><th>Revenue</th></tr></thead>
+          <tbody>
+            {% for name, rev in top_dishes %}
+            <tr>
+              <td>{{ name }}</td>
+              <td>₹{{ '%.0f'|format(rev or 0) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .admin-sidebar {
+        min-height: calc(100vh - 80px);
+        background: #2c3e50;
+        color: white;
+        padding-top: 20px;
+    }
+    .admin-sidebar a {
+        color: #ecf0f1;
+        padding: 10px 15px;
+        display: block;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    .admin-sidebar a:hover {
+        background: #34495e;
+    }
+    .admin-sidebar a.active {
+        background: #e53935;
+    }
+    .admin-main {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: calc(100vh - 80px);
+    }
+    .blog-image {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <h5 class="mb-4 ps-3">Admin Panel</h5>
+            <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">
+                <i class="fas fa-users me-2"></i> Users
+            </a>
+            <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if request.endpoint == 'admin.orders' }}">
+                <i class="fas fa-shopping-cart me-2"></i> Orders
+            </a>
+            <a href="{{ url_for('admin.restaurants') }}" class="{{ 'active' if request.endpoint == 'admin.restaurants' }}">
+                <i class="fas fa-utensils me-2"></i> Restaurants
+            </a>
+            <a href="{{ url_for('admin.admin_blogs') }}" class="{{ 'active' if request.endpoint == 'admin.admin_blogs' }}">
+                <i class="fas fa-blog me-2"></i> Blogs
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="{{ 'active' if request.endpoint == 'admin.reviews' }}">
+                <i class="fas fa-star me-2"></i> Reviews
+            </a>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 admin-main">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Blog Management</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBlogModal">
+                    <i class="fas fa-plus"></i> Add Blog
+                </button>
+            </div>
+            
+            <!-- Blogs Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Author</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for blog in blogs %}
+                                <tr>
+                                    <td>
+                                        {% if blog.image %}
+                                        <img src="{{ url_for('static', filename='uploads/' + blog.image) }}" 
+                                             class="blog-image" alt="{{ blog.title }}">
+                                        {% else %}
+                                        <div class="blog-image bg-secondary d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image text-white"></i>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ blog.title }}</td>
+                                    <td><span class="badge bg-info">{{ blog.category }}</span></td>
+                                    <td>{{ blog.author or 'Admin' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if blog.is_published else 'warning' }}">
+                                            {{ 'Published' if blog.is_published else 'Draft' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ blog.created_at.strftime('%Y-%m-%d') if blog.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" onclick="editBlog('{{ blog.id }}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-info" onclick="viewBlog('{{ blog.id }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteBlog('{{ blog.id }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Blog Modal -->
+<div class="modal fade" id="addBlogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Blog</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addBlogForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" name="category" required>
+                            <option value="Food News">Food News</option>
+                            <option value="Recipes">Recipes</option>
+                            <option value="Restaurant Reviews">Restaurant Reviews</option>
+                            <option value="Health & Nutrition">Health & Nutrition</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" name="content" rows="8" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Featured Image</label>
+                        <input type="file" class="form-control" name="image" accept="image/*">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_published" id="isPublished">
+                            <label class="form-check-label" for="isPublished">
+                                Publish immediately
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitBlog()">Save Blog</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editBlog(blogId) {
+    alert('Edit blog functionality to be implemented');
+}
+
+function viewBlog(blogId) {
+    alert('View blog functionality to be implemented');
+}
+
+function deleteBlog(blogId) {
+    if (confirm('Are you sure you want to delete this blog? This action cannot be undone.')) {
+        alert('Delete blog functionality to be implemented');
+    }
+}
+
+function submitBlog() {
+    alert('Submit blog functionality to be implemented');
+}
+</script>
+{% endblock %}

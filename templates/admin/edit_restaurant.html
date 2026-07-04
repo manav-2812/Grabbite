@@ -1,0 +1,143 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Restaurant — GrabBite Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="mb-1"><i class="fas fa-store me-2 text-warning"></i>Edit Restaurant</h2>
+      <p class="text-muted mb-0">Update details for <strong>{{ restaurant.name }}</strong></p>
+    </div>
+    <a href="{{ url_for('admin.restaurants') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Back to Restaurants
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Restaurant Information</h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data" novalidate>
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <!-- Current Image Preview -->
+          {% if restaurant.image %}
+          <div class="text-center mb-4">
+            <img src="/static/uploads/{{ restaurant.image }}"
+                 id="image-preview"
+                 class="rounded shadow"
+                 style="max-height:200px; max-width:100%; object-fit:cover;"
+                 alt="{{ restaurant.name }}"
+                 onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80'">
+            <p class="small text-muted mt-2">Current image</p>
+          </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="name" class="form-label fw-semibold">Restaurant Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="name" name="name"
+                     value="{{ restaurant.name }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="cuisine_type" class="form-label fw-semibold">Cuisine Type <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="cuisine_type" name="cuisine_type"
+                     value="{{ restaurant.cuisine_type }}" placeholder="Indian, Chinese, etc.">
+            </div>
+            <div class="col-12">
+              <label for="location" class="form-label fw-semibold">Location / Address <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="location" name="location"
+                     value="{{ restaurant.location }}" required>
+            </div>
+            <div class="col-12">
+              <label for="description" class="form-label fw-semibold">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3">{{ restaurant.description or '' }}</textarea>
+            </div>
+            <div class="col-md-4">
+              <label for="delivery_time" class="form-label fw-semibold">Delivery Time (min)</label>
+              <input type="number" class="form-control" id="delivery_time" name="delivery_time"
+                     value="{{ restaurant.delivery_time or 30 }}" min="5" max="120">
+            </div>
+            <div class="col-md-4">
+              <label for="min_order" class="form-label fw-semibold">Min Order (₹)</label>
+              <input type="number" class="form-control" id="min_order" name="min_order"
+                     value="{{ restaurant.min_order or 0 }}" min="0" step="10">
+            </div>
+            <div class="col-md-4">
+              <label for="delivery_fee" class="form-label fw-semibold">Delivery Fee (₹)</label>
+              <input type="number" class="form-control" id="delivery_fee" name="delivery_fee"
+                     value="{{ restaurant.delivery_fee or 40 }}" min="0" step="5">
+            </div>
+            <div class="col-md-6">
+              <label for="opening_time" class="form-label fw-semibold">Opening Time</label>
+              <input type="time" class="form-control" id="opening_time" name="opening_time"
+                     value="{{ restaurant.opening_time or '09:00' }}">
+            </div>
+            <div class="col-md-6">
+              <label for="closing_time" class="form-label fw-semibold">Closing Time</label>
+              <input type="time" class="form-control" id="closing_time" name="closing_time"
+                     value="{{ restaurant.closing_time or '22:00' }}">
+            </div>
+            <div class="col-md-6">
+              <label for="phone" class="form-label fw-semibold">Phone Number</label>
+              <input type="tel" class="form-control" id="phone" name="phone"
+                     value="{{ restaurant.phone or '' }}" placeholder="+91 99999 00000">
+            </div>
+            <div class="col-md-6">
+              <label for="image" class="form-label fw-semibold">Restaurant Image</label>
+              <input type="file" class="form-control" id="image" name="image"
+                     accept="image/png,image/jpg,image/jpeg,image/gif,image/webp"
+                     onchange="previewImage(this)">
+              <small class="text-muted">Leave blank to keep current image</small>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                       value="on" {% if restaurant.is_active %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="is_active">
+                  Restaurant is Active / Visible
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-3">
+            <button type="submit" class="btn btn-warning px-4">
+              <i class="fas fa-save me-2"></i>Save Changes
+            </button>
+            <a href="{{ url_for('admin.restaurants') }}" class="btn btn-secondary px-4">
+              <i class="fas fa-times me-2"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let preview = document.getElementById('image-preview');
+      if (!preview) {
+        preview = document.createElement('img');
+        preview.id = 'image-preview';
+        preview.className = 'rounded shadow mb-2';
+        preview.style.cssText = 'max-height:200px;max-width:100%;object-fit:cover;';
+        input.closest('.col-md-6').insertBefore(preview, input);
+      }
+      preview.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

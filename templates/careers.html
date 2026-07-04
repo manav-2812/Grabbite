@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Careers — GrabBite{% endblock %}
+{% block styles %}
+<style>
+  .careers-hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    padding: 80px 0 60px;
+    text-align: center;
+  }
+  .careers-hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 16px; }
+  .careers-hero .hero-badge {
+    background: #e53935;
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 16px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+  .perk-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    padding: 28px 20px;
+    text-align: center;
+    height: 100%;
+    transition: transform .2s;
+  }
+  .perk-card:hover { transform: translateY(-4px); }
+  .perk-icon { font-size: 2rem; margin-bottom: 12px; }
+  .job-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: border-color .2s, box-shadow .2s;
+    cursor: pointer;
+  }
+  .job-card:hover { border-color: #e53935; box-shadow: 0 4px 20px rgba(229,57,53,.1); }
+  .job-dept { background: #fff8f8; color: #e53935; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .job-type { background: #f0fff4; color: #28a745; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .apply-form-wrap {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+    padding: 40px;
+  }
+  .apply-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: .9rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .apply-input:focus { border-color: #e53935; }
+  .apply-btn {
+    background: #e53935;
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    width: 100%;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .apply-btn:hover { background: #c62828; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="careers-hero">
+  <div class="container">
+    <div class="hero-badge">🚀 We're Hiring!</div>
+    <h1>Build the Future of Food Delivery</h1>
+    <p style="opacity:.85; font-size:1.1rem; max-width:600px; margin:0 auto 24px;">Join a passionate team of engineers, designers, and food-lovers disrupting the $50B food delivery industry.</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap" style="font-size:.9rem; opacity:.7;">
+      <span>📍 Bengaluru (HQ)</span>
+      <span>•</span>
+      <span>🌍 Remote-Friendly</span>
+      <span>•</span>
+      <span>💼 Full-Time & Internships</span>
+    </div>
+  </div>
+</div>
+
+<!-- Perks -->
+<div class="container py-5">
+  <h2 class="fw-bold text-center mb-2">Why Join GrabBite?</h2>
+  <p class="text-center text-muted mb-5">We work hard, eat well, and celebrate wins together</p>
+  <div class="row g-4">
+    {% set perks = [
+      ('💰', '#fff8f8', 'Competitive Pay', 'Top-of-market salaries + ESOPs + annual performance bonuses'),
+      ('🏥', '#f0fff4', 'Health & Wellness', 'Comprehensive medical insurance for you + family, gym allowance'),
+      ('🍕', '#fff8e1', 'Free Food Budget', '₹5,000/month food credits on GrabBite — because we practice what we preach'),
+      ('🏡', '#f0f4ff', 'Flexible Work', 'Hybrid model — 3 days office, 2 days remote. We trust our team'),
+      ('📚', '#faf0ff', 'Learning Budget', '₹50,000/year for courses, books, and conferences of your choice'),
+      ('🚀', '#fff0f4', 'Fast Growth', 'Flat hierarchy, direct impact, and ownership from day one'),
+    ] %}
+    {% for icon, bg, title, desc in perks %}
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="perk-card" style="background:{{ bg }};">
+        <div class="perk-icon">{{ icon }}</div>
+        <div class="fw-bold mb-1" style="font-size:.9rem;">{{ title }}</div>
+        <div style="font-size:.75rem; color:#666; line-height:1.5;">{{ desc }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Open Roles -->
+<div style="background:#f8f9fa; padding:60px 0;">
+  <div class="container">
+    <h2 class="fw-bold text-center mb-2">Open Positions</h2>
+    <p class="text-center text-muted mb-5">Find your perfect role</p>
+
+    <!-- Filter Tabs -->
+    <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap" id="dept-tabs">
+      <button class="btn btn-danger btn-sm fw-bold dept-tab active" onclick="filterJobs('all', this)">All Roles</button>
+      <button class="btn btn-outline-secondary btn-sm fw-bold dept-tab" onclick="filterJobs('Engineering', this)">Engineering</button>
+      <button class="btn btn-outline-secondary btn-sm fw-bold dept-tab" onclick="filterJobs('Product', this)">Product</button>
+      <button class="btn btn-outline-secondary btn-sm fw-bold dept-tab" onclick="filterJobs('Design', this)">Design</button>
+      <button class="btn btn-outline-secondary btn-sm fw-bold dept-tab" onclick="filterJobs('Marketing', this)">Marketing</button>
+      <button class="btn btn-outline-secondary btn-sm fw-bold dept-tab" onclick="filterJobs('Operations', this)">Operations</button>
+    </div>
+
+    <div id="jobs-list">
+      {% set jobs = [
+        ('Senior Backend Engineer', 'Engineering', 'Full-Time', 'Bengaluru / Remote', '₹25–40 LPA', 'Build high-scale APIs serving 10M+ requests/day. Python, Flask, PostgreSQL, Redis, AWS.'),
+        ('React Native Developer', 'Engineering', 'Full-Time', 'Bengaluru / Remote', '₹20–35 LPA', 'Build the GrabBite mobile app used by millions. React Native, TypeScript, GraphQL.'),
+        ('Product Manager — Growth', 'Product', 'Full-Time', 'Bengaluru', '₹22–38 LPA', 'Own the customer acquisition and retention funnel. Work with data, design, and engineering.'),
+        ('Senior UI/UX Designer', 'Design', 'Full-Time', 'Bengaluru / Remote', '₹18–30 LPA', 'Create beautiful, intuitive experiences for our mobile app and web platform.'),
+        ('Data Scientist', 'Engineering', 'Full-Time', 'Bengaluru', '₹20–35 LPA', 'Build ML models for ETA prediction, personalised recommendations, and demand forecasting.'),
+        ('Growth Marketing Manager', 'Marketing', 'Full-Time', 'Bengaluru', '₹15–25 LPA', 'Drive user acquisition through performance marketing, SEO, and influencer campaigns.'),
+        ('City Operations Manager', 'Operations', 'Full-Time', 'Multiple Cities', '₹12–20 LPA', 'Manage restaurant partnerships and delivery operations across your city.'),
+        ('Software Engineer Intern', 'Engineering', 'Internship', 'Bengaluru / Remote', '₹40–60K/month', '6-month internship with a potential pre-placement offer. Python or JavaScript.'),
+        ('Content & Social Media Intern', 'Marketing', 'Internship', 'Remote', '₹20–30K/month', 'Create engaging food content for Instagram, YouTube, and our blog.'),
+      ] %}
+      {% for title, dept, type_, location, salary, desc in jobs %}
+      <div class="job-card" data-dept="{{ dept }}" onclick="scrollToApply('{{ title }}')">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold mb-1">{{ title }}</h5>
+            <div class="d-flex gap-2 flex-wrap mb-2">
+              <span class="job-dept">{{ dept }}</span>
+              <span class="job-type">{{ type_ }}</span>
+            </div>
+            <p class="text-muted small mb-0">{{ desc }}</p>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold" style="color:#e53935;">{{ salary }}</div>
+            <div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>{{ location }}</div>
+            <button class="btn btn-danger btn-sm mt-2 fw-bold" style="border-radius:8px;">Apply Now</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Apply Form -->
+<div class="container py-5" id="apply-section">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="apply-form-wrap">
+        <h3 class="fw-bold mb-2 text-center">Apply Now</h3>
+        <p class="text-center text-muted mb-4">Fill in your details and we'll get back to you within 3 business days.</p>
+        <form id="career-apply-form" onsubmit="submitApplication(event)">
+          <input type="text" id="apply-name" class="apply-input" placeholder="Full Name *" required>
+          <input type="email" id="apply-email" class="apply-input" placeholder="Email Address *" required>
+          <input type="tel" id="apply-phone" class="apply-input" placeholder="Phone Number">
+          <input type="text" id="apply-role" class="apply-input" placeholder="Position Applying For *" required>
+          <input type="url" id="apply-linkedin" class="apply-input" placeholder="LinkedIn Profile URL">
+          <input type="url" id="apply-portfolio" class="apply-input" placeholder="Portfolio / GitHub URL">
+          <textarea id="apply-msg" class="apply-input" rows="4" placeholder="Why do you want to join GrabBite? (optional)" style="resize:none;"></textarea>
+          <button type="submit" class="apply-btn" id="apply-submit-btn">
+            <i class="fas fa-paper-plane me-2"></i>Submit Application
+          </button>
+          <p id="apply-result" class="mt-3 text-center" style="display:none;"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterJobs(dept, btn) {
+  document.querySelectorAll('.dept-tab').forEach(t => {
+    t.classList.remove('btn-danger', 'active');
+    t.classList.add('btn-outline-secondary');
+  });
+  btn.classList.remove('btn-outline-secondary');
+  btn.classList.add('btn-danger', 'active');
+  document.querySelectorAll('.job-card').forEach(card => {
+    card.style.display = (dept === 'all' || card.dataset.dept === dept) ? 'block' : 'none';
+  });
+}
+
+function scrollToApply(role) {
+  document.getElementById('apply-role').value = role;
+  document.getElementById('apply-section').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function submitApplication(e) {
+  e.preventDefault();
+  const btn    = document.getElementById('apply-submit-btn');
+  const result = document.getElementById('apply-result');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+  btn.disabled  = true;
+  const data = {
+    form_type:  'career-apply-form',
+    name:       document.getElementById('apply-name').value,
+    email:      document.getElementById('apply-email').value,
+    phone:      document.getElementById('apply-phone').value,
+    role:       document.getElementById('apply-role').value,
+    linkedin:   document.getElementById('apply-linkedin').value,
+    portfolio:  document.getElementById('apply-portfolio').value,
+    message:    document.getElementById('apply-msg').value,
+  };
+  fetch('/api/footer/enquiry', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(d => {
+    result.style.display = 'block';
+    if (d.success) {
+      result.style.color = '#28a745';
+      result.innerHTML   = '✅ Application submitted! We\'ll review and respond within 3 business days.';
+      document.getElementById('career-apply-form').reset();
+      btn.innerHTML      = '<i class="fas fa-check me-2"></i>Submitted!';
+    } else {
+      result.style.color = '#dc3545';
+      result.innerHTML   = '❌ ' + (d.message || 'Error. Please try again.');
+      btn.innerHTML      = '<i class="fas fa-paper-plane me-2"></i>Submit Application';
+      btn.disabled       = false;
+    }
+  })
+  .catch(() => {
+    result.style.display = 'block';
+    result.style.color   = '#dc3545';
+    result.innerHTML     = '❌ Network error. Please try again.';
+    btn.innerHTML        = '<i class="fas fa-paper-plane me-2"></i>Submit Application';
+    btn.disabled         = false;
+  });
+}
+</script>
+{% endblock %}

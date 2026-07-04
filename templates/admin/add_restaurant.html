@@ -1,0 +1,116 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Add New Restaurant</h4>
+                </div>
+                <div class="card-body">
+                    <form id="addRestaurantForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Restaurant Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cuisine_type">Cuisine Type *</label>
+                                    <input type="text" class="form-control" id="cuisine_type" name="cuisine_type" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="location">Location *</label>
+                                    <input type="text" class="form-control" id="location" name="location" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="delivery_time">Delivery Time (minutes) *</label>
+                                    <input type="number" class="form-control" id="delivery_time" name="delivery_time" min="15" max="120" value="30" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="min_order">Minimum Order (₹) *</label>
+                                    <input type="number" class="form-control" id="min_order" name="min_order" min="0" step="0.01" value="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="delivery_fee">Delivery Fee (₹) *</label>
+                                    <input type="number" class="form-control" id="delivery_fee" name="delivery_fee" min="0" step="0.01" value="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="image">Restaurant Image</label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="image" name="image" accept="image/*">
+                                        <label class="custom-file-label" for="image">Choose file</label>
+                                    </div>
+                                    <small class="form-text text-muted">Recommended size: 800x450px</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="form-group text-right">
+                            <a href="{{ url_for('admin.restaurants') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Add Restaurant</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize custom file input
+    $('.custom-file-input').on('change', function() {
+        let fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').addClass("selected").html(fileName);
+    });
+
+    // Handle form submission
+    $('#addRestaurantForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
+        
+        // Submit form data
+        $.ajax({
+            url: '{{ url_for("admin.api_add_restaurant") }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showToast('Restaurant added successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '{{ url_for("admin.restaurants") }}';
+                    }, 1500);
+                } else {
+                    showToast(response.message || 'Failed to add restaurant', 'error');
+                    submitBtn.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred while adding the restaurant';
+                showToast(errorMsg, 'error');
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

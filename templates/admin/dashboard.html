@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .admin-sidebar {
+        min-height: calc(100vh - 80px);
+        background: #2c3e50;
+        color: white;
+        padding-top: 20px;
+    }
+    .admin-sidebar a {
+        color: #ecf0f1;
+        padding: 10px 15px;
+        display: block;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    .admin-sidebar a:hover {
+        background: #34495e;
+    }
+    .admin-sidebar a.active {
+        background: #e53935;
+    }
+    .admin-main {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: calc(100vh - 80px);
+    }
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-card h3 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 16px;
+    }
+    .stat-card p {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 10px 0 0;
+        color: #e53935;
+    }
+    .stat-card .icon {
+        font-size: 24px;
+        color: #e53935;
+        float: right;
+    }
+    .activity-item {
+        padding: 10px;
+        border-left: 3px solid #e53935;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+    }
+    .real-time-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #28a745;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 admin-sidebar">
+            <h5 class="mb-4 ps-3">Admin Panel</h5>
+            <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">
+                <i class="fas fa-users me-2"></i> Users
+            </a>
+            <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if request.endpoint == 'admin.orders' }}">
+                <i class="fas fa-shopping-cart me-2"></i> Orders
+            </a>
+            <a href="{{ url_for('admin.restaurants') }}" class="{{ 'active' if request.endpoint == 'admin.restaurants' }}">
+                <i class="fas fa-utensils me-2"></i> Restaurants
+            </a>
+            <a href="{{ url_for('admin.dishes') }}" class="{{ 'active' if request.endpoint == 'admin.dishes' }}">
+                <i class="fas fa-hamburger me-2"></i> Dishes
+            </a>
+            <a href="{{ url_for('admin.admin_blogs') }}" class="{{ 'active' if request.endpoint == 'admin.admin_blogs' }}">
+                <i class="fas fa-blog me-2"></i> Blogs
+            </a>
+            <a href="{{ url_for('admin.offers') }}" class="{{ 'active' if request.endpoint == 'admin.offers' }}">
+                <i class="fas fa-tags me-2"></i> Offers
+            </a>
+            <a href="{{ url_for('admin.admin_notifications') }}" class="{{ 'active' if request.endpoint == 'admin.admin_notifications' }}">
+                <i class="fas fa-bell me-2"></i> Notifications
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="{{ 'active' if request.endpoint == 'admin.reviews' }}">
+                <i class="fas fa-star me-2"></i> Reviews
+            </a>
+            <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                <i class="fas fa-chart-bar me-2"></i> Analytics
+            </a>
+            <a href="{{ url_for('admin.database_viewer') }}" class="{{ 'active' if request.endpoint == 'admin.database_viewer' }}">
+                <i class="fas fa-database me-2"></i> Database
+            </a>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-10 admin-main">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Admin Dashboard</h2>
+                <div class="real-time-indicator"></div>
+                <span class="text-muted ms-2">Real-time updates active</span>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-users icon"></i>
+                        <h3>Total Users</h3>
+                        <p id="total-users">{{ total_users }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-utensils icon"></i>
+                        <h3>Restaurants</h3>
+                        <p id="total-restaurants">{{ total_restaurants }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-hamburger icon"></i>
+                        <h3>Dishes</h3>
+                        <p id="total-dishes">{{ total_dishes }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-blog icon"></i>
+                        <h3>Blogs</h3>
+                        <p id="total-blogs">{{ total_blogs }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-shopping-cart icon"></i>
+                        <h3>Total Orders</h3>
+                        <p id="total-orders">{{ total_orders }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-tags icon"></i>
+                        <h3>Active Offers</h3>
+                        <p id="active-offers">{{ active_offers }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <h3>Quick Actions</h3>
+                        <div class="mt-3">
+                            <a href="{{ url_for('admin.add_restaurant') }}" class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-plus"></i> Add Restaurant
+                            </a>
+                            <a href="{{ url_for('admin.add_dish') }}" class="btn btn-success btn-sm me-2">
+                                <i class="fas fa-plus"></i> Add Dish
+                            </a>
+                            <a href="{{ url_for('admin.add_blog') }}" class="btn btn-info btn-sm me-2">
+                                <i class="fas fa-plus"></i> Add Blog
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Section -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Orders Trend (Last 7 Days)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="ordersChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Revenue Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Top Restaurants</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="restaurantsChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">User Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="userActivityChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Recent Orders</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table" id="recent-orders-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Customer</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in recent_orders %}
+                                        <tr>
+                                            <td>#{{ order.id }}</td>
+                                            <td>{{ order.user.name }}</td>
+                                            <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if order.status == 'delivered' else 'warning' }}">
+                                                    {{ order.status }}
+                                                </span>
+                                            </td>
+                                            <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No recent orders</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Recent Activities</h5>
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <small class="text-muted">{{ activity.created_at.strftime('%H:%M') }}</small>
+                                <div><strong>Admin #{{ activity.admin_id }}</strong></div>
+                                <div>{{ activity.action }} - {{ activity.target_type }}</div>
+                                {% if activity.details %}
+                                <small class="text-muted">{{ activity.details }}</small>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p class="text-center text-muted">No recent activities</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Real-time WebSocket Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // ── Chart instances ──────────────────────────────────────────────────────
+    let ordersChart, revenueChart, restaurantsChart, userActivityChart;
+
+    // ── Initialize all charts from analytics API ─────────────────────────────
+    async function initCharts() {
+        try {
+            const resp = await fetch('/admin/api/analytics');
+            const d = await resp.json();
+
+            // 1. Orders Trend (last 7 days)
+            const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+            const orderLabels = (d.daily_orders || []).map(x => x.date || x.day || x[0] || '');
+            const orderCounts = (d.daily_orders || []).map(x => x.count || x[1] || 0);
+            ordersChart = new Chart(ordersCtx, {
+                type: 'bar',
+                data: {
+                    labels: orderLabels.length ? orderLabels : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                    datasets: [{
+                        label: 'Orders',
+                        data: orderCounts.length ? orderCounts : [0,0,0,0,0,0,0],
+                        backgroundColor: 'rgba(229,57,53,0.7)',
+                        borderColor: '#e53935',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+
+            // 2. Revenue Distribution (last 7 days)
+            const revCtx = document.getElementById('revenueChart').getContext('2d');
+            const revLabels = (d.daily_revenue || []).map(x => x.date || x.day || x[0] || '');
+            const revValues = (d.daily_revenue || []).map(x => parseFloat(x.revenue || x[1] || 0));
+            revenueChart = new Chart(revCtx, {
+                type: 'line',
+                data: {
+                    labels: revLabels.length ? revLabels : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: revValues.length ? revValues : [0,0,0,0,0,0,0],
+                        borderColor: '#1e88e5',
+                        backgroundColor: 'rgba(30,136,229,0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } } }
+            });
+
+            // 3. Top Restaurants
+            const restCtx = document.getElementById('restaurantsChart').getContext('2d');
+            const restNames = (d.top_restaurants || []).map(x => x.name || '');
+            const restOrders = (d.top_restaurants || []).map(x => x.order_count || x.orders || 0);
+            restaurantsChart = new Chart(restCtx, {
+                type: 'bar',
+                data: {
+                    labels: restNames.length ? restNames : ['No data'],
+                    datasets: [{
+                        label: 'Orders',
+                        data: restOrders.length ? restOrders : [0],
+                        backgroundColor: ['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa'],
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+
+            // 4. User Activity (role breakdown)
+            const uaCtx = document.getElementById('userActivityChart').getContext('2d');
+            userActivityChart = new Chart(uaCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Customers', 'Owners', 'Admins'],
+                    datasets: [{
+                        data: [
+                            d.customer_count || 0,
+                            d.owner_count    || 0,
+                            d.admin_count    || 1,
+                        ],
+                        backgroundColor: ['#43a047','#fb8c00','#e53935'],
+                        hoverOffset: 8,
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        } catch (err) {
+            console.warn('Chart init error:', err);
+        }
+    }
+
+    // ── Stat update helpers ──────────────────────────────────────────────────
+    function updateDashboardStats() {
+        [
+            ['/admin/api/stats/restaurants', 'total-restaurants'],
+            ['/admin/api/stats/dishes',       'total-dishes'],
+            ['/admin/api/stats/blogs',        'total-blogs'],
+            ['/admin/api/stats/users',        'total-users'],
+            ['/admin/api/stats/orders',       'total-orders'],
+            ['/admin/api/stats/offers',       'active-offers'],
+        ].forEach(([url, id]) => {
+            fetch(url).then(r => r.json()).then(d => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = d.count ?? d.total ?? '—';
+            }).catch(() => {});
+        });
+    }
+
+    // ── Socket.IO ────────────────────────────────────────────────────────────
+    const socket = io();
+    socket.emit('join_admin');
+    socket.on('real_time_update', () => updateDashboardStats());
+
+    socket.on('connect', () => {
+        document.querySelector('.real-time-indicator').style.background = '#28a745';
+    });
+    socket.on('disconnect', () => {
+        document.querySelector('.real-time-indicator').style.background = '#dc3545';
+    });
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        initCharts();
+        // Refresh stats every 30 seconds
+        setInterval(updateDashboardStats, 30000);
+    });
+</script>
+{% endblock %}

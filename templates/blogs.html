@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block title %}Food Blogs - GrabBite{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section-bg position-relative" style="background: url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg') center center/cover no-repeat;">
+    <div class="position-absolute w-100 h-100" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)); z-index: 2;"></div>
+    <div class="hero-content text-center position-relative" style="z-index: 3;">
+        <div class="container py-5">
+
+            <span class="badge bg-danger mb-3 px-3 py-2" style="font-size: 1rem; letter-spacing: 1px;">
+                FOOD & LIFESTYLE BLOG
+            </span>
+            <h1 class="display-3 fw-bold text-white mb-4" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.5); line-height: 1.2;">
+                Culinary Stories &<br>Food Adventures
+            </h1>
+            <p class="lead text-white mb-4" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3); max-width: 700px; margin: 0 auto 2rem;">
+                Discover {{ blogs|length }} articles about food, cooking tips, restaurant reviews, and healthy eating guides
+            </p>
+            
+            <!-- Enhanced Search Bar -->
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <form action="{{ url_for('public.search_page') }}" method="get" id="blog-search-form" class="mb-4">
+                        <div class="search-container mb-4 shadow-lg" style="background: rgba(255,255,255,0.95); border-radius: 50px; overflow: hidden;">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-0" style="padding: 0 20px;">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-0 shadow-none" 
+                                       id="blog-search" 
+                                       name="q"
+                                       placeholder="Search for articles, recipes, or guides..."
+                                       autocomplete="off"
+                                       style="font-size: 1.1rem; height: 60px;"
+                                       required
+                                       minlength="2">
+                                <input type="hidden" name="type" value="blogs">
+                                <button type="submit" class="btn btn-danger px-4" style="border-radius: 0 50px 50px 0; font-weight: 600; font-size: 1.1rem;">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                            <div id="blog-search-suggestions" class="search-suggestions"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Hero Section -->
+
+<!-- Blog Categories -->
+<section class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Browse by Category</h2>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button class="btn btn-outline-danger category-filter active" data-category="all">All Posts</button>
+                <button class="btn btn-outline-danger category-filter" data-category="recipes">Recipes</button>
+                <button class="btn btn-outline-danger category-filter" data-category="reviews">Restaurant Reviews</button>
+                <button class="btn btn-outline-danger category-filter" data-category="tips">Cooking Tips</button>
+                <button class="btn btn-outline-danger category-filter" data-category="trends">Food Trends</button>
+                <button class="btn btn-outline-danger category-filter" data-category="health">Healthy Eating</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Blog -->
+{% if blogs %}
+<section class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4 position-relative d-inline-block">
+                <span class="position-relative">
+                    Featured Article
+                    <span class="position-absolute bottom-0 start-0 w-100 bg-primary-red" style="height: 3px; border-radius: 3px;"></span>
+                </span>
+            </h2>
+            {% set featured_blog = blogs[0] %}
+            <div class="card border-0 shadow-lg overflow-hidden featured-blog-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                <div class="row g-0">
+                    <div class="col-lg-6 position-relative">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark" style="opacity: 0.1; z-index: 1;"></div>
+                        <img src="{{ food_image_url(featured_blog.image) if featured_blog.image else 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200' }}" 
+                             class="img-fluid h-100" 
+                             alt="{{ featured_blog.title }}" 
+                             onerror="this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200'"
+                             style="object-fit: cover; min-height: 400px; width: 100%; transition: transform 0.5s ease;">
+                        <div class="position-absolute bottom-0 start-0 p-4 w-100" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); z-index: 2;">
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <span class="badge bg-danger">Featured</span>
+                                <span class="badge bg-white text-dark">{{ (featured_blog.category or 'Food') | title }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 d-flex align-items-center">
+                        <div class="p-4 p-lg-5">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://images.pexels.com/photos/6544498/pexels-photo-6544498.jpeg" 
+                                     class="rounded-circle me-2" 
+                                     width="40" 
+                                     height="40" 
+                                     alt="Author">
+                                <div>
+                                    <p class="mb-0 fw-bold">{{ featured_blog.author or 'Admin' }}</p>
+                                    <small class="text-muted">{{ featured_blog.created_at.strftime('%B %d, %Y') }}</small>
+                                </div>
+                            </div>
+                            <h3 class="h2 fw-bold mb-3">{{ featured_blog.title }}</h3>
+                            <p class="text-muted mb-4">{{ featured_blog.excerpt or (featured_blog.content[:200] + '...') }}</p>
+                            <a href="{{ url_for('public.blog_detail', blog_id=featured_blog.id) }}" 
+                               class="btn btn-danger px-4 py-2 d-inline-flex align-items-center"
+                               style="font-weight: 500;">
+                                Read Full Story <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                            <div class="mt-4 pt-3 border-top d-flex align-items-center">
+                                <div class="d-flex align-items-center me-4">
+                                    <i class="far fa-clock text-muted me-2"></i>
+                                    <small class="text-muted">{{ (featured_blog.content|wordcount // 200) + 1 }} min read</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="far fa-comment-alt text-muted me-2"></i>
+                                    <small class="text-muted">{{ featured_blog.comments|length }} comments</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Blog Grid -->
+<section class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="position-relative d-inline-block">
+                <span class="position-relative">
+                    Latest Articles
+                    <span class="position-absolute bottom-0 start-0 w-100 bg-primary-red" style="height: 3px; border-radius: 3px;"></span>
+                </span>
+            </h2>
+            <p class="text-muted mt-2">Discover our collection of food stories, recipes, and culinary adventures</p>
+        </div>
+    </div>
+    
+    <div class="row g-4" id="blog-grid">
+        {% if blogs %}
+            {% for blog in blogs[1:] %}
+            <div class="col-xl-4 col-md-6 blog-item" data-category="{{ (blog.category or 'food').lower() }}">
+                <article class="card h-100 border-0 shadow-sm overflow-hidden" style="border-radius: 12px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                    <div class="position-relative">
+                        <img src="{{ food_image_url(blog.image) if blog.image else 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=900' }}" 
+                             class="card-img-top" 
+                             alt="{{ blog.title }}"
+                             onerror="this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=900'"
+                             style="height: 220px; object-fit: cover; width: 100%;">
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="badge bg-white text-dark">{{ (blog.category or 'Food') | title }}</span>
+                        </div>
+                        <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ url_for('static', filename='img/avatars/author-default.jpg') }}" 
+                                     class="rounded-circle me-2" 
+                                     width="32" 
+                                     height="32" 
+                                     alt="{{ blog.author }}">
+                                <div>
+                                    <p class="mb-0 text-white fw-bold small">{{ blog.author or 'Admin' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                <i class="far fa-calendar-alt me-1"></i>{{ blog.created_at.strftime('%b %d, %Y') }}
+                            </small>
+                            <small class="text-muted">
+                                <i class="far fa-clock me-1"></i>{{ (blog.content|wordcount // 200) + 1 }} min read
+                            </small>
+                        </div>
+                        <h3 class="h5 fw-bold mb-2">
+                            <a href="{{ url_for('public.blog_detail', blog_id=blog.id) }}" class="text-decoration-none text-dark">
+                                {{ blog.title }}
+                            </a>
+                        </h3>
+                        <p class="card-text text-muted mb-3">{{ blog.excerpt or (blog.content[:120] + '...') }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('public.blog_detail', blog_id=blog.id) }}" 
+                               class="btn btn-sm btn-outline-danger d-flex align-items-center">
+                                Read More <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                            <div class="d-flex align-items-center">
+                                <i class="far fa-comment-alt text-muted me-1"></i>
+                                <small class="text-muted">{{ blog.comments|length }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-blog fa-5x text-muted mb-4"></i>
+                <h3>No blogs available</h3>
+                <p class="text-muted mb-4">We're working on bringing you amazing food content. Check back soon!</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Newsletter Signup -->
+<section class="py-5 my-5" style="background-color: #f8f9fa;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <div class="p-4 p-lg-5 rounded-4" style="background: linear-gradient(135deg, #ff4757, #ff6b81);">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-9">
+                            <h3 class="text-white mb-3">Hungry for More?</h3>
+                            <p class="text-white-50 mb-4">Subscribe to our newsletter and never miss a delicious update. Get the latest recipes, restaurant reviews, and food trends delivered straight to your inbox.</p>
+                            <form class="newsletter-form">
+                                <div class="input-group shadow-lg rounded-pill overflow-hidden">
+                                    <input type="email" 
+                                           class="form-control border-0 py-3 px-4" 
+                                           placeholder="Your email address" 
+                                           required
+                                           style="font-size: 1.05rem;">
+                                    <button class="btn btn-dark px-4 px-lg-5" type="submit">
+                                        <span class="d-none d-md-inline">Subscribe Now</span>
+                                        <span class="d-md-none">Subscribe</span>
+                                        <i class="fas fa-paper-plane ms-2"></i>
+                                    </button>
+                                </div>
+                                <small class="text-white-50 d-block mt-3">We respect your privacy. Unsubscribe at any time.</small>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Hero Section */
+.hero-section-bg {
+    position: relative;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    padding: 80px 0;
+    margin-bottom: 40px;
+}
+
+/* Blog Cards */
+.blog-item .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    overflow: hidden;
+}
+
+.blog-item .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+
+.blog-item .card-img-top {
+    transition: transform 0.5s ease;
+}
+
+.blog-item .card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+/* Featured Blog */
+.featured-blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15) !important;
+}
+
+.featured-blog-card:hover .card-img-top {
+    transform: scale(1.03);
+}
+
+/* Category Filter */
+.category-filter {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border-radius: 30px !important;
+    padding: 8px 20px;
+    margin: 0 5px 10px 0;
+}
+
+.category-filter:hover, 
+.category-filter.active {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+    transform: translateY(-2px);
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+    transform: translateY(-2px);
+}
+
+.search-container .form-control:focus {
+    box-shadow: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hero-section-bg {
+        min-height: 500px;
+        padding: 60px 0;
+    }
+    
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-content p {
+        font-size: 1.1rem;
+    }
+    
+    .search-container {
+        padding: 0 15px;
+    }
+    
+    .featured-blog-card .row > div:first-child {
+        height: 300px;
+    }
+    
+    .featured-blog-card .row > div:last-child {
+        padding: 2rem !important;
+    }
+}
+
+.hero-content input[type="text"] {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1.1rem;
+    padding: 14px 20px;
+    border-radius: 40px 0 0 40px;
+    background: transparent;
+}
+
+.hero-content button[type="submit"] {
+    background: #e53935;
+    color: #fff;
+    border: none;
+    border-radius: 0 40px 40px 0;
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.featured-blog-card {
+    border: none;
+    overflow: hidden;
+}
+
+.blog-card {
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+}
+
+.blog-image-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.blog-overlay {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 1;
+}
+
+.newsletter-form .input-group {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.category-filter.active {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .featured-blog-card .row {
+        --bs-gutter-x: 0;
+    }
+    
+    .featured-blog-card .card-body {
+        padding: 2rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Category filtering
+    const categoryFilters = document.querySelectorAll('.category-filter');
+    const blogItems = document.querySelectorAll('.blog-item');
+    
+    categoryFilters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            // Update active filter
+            categoryFilters.forEach(f => f.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            
+            blogItems.forEach(item => {
+                if (category === 'all' || item.dataset.category === category) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+    
+    // Newsletter form
+    document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = this.querySelector('input[type="email"]').value;
+        
+        if (email) {
+            showToast('Thank you for subscribing! We\'ll keep you updated with the latest food content.', 'success');
+            this.reset();
+        }
+    });
+});
+
+// Initialize blog search functionality when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('blog-search-form');
+    const searchInput = document.getElementById('blog-search');
+    const searchSuggestions = document.getElementById('blog-search-suggestions');
+    let searchTimeout;
+
+    // Handle search form submission
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                e.preventDefault();
+                searchInput.setCustomValidity('Please enter at least 2 characters');
+                searchInput.reportValidity();
+                searchInput.focus();
+            } else {
+                // Add loading state
+                const submitBtn = searchForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Searching...';
+                }
+            }
+        });
+    }
+
+    // Handle search input for suggestions
+    if (searchInput && searchSuggestions) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Hide suggestions if query is too short
+            if (query.length < 2) {
+                searchSuggestions.style.display = 'none';
+                return;
+            }
+            
+            // Show loading state
+            searchSuggestions.innerHTML = `
+                <div class="suggestion-item">
+                    <div class="search-loading">
+                        <div class="spinner"></div>
+                        <span>Searching blog posts...</span>
+                    </div>
+                </div>`;
+            searchSuggestions.style.display = 'block';
+            
+            // Debounce the search
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&type=blogs`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.suggestions && data.suggestions.length > 0) {
+                        let html = '';
+                        data.suggestions.forEach(suggestion => {
+                            html += `
+                                <a href="#" class="suggestion-item" data-type="${suggestion.type}" data-value="${suggestion.value}">
+                                    <i class="fas fa-${suggestion.type === 'blog' ? 'blog' : 'file-alt'} me-2"></i>
+                                    ${suggestion.text}
+                                    <small>${suggestion.type}</small>
+                                </a>`;
+                        });
+                        searchSuggestions.innerHTML = html;
+                    } else {
+                        searchSuggestions.innerHTML = `
+                            <div class="suggestion-item text-muted">
+                                No blog posts found matching "${query}"
+                            </div>`;
+                    }
+                    searchSuggestions.style.display = 'block';
+                } catch (error) {
+                    console.error('Error fetching blog suggestions:', error);
+                    searchSuggestions.style.display = 'none';
+                }
+            }, 300);
+        });
+        
+        // Handle click outside to close suggestions
+        document.addEventListener('click', function(e) {
+            if (searchForm && !searchForm.contains(e.target)) {
+                searchSuggestions.style.display = 'none';
+            }
+        });
+        
+        // Handle suggestion click
+        searchSuggestions.addEventListener('click', function(e) {
+            e.preventDefault();
+            const suggestionItem = e.target.closest('.suggestion-item');
+            if (suggestionItem && searchForm) {
+                const text = suggestionItem.textContent.trim().replace(/\s*\w+$/, '').trim();
+                searchInput.value = text;
+                searchForm.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

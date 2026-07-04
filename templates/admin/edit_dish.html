@@ -1,0 +1,158 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Dish — GrabBite Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="mb-1"><i class="fas fa-utensils me-2 text-danger"></i>Edit Dish</h2>
+      <p class="text-muted mb-0">Updating: <strong>{{ dish.name }}</strong></p>
+    </div>
+    <a href="{{ url_for('admin.dishes') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Back to Dishes
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Dish Details</h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data" novalidate>
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <!-- Current Image Preview -->
+          {% if dish.image %}
+          <div class="text-center mb-4">
+            <img src="/static/uploads/{{ dish.image }}"
+                 id="image-preview"
+                 class="rounded shadow"
+                 style="max-height:200px; max-width:100%; object-fit:cover;"
+                 alt="{{ dish.name }}"
+                 onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'">
+            <p class="small text-muted mt-2">Current image</p>
+          </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="name" class="form-label fw-semibold">Dish Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="name" name="name"
+                     value="{{ dish.name }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="price" class="form-label fw-semibold">Price (₹) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" class="form-control" id="price" name="price"
+                       value="{{ dish.price }}" min="0" step="0.5" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="restaurant_id" class="form-label fw-semibold">Restaurant <span class="text-danger">*</span></label>
+              <select class="form-select" id="restaurant_id" name="restaurant_id" required>
+                {% for r in restaurants %}
+                <option value="{{ r.id }}" {% if r.id == dish.restaurant_id %}selected{% endif %}>
+                  {{ r.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="category" class="form-label fw-semibold">Category</label>
+              <select class="form-select" id="category" name="category">
+                {% set categories = ['Starter', 'Main Course', 'Dessert', 'Drinks', 'Snacks', 'Breakfast', 'Combo', 'Thali', 'Biryani', 'Pizza', 'Burger', 'South Indian', 'North Indian', 'Chinese', 'Fast Food'] %}
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if cat == dish.category %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label for="description" class="form-label fw-semibold">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3">{{ dish.description or '' }}</textarea>
+            </div>
+            <div class="col-12">
+              <label for="image" class="form-label fw-semibold">Dish Image</label>
+              <input type="file" class="form-control" id="image" name="image"
+                     accept="image/png,image/jpg,image/jpeg,image/gif,image/webp"
+                     onchange="previewImage(this)">
+              <small class="text-muted">Leave blank to keep current image</small>
+            </div>
+
+            <!-- Dietary Badges -->
+            <div class="col-12">
+              <label class="form-label fw-semibold d-block mb-2">Dietary Tags</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="is_vegetarian" name="is_vegetarian"
+                         {% if dish.is_vegetarian %}checked{% endif %}>
+                  <label class="form-check-label" for="is_vegetarian">
+                    <span class="badge bg-success">🌿 Vegetarian</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="is_vegan" name="is_vegan"
+                         {% if dish.is_vegan %}checked{% endif %}>
+                  <label class="form-check-label" for="is_vegan">
+                    <span class="badge bg-success">🌱 Vegan</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="is_gluten_free" name="is_gluten_free"
+                         {% if dish.is_gluten_free %}checked{% endif %}>
+                  <label class="form-check-label" for="is_gluten_free">
+                    <span class="badge bg-info text-dark">🌾 Gluten-Free</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="is_available" name="is_available"
+                       value="on" {% if dish.is_available %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="is_available">
+                  Item is Available
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-3">
+            <button type="submit" class="btn btn-danger px-4">
+              <i class="fas fa-save me-2"></i>Save Changes
+            </button>
+            <a href="{{ url_for('admin.dishes') }}" class="btn btn-secondary px-4">
+              <i class="fas fa-times me-2"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let preview = document.getElementById('image-preview');
+      if (!preview) {
+        preview = document.createElement('img');
+        preview.id = 'image-preview';
+        preview.className = 'rounded shadow mb-2';
+        preview.style.cssText = 'max-height:200px;max-width:100%;object-fit:cover;';
+        input.closest('.col-12').insertBefore(preview, input);
+      }
+      preview.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

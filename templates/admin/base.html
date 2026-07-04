@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - {{ title }} | {{ super() }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    /* Admin Panel Styles */
+    .sidebar {
+        min-height: calc(100vh - 56px);
+        background: #343a40;
+        padding: 0;
+        transition: all 0.3s;
+    }
+    
+    .sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.75rem 1rem;
+        border-left: 3px solid transparent;
+    }
+    
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+        border-left: 3px solid #007bff;
+    }
+    
+    .sidebar .nav-link i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+    }
+    
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 15px 20px;
+    }
+    
+    .card-title {
+        margin: 0;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+    
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-active {
+        background-color: #e6f7ee;
+        color: #28a745;
+    }
+    
+    .status-inactive {
+        background-color: #fef0f0;
+        color: #dc3545;
+    }
+    
+    .action-btns .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        margin-right: 5px;
+    }
+    
+    /* Toast notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1100;
+    }
+    
+    .toast {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+    }
+    
+    .toast-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .toast-error {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .toast-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .sidebar {
+            min-height: auto;
+        }
+        
+        .main-content {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <div class="sidebar-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' }}" 
+                           href="{{ url_for('admin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.restaurants' }}" 
+                           href="{{ url_for('admin.restaurants') }}">
+                            <i class="fas fa-utensils"></i> Restaurants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.dishes' }}" 
+                           href="{{ url_for('admin.dishes') }}">
+                            <i class="fas fa-list"></i> Menu Items
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.orders' }}" 
+                           href="{{ url_for('admin.orders') }}">
+                            <i class="fas fa-shopping-cart"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.users' }}" 
+                           href="{{ url_for('admin.users') }}">
+                            <i class="fas fa-users"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.admin_blogs' }}" 
+                           href="{{ url_for('admin.admin_blogs') }}">
+                            <i class="fas fa-blog"></i> Blog Posts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint == 'admin.reviews' }}" 
+                           href="{{ url_for('admin.reviews') }}">
+                            <i class="fas fa-star"></i> Reviews
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4 main-content">
+            <!-- Page header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">{% block page_title %}{{ title }}{% endblock %}</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </div>
+
+            <!-- Page content -->
+            {% block admin_content %}
+            {% endblock %}
+        </main>
+    </div>
+</div>
+
+<!-- Toast container for notifications -->
+<div class="toast-container"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Global toast notification function
+function showToast(message, type = 'success') {
+    const toastContainer = document.querySelector('.toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast show toast-${type} mb-3`;
+    toast.role = 'alert';
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Auto remove toast after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+// Handle delete confirmation
+function confirmDelete(itemName, deleteUrl, callback) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete ${itemName}. This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Item deleted successfully', 'success');
+                    if (typeof callback === 'function') {
+                        callback(data);
+                    }
+                } else {
+                    showToast(data.message || 'Failed to delete item', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while deleting the item', 'error');
+            });
+        }
+    });
+}
+
+// Initialize tooltips
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});
+
+// Handle sidebar toggle
+$('#sidebarCollapse').on('click', function () {
+    $('#sidebar').toggleClass('active');
+});
+</script>
+{% endblock %}

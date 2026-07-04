@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed — GrabBite</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#f4f4f7; font-family:'Segoe UI',Arial,sans-serif; color:#333; }
+    .wrapper { max-width:600px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .header { background:linear-gradient(135deg,#e53935,#c62828); padding:32px; text-align:center; }
+    .header .logo { font-size:1.6rem; font-weight:900; color:#fff; }
+    .confirm-badge { background:rgba(255,255,255,0.18); border:2px solid rgba(255,255,255,0.4); border-radius:50%; width:72px; height:72px; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:12px auto 0; }
+    .header h1 { color:#fff; font-size:1.35rem; font-weight:800; margin-top:12px; }
+    .body { padding:36px 32px; }
+    .text { font-size:0.96rem; color:#555; line-height:1.7; margin-bottom:16px; }
+    .order-meta { background:#fff7f7; border-radius:12px; border:1px solid #fce8e8; padding:20px; margin:20px 0; }
+    .order-meta .row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f0e0e0; font-size:0.9rem; }
+    .order-meta .row:last-child { border-bottom:none; }
+    .order-meta .label { color:#888; }
+    .order-meta .value { font-weight:700; color:#1a1a1a; }
+    .items-table { width:100%; border-collapse:collapse; margin:20px 0; }
+    .items-table th { background:#f8f8f8; padding:10px 12px; text-align:left; font-size:0.8rem; color:#888; text-transform:uppercase; letter-spacing:0.5px; }
+    .items-table td { padding:12px; border-bottom:1px solid #f0f0f0; font-size:0.88rem; vertical-align:top; }
+    .items-table tr:last-child td { border-bottom:none; }
+    .item-name { font-weight:700; color:#1a1a1a; }
+    .item-qty { color:#888; font-size:0.82rem; margin-top:2px; }
+    .totals { background:#f8f8f8; border-radius:12px; padding:20px; margin:20px 0; }
+    .totals .row { display:flex; justify-content:space-between; padding:6px 0; font-size:0.9rem; color:#555; }
+    .totals .row.total { font-weight:900; font-size:1.05rem; color:#1a1a1a; border-top:2px solid #e0e0e0; margin-top:8px; padding-top:10px; }
+    .payment-status-paid { color:#2e7d32; }
+    .payment-status-unpaid { color:#e53935; }
+    .totals .row.discount { color:#2e7d32; }
+    .status-timeline { margin:24px 0; }
+    .step { display:flex; align-items:flex-start; gap:12px; margin-bottom:16px; }
+    .step-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; margin-top:2px; }
+    .step-dot.done { background:#e53935; color:#fff; }
+    .step-dot.pending { background:#f0f0f0; color:#aaa; }
+    .step-content strong { font-size:0.9rem; display:block; }
+    .step-content span { font-size:0.8rem; color:#888; }
+    .cta-btn { display:inline-block; background:#e53935; color:#fff !important; text-decoration:none; font-weight:800; padding:14px 32px; border-radius:50px; font-size:0.95rem; margin:12px 0; }
+    .footer { background:#f8f8f8; padding:20px 32px; text-align:center; font-size:0.78rem; color:#aaa; }
+    .footer a { color:#e53935; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">🍽️ GrabBite</div>
+      <div class="confirm-badge">✅</div>
+      <h1>Order Confirmed!</h1>
+    </div>
+    <div class="body">
+      <p class="text">
+        Hey <strong>{{ user.name }}</strong>! Your order has been placed successfully.
+        The restaurant is being notified right now and your food will be on its way soon.
+      </p>
+
+      <div class="order-meta">
+        <div class="row">
+          <span class="label">Order ID</span>
+          <span class="value">#{{ order.id }}</span>
+        </div>
+        <div class="row">
+          <span class="label">Payment Method</span>
+          <span class="value">{{ order.payment_method | upper }}</span>
+        </div>
+        <div class="row">
+          <span class="label">Payment Status</span>
+          <span class="value {{ 'payment-status-paid' if order.payment_status == 'paid' else 'payment-status-unpaid' }}">
+            {{ order.payment_status | title }}
+          </span>
+        </div>
+        <div class="row">
+          <span class="label">Delivery Address</span>
+          <span class="value" style="max-width:260px; text-align:right;">{{ order.delivery_address }}</span>
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th style="text-align:right;">Qty</th>
+            <th style="text-align:right;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.order_items %}
+          <tr>
+            <td>
+              <div class="item-name">{{ item.name }}</div>
+              <div class="item-qty">{{ item.restaurant_name }}</div>
+            </td>
+            <td style="text-align:right;color:#555;">× {{ item.quantity }}</td>
+            <td style="text-align:right;font-weight:700;">₹{{ (item.price * item.quantity) | round(0) | int }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span>₹{{ order.subtotal | round(0) | int }}</span></div>
+        <div class="row"><span>GST (18%)</span><span>₹{{ order.tax | round(0) | int }}</span></div>
+        <div class="row"><span>Delivery Fee</span><span>₹{{ order.delivery_fee | round(0) | int }}</span></div>
+        {% if order.discount and order.discount > 0 %}
+        <div class="row discount"><span>Discount ({{ order.coupon_code }})</span><span>− ₹{{ order.discount | round(0) | int }}</span></div>
+        {% endif %}
+        <div class="row"><span>Platform Fee</span><span>₹5</span></div>
+        <div class="row total"><span>Total Paid</span><span>₹{{ order.total_amount | round(0) | int }}</span></div>
+      </div>
+
+      <div class="status-timeline">
+        <p style="font-weight:800;font-size:0.9rem;color:#1a1a1a;margin-bottom:14px;">What happens next?</p>
+        <div class="step">
+          <div class="step-dot done">✓</div>
+          <div class="step-content">
+            <strong>Order Placed</strong>
+            <span>Restaurant has been notified</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-dot pending">2</div>
+          <div class="step-content">
+            <strong>Restaurant Accepts</strong>
+            <span>Usually within 5–10 minutes</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-dot pending">3</div>
+          <div class="step-content">
+            <strong>Food is Prepared</strong>
+            <span>Fresh and hot, packed for delivery</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-dot pending">4</div>
+          <div class="step-content">
+            <strong>Out for Delivery</strong>
+            <span>Heading to your location</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <a href="{{ url_for('account.orders', _external=True) }}" class="cta-btn">
+          📦 Track My Order
+        </a>
+      </div>
+    </div>
+    <div class="footer">
+      © 2026 GrabBite · 
+      <a href="{{ url_for('public.index', _external=True) }}">Website</a> · 
+      <a href="{{ url_for('public.help', _external=True) }}">Support</a><br>
+      Need help with this order? Reply to this email.
+    </div>
+  </div>
+</body>
+</html>

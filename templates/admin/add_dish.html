@@ -1,0 +1,185 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add New Dish | Admin Panel{% endblock %}
+
+{% block page_title %}Add New Dish{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ url_for('admin.dishes') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dishes
+    </a>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="addDishForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="name">Dish Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="restaurant_id">Restaurant *</label>
+                                <select class="form-control" id="restaurant_id" name="restaurant_id" required>
+                                    <option value="">Select Restaurant</option>
+                                    {% for restaurant in restaurants %}
+                                        <option value="{{ restaurant.id }}">{{ restaurant.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="category">Category *</label>
+                                <input type="text" class="form-control" id="category" name="category" required>
+                                <small class="form-text text-muted">e.g., Appetizers, Main Course, Desserts</small>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="price">Price (₹) *</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">₹</span>
+                                    </div>
+                                    <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="discount">Discount (%)</label>
+                                <input type="number" class="form-control" id="discount" name="discount" min="0" max="100" value="0">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="image">Dish Image</label>
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="image" name="image" accept="image/*">
+                                    <label class="custom-file-label" for="image">Choose file</label>
+                                </div>
+                                <small class="form-text text-muted">Recommended size: 800x600px</small>
+                                <div class="mt-2" id="imagePreview"></div>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="is_vegetarian">Food Type</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_vegetarian" name="is_vegetarian" value="true">
+                                    <label class="form-check-label" for="is_vegetarian">
+                                        Vegetarian
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_vegan" name="is_vegan" value="true">
+                                    <label class="form-check-label" for="is_vegan">
+                                        Vegan
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_gluten_free" name="is_gluten_free" value="true">
+                                    <label class="form-check-label" for="is_gluten_free">
+                                        Gluten Free
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="is_available">Availability</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="is_available" name="is_available" checked>
+                                    <label class="custom-control-label" for="is_available">Available</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="ingredients">Ingredients</label>
+                        <textarea class="form-control" id="ingredients" name="ingredients" rows="2" placeholder="Enter ingredients separated by commas"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Dish
+                        </button>
+                        <a href="{{ url_for('admin.dishes') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    // Initialize custom file input
+    $('.custom-file-input').on('change', function() {
+        let fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        
+        // Show image preview
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#imagePreview').html(`<img src="${e.target.result}" class="img-fluid mt-2" style="max-height: 150px;">`);
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    // Handle form submission
+    $('#addDishForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
+        
+        // Submit form data
+        $.ajax({
+            url: '{{ url_for("admin.api_add_dish") }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showToast('Dish added successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '{{ url_for("admin.dishes") }}';
+                    }, 1500);
+                } else {
+                    showToast(response.message || 'Failed to add dish', 'error');
+                    submitBtn.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred while adding the dish';
+                showToast(errorMsg, 'error');
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
