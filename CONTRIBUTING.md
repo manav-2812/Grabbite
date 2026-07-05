@@ -130,7 +130,20 @@ docs: update README with deployment instructions
 ## Project Structure
 
 - `app.py` - Main application factory
-- `models.py` - Database models
+- `models/` - Database models package (one file per domain)
+  - `__init__.py` — re-exports all classes; no import changes needed elsewhere
+  - `user.py` — `User`, `Address`
+  - `restaurant.py` — `Restaurant`, `FoodItem`
+  - `order.py` — `Cart`, `Order`, `OrderItem`, `OrderStatusHistory`
+  - `payment.py` — `Payment`, `WalletTransaction`
+  - `offer.py` — `Offer`, `CouponUsage`
+  - `blog.py` — `Blog`
+  - `review.py` — `Review`
+  - `notification.py` — `Notification`, `AdminNotification`
+  - `support.py` — `SupportTicket`
+  - `wishlist.py` — `Wishlist`
+  - `admin.py` — `AdminActivity`
+  - `constants.py` — shared enums (`ROLES`, `ORDER_STATUSES`, etc.)
 - `blueprints/` - Route modules organized by feature
 - `templates/` - HTML/Jinja2 templates
 - `static/` - CSS, JS, and static assets

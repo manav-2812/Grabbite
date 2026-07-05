@@ -247,7 +247,20 @@ Grabbite/
 │
 ├── app.py                    # App factory — config, extensions, blueprints, socket events
 ├── run.py                    # Entry point — dev server (Flask) or prod server (Waitress)
-├── models.py                 # All SQLAlchemy database models (16 tables)
+├── models/                   # SQLAlchemy database models (one file per domain)
+│   ├── __init__.py           # Re-exports all classes — no import changes needed
+│   ├── constants.py          # Shared enums: ROLES, ORDER_STATUSES, PAYMENT_*
+│   ├── user.py               # User, Address
+│   ├── restaurant.py         # Restaurant, FoodItem
+│   ├── order.py              # Cart, Order, OrderItem, OrderStatusHistory
+│   ├── payment.py            # Payment, WalletTransaction
+│   ├── offer.py              # Offer, CouponUsage
+│   ├── blog.py               # Blog
+│   ├── review.py             # Review
+│   ├── notification.py       # Notification, AdminNotification
+│   ├── support.py            # SupportTicket
+│   ├── wishlist.py           # Wishlist
+│   └── admin.py              # AdminActivity
 ├── admin_routes.py           # Admin panel routes (/admin/*)
 ├── auth_routes.py            # Login, signup, logout, profile update
 ├── db.py                     # SQLAlchemy db instance (avoids circular imports)
