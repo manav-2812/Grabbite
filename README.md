@@ -14,7 +14,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/manav-2812/Grabbite?style=flat&logo=github&color=ef4444)](https://github.com/manav-2812/Grabbite/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/manav-2812/Grabbite?style=flat&logo=github&color=10b981)](https://github.com/manav-2812/Grabbite/commits)
 
-GrabBite is a production-grade food ordering platform built with **Python (Flask)** and **PostgreSQL**. It mirrors the core flows of platforms like Zomato and Swiggy: customers browse restaurants, place orders, and pay online — while restaurant owners manage menus and admins control everything from a live dashboard.
+**GrabBite** is a full-stack food delivery platform engineered with **Python (Flask)** and **PostgreSQL**, designed to replicate the end-to-end experience of modern food-tech products. Customers discover restaurants, build orders, and complete payments through an integrated Razorpay checkout — while restaurant owners manage their menus and fulfil orders through a dedicated dashboard, and platform administrators maintain full operational control via a real-time admin panel. The platform is built with production concerns in mind: CSRF protection, HMAC-verified payment webhooks, rate limiting, signed password-reset tokens, WebSocket-based live order tracking, and a role-based access control system across three distinct user types.
 
 ---
 
