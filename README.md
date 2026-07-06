@@ -854,6 +854,17 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines. Pull requests are welco
 
 ---
 
+## Author
+
+**Manav Baghel**
+
+Full-stack developer. Built GrabBite as a production-grade demonstration of Python (Flask) applied to a real-world food delivery domain — covering payment gateway integration, real-time WebSockets, role-based access control, and deployment on PostgreSQL + Railway.
+
+- Email: [manavraj854@gmail.com](mailto:manavraj854@gmail.com)
+- GitHub: [@manav-2812](https://github.com/manav-2812)
+
+---
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE).

@@ -1141,4 +1141,4 @@ When this event fires, call `GET /api/orders/<id>/status` to get the full update
 
 ---
 
-*Last updated: July 2026 · GrabBite v2.0*
+*Last updated: July 2026 · GrabBite v2.0 · Built by [Manav Baghel](mailto:manavraj854@gmail.com)*
