@@ -37,10 +37,13 @@ psycopg2-binary==2.9.9
 
 
 # ── Production WSGI server ────────────────────────────────────────────────────
-# Waitress is a pure-Python WSGI server — zero C dependencies, works on
-# Windows and Linux. run.py uses it when FLASK_DEBUG=0.
-# For Linux/Mac deployments, gunicorn is an equally good alternative.
+# Waitress is a pure-Python WSGI server — works on Windows and Linux.
+# run.py uses it when FLASK_DEBUG=0.
 waitress==3.0.1
+
+# Gunicorn — used by the Procfile (Railway / Heroku / Render buildpack deploys).
+# Requires --worker-class gthread for Flask-SocketIO threading mode.
+gunicorn==21.2.0
 
 
 # ── Environment Configuration ─────────────────────────────────────────────────

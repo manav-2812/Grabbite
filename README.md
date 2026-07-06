@@ -498,6 +498,8 @@ Grabbite/
 ├── Dockerfile                # Multi-stage production image (python:3.11-slim)
 ├── docker-compose.yml        # App + PostgreSQL for local Docker development
 ├── .dockerignore             # Excludes .venv, .env, instance/, tests/ from the image
+├── Procfile                  # Gunicorn start command for Railway / Heroku / Render buildpack deploys
+├── runtime.txt               # Python version pin for Railway / Render / Heroku buildpacks
 ├── .env.example              # All supported environment variables with documentation
 ├── .github/workflows/ci.yml  # GitHub Actions CI pipeline
 ├── requirements.txt          # Python production dependencies (pinned)
@@ -775,7 +777,7 @@ All tables use integer primary keys with PostgreSQL sequences. Foreign key index
 
 ### Railway (recommended — one-click from GitHub)
 
-Railway automatically detects the `Dockerfile` and provides a managed PostgreSQL add-on.
+Railway auto-detects the `Dockerfile` for container deploys, or falls back to the `Procfile` + `runtime.txt` for buildpack deploys. Both are included — Railway picks the `Dockerfile` by default.
 
 1. Push the repo to GitHub (already done)
 2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select `Grabbite`
@@ -797,7 +799,7 @@ SOCKETIO_ALLOWED_ORIGINS=https://your-railway-domain.up.railway.app
 
 5. Railway deploys automatically on every push to `main`. The `/healthz` endpoint is used as the health probe.
 
-> Railway injects `$PORT` at runtime — `run.py` reads it automatically.
+> Railway injects `$PORT` at runtime — `run.py` and the `Procfile` both read it automatically.
 
 ---
 
