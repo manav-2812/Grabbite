@@ -3,12 +3,11 @@ Grabbite — Main Application Entry Point
 Flask app factory with all route registrations, extensions, and configuration.
 """
 from flask import (Flask, render_template, request, redirect, url_for,
-                   flash, session, jsonify, make_response, abort)
+                   flash, session, jsonify, abort)
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_login import (LoginManager, current_user, login_user,
                           logout_user, login_required)
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta, timezone
 
 # Optional rate limiter — Flask-Limiter (C9 fix: wire it up so we can rate-limit
@@ -25,14 +24,6 @@ import os
 import secrets
 import hmac
 import hashlib
-
-# Optional razorpay — COD works without it
-try:
-    # pyrefly: ignore [missing-import]
-    import razorpay as _razorpay_module
-    _RAZORPAY_AVAILABLE = True
-except ImportError:
-    _RAZORPAY_AVAILABLE = False
 
 # Load .env variables FIRST so os.environ.get() picks them up below
 try:
@@ -213,22 +204,6 @@ else:
         def exempt(self, fn):
             return fn
     limiter = _NullLimiter()
-
-# ── Razorpay client (initialized lazily after config is ready) ─────────────────
-def get_razorpay_client():
-    """Return a Razorpay client or None if unavailable/unconfigured."""
-    if not _RAZORPAY_AVAILABLE:
-        return None
-    key_id     = app.config.get('RAZORPAY_KEY_ID', '')
-    key_secret = app.config.get('RAZORPAY_KEY_SECRET', '')
-    if not key_id or not key_secret or 'xxx' in key_secret.lower():
-        return None
-    try:
-        return _razorpay_module.Client(auth=(key_id, key_secret))
-    except Exception as exc:
-        app.logger.warning(f'Razorpay client init failed: {exc}')  # LOW-3
-        return None
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MODELS (import after db init)

@@ -76,9 +76,11 @@ class Order(db.Model):
 
     # Relationships
     restaurant   = db.relationship('Restaurant', backref='orders', lazy=True)
-    payments     = db.relationship('Payment', backref='order', lazy=True)
+    payments     = db.relationship('Payment', backref='order', lazy=True,
+                                    cascade='all, delete-orphan')
     status_history = db.relationship('OrderStatusHistory', backref='order', lazy=True,
-                                      order_by='OrderStatusHistory.created_at')
+                                      order_by='OrderStatusHistory.created_at',
+                                      cascade='all, delete-orphan')
     # HIGH-10: normalized line items (additive — JSON column kept for backward compat)
     order_line_items = db.relationship('OrderItem', backref='order', lazy=True,
                                         cascade='all, delete-orphan')

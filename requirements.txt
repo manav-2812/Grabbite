@@ -1,73 +1,76 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Grabbite — Python Dependencies
-# ─────────────────────────────────────────────────────────────────────────────
-# Install all required packages:
+# GrabBite — Python production dependencies (pinned)
+#
+# Install:
 #   pip install -r requirements.txt
 #
-# For development tools (linter, tests) also run:
+# Also install dev/test tools:
 #   pip install -r requirements-dev.txt
 # ─────────────────────────────────────────────────────────────────────────────
 
 
 # ── Web Framework ─────────────────────────────────────────────────────────────
 Flask==2.3.3                    # Core web framework
-Flask-SQLAlchemy==3.0.5         # Database ORM (Object Relational Mapper)
+Flask-SQLAlchemy==3.0.5         # SQLAlchemy ORM integration
 Flask-Login==0.6.3              # User session & authentication management
 Flask-WTF==1.2.1                # Form handling (used by admin blog forms)
-Flask-Migrate==4.0.5            # Database schema migrations (Alembic wrapper)
-Flask-Limiter==3.5.0            # Rate limiting on sensitive endpoints (login, signup, etc.)
+Flask-Migrate==4.0.5            # Alembic-backed database schema migrations
+Flask-Limiter==3.5.0            # Rate limiting on sensitive endpoints
 Flask-Mail==0.10.0              # Transactional email (order confirmations, password reset)
 Flask-SocketIO==5.3.6           # Real-time WebSocket support (live order notifications)
 
 
 # ── Security ──────────────────────────────────────────────────────────────────
-# Bumped to 2.3.8 to patch CVE-2023-46136 (DoS via slow multipart parsing).
-# API-compatible with Flask 2.3.3 — no code changes needed.
+# Bumped to 2.3.8 — patches CVE-2023-46136 (DoS via slow multipart parsing).
+# API-compatible with Flask 2.3.3.
 Werkzeug==2.3.8
 
 
 # ── Database ──────────────────────────────────────────────────────────────────
-# SQLite ships with Python — no extra install needed for local development.
-# For production, uncomment ONE of the following drivers:
-#
-#   PostgreSQL (recommended for production):
-#     psycopg2-binary==2.9.9
-#
-#   MySQL / MariaDB:
-#     PyMySQL==1.1.0
-#
-# Set DATABASE_URL in your .env to switch backends (see .env.example).
+# Primary database is PostgreSQL. psycopg2-binary provides the driver.
+# SQLite ships with Python and is used as a local dev fallback when
+# DATABASE_URL is not set.
+psycopg2-binary==2.9.9
+
+# MySQL / MariaDB alternative (uncomment if switching backends):
+#   PyMySQL==1.1.0
+
+
+# ── Production WSGI server ────────────────────────────────────────────────────
+# Waitress is a pure-Python WSGI server — zero C dependencies, works on
+# Windows and Linux. run.py uses it when FLASK_DEBUG=0.
+# For Linux/Mac deployments, gunicorn is an equally good alternative.
+waitress==3.0.1
 
 
 # ── Environment Configuration ─────────────────────────────────────────────────
-python-dotenv==1.0.0            # Loads variables from the .env file into os.environ
+python-dotenv==1.0.0            # Loads .env file variables into os.environ
 
 
 # ── Image Processing ──────────────────────────────────────────────────────────
-Pillow>=10.0.1                  # Resizes profile photos and uploaded restaurant/dish images
+Pillow>=10.0.1                  # Resizes and validates uploaded images
 
 
 # ── Payment Gateway ───────────────────────────────────────────────────────────
 # Handles online payments (UPI, card, net banking).
-# The app degrades gracefully to Cash on Delivery if keys are not configured.
+# The app falls back to Cash on Delivery if keys are not configured.
 razorpay==1.4.1
 
 
 # ── Token Signing ─────────────────────────────────────────────────────────────
-# Used to generate and verify time-limited, signed password-reset URLs.
+# Generates and verifies time-limited signed password-reset URLs.
 itsdangerous>=2.1.2
 
 
-
-# ── Optional: Redis-backed Rate Limiter ──────────────────────────────────────
-# By default, Flask-Limiter uses in-memory storage (single worker only).
-# For multi-worker production deployments, point at a Redis instance:
-#   Uncomment the line below and set REDIS_URL in your .env
+# ── Optional: Redis-backed rate limiter ──────────────────────────────────────
+# Flask-Limiter defaults to in-memory storage (single worker only).
+# For multi-worker production deployments, point REDIS_URL at a Redis instance
+# and uncomment the line below.
 # redis==5.0.1
 
 
-# ── Optional: Async WebSocket Backend ────────────────────────────────────────
-# Flask-SocketIO currently uses threading mode (async_mode='threading').
-# To switch to eventlet for better async performance, uncomment below
+# ── Optional: Async WebSocket backend ────────────────────────────────────────
+# Flask-SocketIO runs in threading mode by default (async_mode='threading').
+# To switch to eventlet for higher WebSocket concurrency, uncomment below
 # and add eventlet.monkey_patch() at the top of run.py.
 # eventlet==0.33.3
