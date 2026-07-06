@@ -166,7 +166,7 @@
     {% endif %}
 
     <div class="action-btns">
-      <a href="{{ url_for('account.orders') }}" class="btn-track">
+      <a href="{{ url_for('account.order_track', order_id=order.id) }}" class="btn-track">
         <i class="fas fa-map-marker-alt"></i> Track Order
       </a>
       <a href="{{ url_for('public.index') }}" class="btn-home">

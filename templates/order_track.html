@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}Track Order #{{ order.id }} — GrabBite{% endblock %}
+
+{% block styles %}
+<style>
+/* ── Page layout ───────────────────────────────────────────────────── */
+.track-hero {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #fff;
+    padding: 32px 0 24px;
+}
+.track-hero h4 { font-weight: 800; margin: 0; font-size: 1.4rem; }
+.track-hero .sub { opacity: .75; font-size: .9rem; margin-top: 4px; }
+
+/* ── Live status banner ────────────────────────────────────────────── */
+.status-banner {
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: background .4s, border-color .4s;
+}
+.status-banner .sb-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+.status-banner .sb-label { font-size: 1.25rem; font-weight: 700; }
+.status-banner .sb-desc  { font-size: .88rem; opacity: .85; margin-top: 2px; }
+
+/* ── Stepper ───────────────────────────────────────────────────────── */
+.stepper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: relative;
+    padding: 8px 0 0;
+}
+.stepper::before {
+    content: '';
+    position: absolute;
+    top: 26px;
+    left: 6%;
+    right: 6%;
+    height: 3px;
+    background: #e5e7eb;
+    z-index: 0;
+}
+.stepper-fill {
+    position: absolute;
+    top: 26px;
+    left: 6%;
+    height: 3px;
+    background: #16a34a;
+    z-index: 1;
+    transition: width .6s ease;
+}
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    position: relative;
+    z-index: 2;
+}
+.step-circle {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 3px solid #d1d5db;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    color: #9ca3af;
+    transition: all .4s;
+}
+.step.done .step-circle {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+}
+.step.active .step-circle {
+    border-color: #2563eb;
+    color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+    animation: pulse-ring 1.8s ease-in-out infinite;
+}
+.step.cancelled .step-circle {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+}
+@keyframes pulse-ring {
+    0%,100% { box-shadow: 0 0 0 4px rgba(37,99,235,.15); }
+    50%      { box-shadow: 0 0 0 8px rgba(37,99,235,.08); }
+}
+.step-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 68px;
+}
+.step.done .step-label, .step.active .step-label { color: #111; }
+
+/* ── Timeline / history ────────────────────────────────────────────── */
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: #e5e7eb;
+}
+.tl-item {
+    position: relative;
+    padding: 0 0 22px 14px;
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+    position: absolute;
+    left: -20px; top: 4px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #d1d5db;
+}
+.tl-item.tl-current .tl-dot {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+.tl-item.tl-done .tl-dot {
+    background: #16a34a;
+    border-color: #16a34a;
+}
+.tl-label { font-weight: 700; font-size: .95rem; }
+.tl-note  { font-size: .82rem; color: #6b7280; }
+.tl-time  { font-size: .78rem; color: #9ca3af; }
+
+/* ── Order summary card ────────────────────────────────────────────── */
+.summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: .9rem; }
+.summary-row + .summary-row { border-top: 1px solid #f3f4f6; }
+
+/* ── Live indicator dot ────────────────────────────────────────────── */
+.live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    margin-right: 6px;
+    animation: blink 1.4s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero bar -->
+<div class="track-hero">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h4><i class="fas fa-map-marker-alt me-2"></i>Track Order #{{ order.id }}</h4>
+        <div class="sub">
+          {{ order.restaurant.name if order.restaurant else 'Restaurant' }} ·
+          Placed {{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}
+        </div>
+      </div>
+      <a href="{{ url_for('account.orders') }}" class="btn btn-outline-light btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> All Orders
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4">
+
+    <!-- LEFT: live tracker ──────────────────────────────────────────── -->
+    <div class="col-lg-8">
+
+      <!-- Live status banner -->
+      <div id="status-banner" class="status-banner border mb-4"
+           style="background:#f0fdf4; border-color:#86efac !important;">
+        <div class="sb-icon" style="background:#dcfce7; color:#16a34a;">
+          <i id="sb-icon" class="fas fa-{{ 'circle-check' if order.status == 'delivered' else 'receipt' }}"></i>
+        </div>
+        <div>
+          <div class="sb-label" id="sb-label">{{ order.status.replace('_',' ').title() }}</div>
+          <div class="sb-desc"  id="sb-desc">Loading status…</div>
+        </div>
+        <div class="ms-auto text-end">
+          <small><span class="live-dot" id="live-dot"></span><span id="live-txt">Live</span></small>
+          <div class="text-muted" style="font-size:.78rem;" id="last-updated"></div>
+        </div>
+      </div>
+
+      <!-- Stepper -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-4">Order Progress</h6>
+          <div class="stepper" id="stepper">
+            {% set pipeline = ['placed','accepted','preparing','ready','on_the_way','delivered'] %}
+            {% set labels   = ['Placed','Accepted','Preparing','Ready','On the Way','Delivered'] %}
+            {% set icons    = ['receipt','check-circle','fire-burner','bag-shopping','motorcycle','circle-check'] %}
+            {% for s in pipeline %}
+            <div class="step {% if order.status == 'cancelled' and loop.first %}cancelled{% elif pipeline.index(order.status) >= loop.index0 %}done{% elif pipeline.index(order.status) == loop.index0 - 1 %}active{% endif %}"
+                 id="step-{{ s }}" data-status="{{ s }}">
+              <div class="step-circle">
+                <i class="fas fa-{{ icons[loop.index0] }}"></i>
+              </div>
+              <span class="step-label">{{ labels[loop.index0] }}</span>
+            </div>
+            {% endfor %}
+            <div class="stepper-fill" id="stepper-fill" style="width:0%"></div>
+          </div>
+
+          {% if order.status == 'cancelled' %}
+          <div class="alert alert-danger mt-4 mb-0">
+            <i class="fas fa-circle-xmark me-2"></i>
+            This order was cancelled.
+          </div>
+          {% elif order.status == 'delivered' %}
+          <div class="alert alert-success mt-4 mb-0">
+            <i class="fas fa-circle-check me-2"></i>
+            Delivered! Thank you for ordering with GrabBite.
+          </div>
+          {% elif order.estimated_time %}
+          <div class="text-center mt-3">
+            <span class="badge bg-primary px-3 py-2" style="font-size:.85rem;">
+              <i class="fas fa-clock me-1"></i>
+              Estimated delivery: ~{{ order.estimated_time }} min
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Status history timeline -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Status History</h6>
+          <div class="timeline" id="timeline">
+            {% for h in history | reverse %}
+            <div class="tl-item {% if loop.first %}tl-current{% else %}tl-done{% endif %}">
+              <div class="tl-dot"></div>
+              <div class="tl-label">{{ h.status.replace('_',' ').title() }}</div>
+              {% if h.note %}<div class="tl-note">{{ h.note }}</div>{% endif %}
+              <div class="tl-time">{{ h.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: order summary ─────────────────────────────────────────── -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Order Summary</h6>
+          {% set items = order.order_line_items if order.order_line_items else order.items %}
+          {% for item in items %}
+          <div class="d-flex justify-content-between mb-2" style="font-size:.9rem;">
+            <span>{{ item.name if item.name else item.get('name','') }}
+              <span class="text-muted">× {{ item.quantity if item.quantity else item.get('quantity',1) }}</span>
+            </span>
+            <span>₹{{ "%.0f"|format((item.price if item.price else item.get('price',0)) * (item.quantity if item.quantity else item.get('quantity',1))) }}</span>
+          </div>
+          {% endfor %}
+          <hr class="my-2">
+          <div class="summary-row"><span class="text-muted">Subtotal</span><span>₹{{ "%.2f"|format(order.subtotal) }}</span></div>
+          <div class="summary-row"><span class="text-muted">Tax (18%)</span><span>₹{{ "%.2f"|format(order.tax) }}</span></div>
+          <div class="summary-row"><span class="text-muted">Delivery fee</span><span>₹{{ "%.2f"|format(order.delivery_fee) }}</span></div>
+          {% if order.discount %}<div class="summary-row text-success"><span>Discount</span><span>−₹{{ "%.2f"|format(order.discount) }}</span></div>{% endif %}
+          <hr class="my-2">
+          <div class="summary-row fw-bold"><span>Total</span><span>₹{{ "%.2f"|format(order.total_amount) }}</span></div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Delivery Details</h6>
+          <p class="mb-2" style="font-size:.88rem;"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ order.delivery_address }}</p>
+          {% if order.delivery_phone %}
+          <p class="mb-0" style="font-size:.88rem;"><i class="fas fa-phone text-muted me-2"></i>{{ order.delivery_phone }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Payment</h6>
+          <div class="summary-row"><span class="text-muted">Method</span><span class="text-capitalize">{{ order.payment_method }}</span></div>
+          <div class="summary-row">
+            <span class="text-muted">Status</span>
+            <span class="badge {% if order.payment_status == 'paid' %}bg-success{% elif order.payment_status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+              {{ order.payment_status.title() }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  const ORDER_ID    = {{ order.id }};
+  const IS_DONE     = {{ 'true' if order.status in ('delivered','cancelled') else 'false' }};
+  const PIPELINE    = ['placed','accepted','preparing','ready','on_the_way','delivered'];
+  const POLL_MS     = 12000;   // fallback poll every 12 s
+  let   pollTimer   = null;
+  let   lastStatus  = '{{ order.status }}';
+
+  /* ── Status colour map ─────────────────────────────────────────── */
+  const STATUS_COLOR = {
+    placed:     {bg:'#fffbeb', border:'#fcd34d', icon:'#f59e0b', ibg:'#fef3c7'},
+    accepted:   {bg:'#eff6ff', border:'#93c5fd', icon:'#3b82f6', ibg:'#dbeafe'},
+    preparing:  {bg:'#f5f3ff', border:'#c4b5fd', icon:'#8b5cf6', ibg:'#ede9fe'},
+    ready:      {bg:'#ecfeff', border:'#67e8f9', icon:'#06b6d4', ibg:'#cffafe'},
+    picked:     {bg:'#f0fdf4', border:'#86efac', icon:'#10b981', ibg:'#dcfce7'},
+    on_the_way: {bg:'#f0fdf4', border:'#86efac', icon:'#10b981', ibg:'#dcfce7'},
+    delivered:  {bg:'#f0fdf4', border:'#86efac', icon:'#16a34a', ibg:'#dcfce7'},
+    cancelled:  {bg:'#fef2f2', border:'#fca5a5', icon:'#ef4444', ibg:'#fee2e2'},
+  };
+
+  const STATUS_ICONS = {
+    placed:'fa-receipt', accepted:'fa-check-circle', preparing:'fa-fire-burner',
+    ready:'fa-bag-shopping', picked:'fa-person-biking',
+    on_the_way:'fa-motorcycle', delivered:'fa-circle-check', cancelled:'fa-circle-xmark',
+  };
+
+  /* ── DOM refs ──────────────────────────────────────────────────── */
+  const $banner   = document.getElementById('status-banner');
+  const $icon     = document.getElementById('sb-icon');
+  const $label    = document.getElementById('sb-label');
+  const $desc     = document.getElementById('sb-desc');
+  const $updated  = document.getElementById('last-updated');
+  const $fill     = document.getElementById('stepper-fill');
+  const $liveDot  = document.getElementById('live-dot');
+  const $liveTxt  = document.getElementById('live-txt');
+  const $timeline = document.getElementById('timeline');
+
+  /* ── Apply status to UI ────────────────────────────────────────── */
+  function applyStatus(data) {
+    const s    = data.status;
+    const meta = STATUS_COLOR[s] || STATUS_COLOR.placed;
+
+    // Banner
+    $banner.style.background    = meta.bg;
+    $banner.style.borderColor   = meta.border;
+    const $ico = $banner.querySelector('.sb-icon');
+    $ico.style.background       = meta.ibg;
+    $ico.style.color            = meta.icon;
+    $icon.className             = 'fas ' + (STATUS_ICONS[s] || 'fa-receipt');
+    $label.textContent          = data.status_label || s.replace(/_/g,' ');
+    $desc.textContent           = data.status_desc  || '';
+    $updated.textContent        = 'Updated just now';
+
+    // Stepper fill bar
+    const idx  = PIPELINE.indexOf(s === 'picked' ? 'on_the_way' : s);
+    const pct  = idx < 0 ? 0 : Math.round(idx / (PIPELINE.length - 1) * 88 + 6);
+    $fill.style.width = pct + '%';
+
+    // Step dots
+    (data.steps || []).forEach(step => {
+      const el = document.getElementById('step-' + step.status);
+      if (!el) return;
+      el.classList.toggle('done',   step.done && !step.active);
+      el.classList.toggle('active', step.active);
+    });
+    if (s === 'cancelled') {
+      const el = document.getElementById('step-placed');
+      if (el) el.classList.add('cancelled');
+    }
+
+    // Timeline
+    if (data.history && data.history.length) {
+      const html = [...data.history].reverse().map((h, i) => `
+        <div class="tl-item ${i === 0 ? 'tl-current' : 'tl-done'}">
+          <div class="tl-dot"></div>
+          <div class="tl-label">${h.label}</div>
+          ${h.note ? `<div class="tl-note">${h.note}</div>` : ''}
+          <div class="tl-time">${h.timestamp}</div>
+        </div>`).join('');
+      $timeline.innerHTML = html;
+    }
+  }
+
+  /* ── Fetch status from API ─────────────────────────────────────── */
+  function fetchStatus() {
+    fetch(`/api/orders/${ORDER_ID}/status`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || !data.success) return;
+        applyStatus(data);
+        if (data.is_done) stopPolling();
+        lastStatus = data.status;
+      })
+      .catch(() => { /* silent — network blip */ });
+  }
+
+  /* ── Polling ───────────────────────────────────────────────────── */
+  function startPolling() {
+    if (IS_DONE) return;
+    pollTimer = setInterval(fetchStatus, POLL_MS);
+  }
+  function stopPolling() {
+    clearInterval(pollTimer);
+    $liveDot.style.display = 'none';
+    $liveTxt.textContent   = 'Final';
+  }
+
+  /* ── SocketIO real-time push ───────────────────────────────────── */
+  if (window.io) {
+    const socket = io({ transports: ['websocket', 'polling'] });
+    socket.on('real_time_update', function (msg) {
+      if (msg.type === 'order_update' && msg.data && msg.data.order_id == ORDER_ID) {
+        fetchStatus();   // pull full status from API after push
+      }
+    });
+  }
+
+  /* ── Init ──────────────────────────────────────────────────────── */
+  fetchStatus();   // immediate first load
+  startPolling();
+})();
+</script>
+{% endblock %}

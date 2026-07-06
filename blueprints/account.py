@@ -204,6 +204,15 @@ def orders():
     return render_template('orders.html', orders=user_orders)
 
 
+@account_bp.route('/orders/<int:order_id>/track')
+@login_required
+def order_track(order_id):
+    """Live order tracking page for a specific order."""
+    order = Order.query.filter_by(id=order_id, user_id=current_user.id).first_or_404()
+    history = order.status_history  # already ordered by created_at via relationship
+    return render_template('order_track.html', order=order, history=history)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # CART
 # ─────────────────────────────────────────────────────────────────────────────

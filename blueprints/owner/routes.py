@@ -284,6 +284,17 @@ def update_order_status(order_id):
     db.session.commit()
     flash(f'Order #{order.id} marked as {new_status}.', 'success')
 
+    # Broadcast real-time status update to the customer via WebSocket
+    try:
+        from app import broadcast_update
+        broadcast_update('order_update', {
+            'order_id':   order.id,
+            'status':     new_status,
+            'message':    status_messages.get(new_status, ('', ''))[1],
+        }, room='authenticated_users')
+    except Exception:
+        pass  # WebSocket failure must never break order management
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'success': True, 'status': new_status})
     return redirect(url_for('owner.orders'))

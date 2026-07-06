@@ -152,6 +152,15 @@
                         <span>{{ order.delivery_address }}</span>
                     </div>
                     {% endif %}
+
+                    <!-- Track button — shown for active orders -->
+                    <div class="mt-3 d-flex gap-2">
+                        <a href="{{ url_for('account.order_track', order_id=order.id) }}"
+                           class="btn btn-sm {% if order.status in ('delivered','cancelled') %}btn-outline-secondary{% else %}btn-primary{% endif %} flex-fill">
+                            <i class="fas fa-{% if order.status == 'delivered' %}receipt{% elif order.status == 'cancelled' %}circle-xmark{% else %}map-marker-alt{% endif %} me-1"></i>
+                            {% if order.status in ('delivered','cancelled') %}View Details{% else %}Track Order{% endif %}
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
