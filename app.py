@@ -255,7 +255,7 @@ register_template_globals(app)
 
 
 # ── Seed data — moved to utils/seed_data.py ─────────────────────────────────
-from utils.seed_data import seed_homepage_showcase_data
+from utils.seed_data import seed_homepage_showcase_data, seed_demo_accounts
 
 # Image data dicts and seed function moved to utils/image_data.py and utils/seed_data.py
 
@@ -310,6 +310,7 @@ with app.app_context():
             print(f'✅ Dev admin created — email: admin@grabbite.com  password: {_dev_password}')
 
     seed_homepage_showcase_data()
+    seed_demo_accounts()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONTEXT PROCESSORS

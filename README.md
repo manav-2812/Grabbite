@@ -23,6 +23,7 @@
 ## Table of Contents
 
 - [Platform at a Glance](#platform-at-a-glance)
+- [Demo Accounts](#demo-accounts)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
@@ -52,6 +53,20 @@
 | Real-time events | WebSocket push via Flask-SocketIO (order updates, admin alerts) |
 | CI | GitHub Actions — Python 3.11 + 3.12, SQLite in-memory, 85 tests |
 | Primary database | PostgreSQL (SQLite fallback for local dev without `DATABASE_URL`) |
+
+---
+
+## Demo Accounts
+
+Three accounts are seeded automatically on first boot. Use them to explore every role without registering.
+
+| Role | Email | Password |
+|---|---|---|
+| 👤 Customer | `demo_user@gmail.com` | `Demo@1234` |
+| 🍽️ Restaurant Owner | `owner@gmail.com` | `Owner@1234` |
+| 🛡️ Admin | `admin@gmail.com` | `Admin@1234` |
+
+> The live demo runs on a shared database — please don't change these passwords.
 
 ---
 

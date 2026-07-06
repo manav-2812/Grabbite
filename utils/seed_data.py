@@ -1,10 +1,11 @@
 """
 Grabbite — Seed Data
 Homepage showcase seeding for restaurants, dishes, and blogs.
+Also seeds fixed demo accounts for portfolio / live-demo use.
 Extracted from app.py (Plan 2 refactor).
 """
 from db import db
-from models import Restaurant, FoodItem, Blog
+from models import Restaurant, FoodItem, Blog, User
 from utils.image_data import food_photo
 
 
@@ -104,5 +105,86 @@ def seed_homepage_showcase_data():
             )
             blog.generate_slug()
             db.session.add(blog)
+
+    db.session.commit()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEMO ACCOUNTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Passwords are stored hashed. The plaintext values below are only used once
+# during seeding — they are the credentials shown in the README demo section.
+_DEMO_ACCOUNTS = [
+    {
+        'name':     'Demo Customer',
+        'email':    'demo_user@gmail.com',
+        'password': 'Demo@1234',
+        'role':     'customer',
+        'is_admin': False,
+    },
+    {
+        'name':     'Demo Owner',
+        'email':    'owner@gmail.com',
+        'password': 'Owner@1234',
+        'role':     'restaurant_owner',
+        'is_admin': False,
+        'restaurant': {
+            'name':         'Demo Kitchen',
+            'location':     'Koramangala, Bengaluru',
+            'cuisine_type': 'Multi-Cuisine',
+            'description':  'Demo restaurant for portfolio showcase.',
+            'is_active':    True,
+            'is_approved':  True,
+        },
+    },
+    {
+        'name':     'Admin',
+        'email':    'admin@gmail.com',
+        'password': 'Admin@1234',
+        'role':     'admin',
+        'is_admin': True,
+    },
+]
+
+
+def seed_demo_accounts() -> None:
+    """Create fixed demo accounts on first boot if they don't already exist.
+
+    Safe to call on every startup — skips any account whose email is already
+    in the database. Passwords are hashed with werkzeug pbkdf2:sha256.
+    """
+    from werkzeug.security import generate_password_hash
+
+    for spec in _DEMO_ACCOUNTS:
+        if User.query.filter_by(email=spec['email']).first():
+            continue  # already seeded — skip
+
+        user = User(
+            name=spec['name'],
+            email=spec['email'],
+            password=generate_password_hash(spec['password']),
+            role=spec['role'],
+            is_admin=spec.get('is_admin', False),
+            is_active=True,
+        )
+        user.generate_referral_code()
+        db.session.add(user)
+        db.session.flush()   # get user.id for the owner's restaurant below
+
+        # Restaurant owners need a restaurant record so the owner dashboard works
+        if spec['role'] == 'restaurant_owner' and 'restaurant' in spec:
+            rest_spec = spec['restaurant']
+            restaurant = Restaurant.query.filter_by(
+                name=rest_spec['name']
+            ).first()
+            if not restaurant:
+                restaurant = Restaurant(
+                    owner_id=user.id,
+                    **rest_spec,
+                )
+                db.session.add(restaurant)
+
+        print(f'✅ Demo account seeded: {spec["email"]}  ({spec["role"]})')
 
     db.session.commit()
