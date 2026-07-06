@@ -1,12 +1,13 @@
 """
 Grabbite — Payment Blueprint
-HIGH-4: Extracted from app.py as part of the blueprint refactor.
-Handles payment pages, COD, Razorpay order creation, payment verification
+Handles payment pages, COD, Razorpay order creation, payment verification,
 and Razorpay server-to-server webhooks.
+
+Plan 5 refactor: private helpers moved to:
+  utils/order_helpers.py    — _build_order_from_cart, _create_order_record, _post_order_notifications
+  utils/razorpay_helpers.py — _get_razorpay_client, verify_razorpay_signature, verify_webhook_signature
 """
 import os
-import hmac
-import hashlib
 from datetime import datetime, timezone
 
 from flask import (Blueprint, render_template, request, redirect,
@@ -14,224 +15,22 @@ from flask import (Blueprint, render_template, request, redirect,
 from flask_login import current_user, login_required
 
 from db import db
-from models import (Order, Cart, FoodItem, Restaurant, Offer, CouponUsage,
-                    Payment, OrderStatusHistory, Notification, AdminNotification,
-                    OrderItem)
+from models import (Order, Cart, Payment, OrderStatusHistory,
+                    Notification, AdminNotification)
+from utils.order_helpers import (
+    _build_order_from_cart, _create_order_record, _post_order_notifications,
+)
+from utils.razorpay_helpers import (
+    _get_razorpay_client, verify_razorpay_signature, verify_webhook_signature,
+)
 
 payment_bp = Blueprint('payment', __name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# RAZORPAY CLIENT
-# ─────────────────────────────────────────────────────────────────────────────
-def _get_razorpay_client():
-    """Return a Razorpay client or None if unavailable/unconfigured."""
-    try:
-        import razorpay as _rz
-    except ImportError:
-        return None
-    key_id     = current_app.config.get('RAZORPAY_KEY_ID', '')
-    key_secret = current_app.config.get('RAZORPAY_KEY_SECRET', '')
-    if not key_id or not key_secret or 'xxx' in key_secret.lower():
-        return None
-    try:
-        return _rz.Client(auth=(key_id, key_secret))
-    except Exception as exc:
-        current_app.logger.warning(f'Razorpay client init failed: {exc}')
-        return None
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ORDER HELPERS
-# ─────────────────────────────────────────────────────────────────────────────
-def _build_order_from_cart(data):
-    """Validate cart and build order totals.
-    Returns (cart_rows, amounts_dict, restaurant_id, items_snapshot) or raises ValueError.
-    """
-    cart_rows = db.session.query(Cart, FoodItem, Restaurant)\
-        .join(FoodItem, Cart.food_item_id == FoodItem.id)\
-        .join(Restaurant, FoodItem.restaurant_id == Restaurant.id)\
-        .filter(Cart.user_id == current_user.id).all()
-
-    if not cart_rows:
-        raise ValueError('Your cart is empty')
-
-    subtotal     = sum(c.quantity * f.price for c, f, _ in cart_rows)
-    tax          = round(subtotal * 0.18, 2)
-    delivery_fee = 0.0 if subtotal > 500 else 40.0
-    coupon_code  = str(data.get('coupon_code') or '').strip().upper()
-    discount     = 0.0
-
-    if coupon_code:
-        offer = Offer.query.filter_by(code=coupon_code).first()
-        if offer:
-            valid, msg = offer.is_valid()
-            if valid and subtotal >= offer.min_order_amount:
-                already = CouponUsage.query.filter_by(offer_id=offer.id, user_id=current_user.id).first()
-                if not already:
-                    if offer.discount_type == 'percentage':
-                        raw = subtotal * offer.discount_value / 100
-                        discount = min(raw, offer.max_discount) if offer.max_discount else raw
-                    else:
-                        discount = min(offer.discount_value, subtotal)
-                    discount = round(discount, 2)
-
-    platform_fee = 5.0
-    final_total  = round(subtotal + tax + delivery_fee - discount + platform_fee, 2)
-    restaurant_id = cart_rows[0][2].id
-
-    items_snapshot = [{
-        'id':              f.id,
-        'name':            f.name,
-        'restaurant_name': r.name,
-        'quantity':        c.quantity,
-        'price':           float(f.price),
-        'total':           float(c.quantity * f.price),
-    } for c, f, r in cart_rows]
-
-    amounts = {
-        'subtotal': subtotal, 'tax': tax, 'delivery_fee': delivery_fee,
-        'discount': discount, 'platform_fee': platform_fee,
-        'total': final_total, 'coupon_code': coupon_code or None,
-    }
-    return cart_rows, amounts, restaurant_id, items_snapshot
-
-
-def _create_order_record(data, amounts, restaurant_id, items_snapshot, payment_method,
-                          payment_status='pending', gateway_order_id=None):
-    """Persist Order + Payment record, notify, clear cart (if paid)."""
-    delivery_location = data.get('delivery_location') or {}
-    location_note = ''
-    if isinstance(delivery_location, dict):
-        parts = [str(delivery_location.get(k) or '').strip()
-                 for k in ('name', 'city', 'state')
-                 if str(delivery_location.get(k) or '').strip()]
-        if parts:
-            location_note = 'Location: ' + ', '.join(dict.fromkeys(parts))
-
-    order_notes = str(data.get('notes') or '').strip()[:1000]
-    if location_note:
-        order_notes = f'{order_notes}\n{location_note}'.strip()[:1000]
-
-    delivery_address = str(data.get('delivery_address') or '').strip()[:500]
-    if len(delivery_address) < 5:
-        raise ValueError('Delivery address looks too short.')
-
-    order = Order(
-        user_id=current_user.id,
-        restaurant_id=restaurant_id,
-        order_items=items_snapshot,
-        subtotal=amounts['subtotal'],
-        tax=amounts['tax'],
-        delivery_fee=amounts['delivery_fee'],
-        discount=amounts['discount'],
-        total_amount=amounts['total'],
-        delivery_address=delivery_address,
-        delivery_phone=data.get('delivery_phone', ''),
-        payment_method=payment_method,
-        payment_status=payment_status,
-        coupon_code=amounts.get('coupon_code'),
-        status='placed',
-        notes=order_notes,
-    )
-    if gateway_order_id:
-        order.razorpay_order_id = gateway_order_id
-
-    db.session.add(order)
-    db.session.flush()
-
-    for item in items_snapshot:
-        db.session.add(OrderItem(
-            order_id=order.id,
-            food_item_id=item.get('id'),
-            name=item['name'],
-            price=float(item['price']),
-            quantity=int(item['quantity']),
-            image=item.get('image'),
-        ))
-
-    payment_rec = Payment(
-        order_id=order.id,
-        user_id=current_user.id,
-        amount=amounts['total'],
-        payment_method=payment_method,
-        status=payment_status,
-        gateway_order_id=gateway_order_id,
-    )
-    db.session.add(payment_rec)
-
-    history = OrderStatusHistory(order_id=order.id, status='placed', note='Order placed by customer')
-    db.session.add(history)
-
-    coupon_code = amounts.get('coupon_code')
-    if coupon_code and amounts.get('discount', 0) > 0:
-        offer = Offer.query.filter_by(code=coupon_code).first()
-        if offer and not CouponUsage.query.filter_by(
-            offer_id=offer.id, user_id=current_user.id
-        ).first():
-            db.session.add(CouponUsage(
-                offer_id=offer.id, user_id=current_user.id, order_id=order.id,
-            ))
-            from sqlalchemy import update as _sa_update
-            res = db.session.execute(
-                _sa_update(Offer)
-                .where(
-                    db.and_(
-                        Offer.id == offer.id,
-                        db.or_(
-                            Offer.usage_limit.is_(None),
-                            Offer.used_count < Offer.usage_limit,
-                        ),
-                    )
-                )
-                .values(used_count=Offer.used_count + 1)
-            )
-            if res.rowcount == 0:
-                current_app.logger.warning(
-                    f'Offer {offer.code} usage_limit reached during order commit; '
-                    f'reverting discount on order {order.id}'
-                )
-                order.discount = 0.0
-                order.total_amount = round(
-                    order.subtotal + order.tax + order.delivery_fee + 5.0, 2
-                )
-                payment_rec.amount = order.total_amount
-
-    return order, payment_rec
-
-
-def _post_order_notifications(order, amounts):
-    """Fire admin + user notifications after order is committed."""
-    db.session.add(AdminNotification(
-        title='New Order',
-        message=f'Order #{order.id} placed by {current_user.name} — ₹{amounts["total"]}',
-        type='order',
-    ))
-    db.session.add(Notification(
-        user_id=current_user.id,
-        title='Order Placed! 🎉',
-        message=f'Your order #{order.id} is confirmed. Total: ₹{amounts["total"]}',
-        type='order_update',
-        link=url_for('account.orders'),
-    ))
-    db.session.commit()
-
-    try:
-        from utils.mail import send_order_confirmation
-        import threading
-        _user = current_user._get_current_object()
-        threading.Thread(
-            target=send_order_confirmation,
-            args=(_user, order),
-            daemon=True,
-        ).start()
-    except Exception as _me:
-        current_app.logger.warning(f'Order confirmation email failed to start: {_me}')
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # PAYMENT PAGES
 # ─────────────────────────────────────────────────────────────────────────────
+
 @payment_bp.route('/payment/success/<int:order_id>')
 @login_required
 def payment_success(order_id):
@@ -253,6 +52,7 @@ def payment_failed():
 # ─────────────────────────────────────────────────────────────────────────────
 # PAYMENT APIs
 # ─────────────────────────────────────────────────────────────────────────────
+
 @payment_bp.route('/api/orders/place', methods=['POST'])
 @login_required
 def place_order():
@@ -346,24 +146,21 @@ def create_razorpay_order():
 def verify_payment():
     """Verify Razorpay HMAC-SHA256 signature and confirm the order as paid."""
     try:
-        data               = request.get_json() or {}
-        rz_order_id        = data.get('razorpay_order_id', '')
-        rz_payment_id      = data.get('razorpay_payment_id', '')
-        rz_signature       = data.get('razorpay_signature', '')
-        order_id           = data.get('order_id')
+        data          = request.get_json() or {}
+        rz_order_id   = data.get('razorpay_order_id', '')
+        rz_payment_id = data.get('razorpay_payment_id', '')
+        rz_signature  = data.get('razorpay_signature', '')
+        order_id      = data.get('order_id')
 
         if not all([rz_order_id, rz_payment_id, rz_signature, order_id]):
             return jsonify({'success': False, 'message': 'Incomplete payment data'}), 400
 
-        key_secret = current_app.config.get('RAZORPAY_KEY_SECRET', '').encode()
-        msg        = f'{rz_order_id}|{rz_payment_id}'.encode()
-        expected   = hmac.new(key_secret, msg, hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(expected, rz_signature):
+        if not verify_razorpay_signature(rz_order_id, rz_payment_id, rz_signature):
             current_app.logger.warning(f'Payment signature mismatch for order {order_id}')
             return jsonify({'success': False, 'message': 'Payment verification failed'}), 400
 
         from sqlalchemy import update
-        now = datetime.now(timezone.utc)
+        now  = datetime.now(timezone.utc)
         stmt = (
             update(Order)
             .where(Order.id == order_id)
@@ -417,7 +214,6 @@ def verify_payment():
             order_id=order.id, status='placed',
             note=f'Payment confirmed via Razorpay ({rz_payment_id})'
         ))
-
         db.session.add(AdminNotification(
             title='Payment Received',
             message=f'Order #{order.id} paid ₹{order.total_amount} via {order.payment_method}',
@@ -460,8 +256,7 @@ def razorpay_webhook():
 
         received_sig = request.headers.get('X-Razorpay-Signature', '')
         body         = request.get_data()
-        expected     = hmac.new(webhook_secret.encode(), body, hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(expected, received_sig):
+        if not verify_webhook_signature(body, received_sig, webhook_secret):
             current_app.logger.warning('Webhook signature verification failed')
             return jsonify({'error': 'Invalid signature'}), 400
 

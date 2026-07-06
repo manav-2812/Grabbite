@@ -99,7 +99,7 @@ def api_home_search():
 
 @api_bp.route('/api/search')
 def api_search():
-    from blueprints.public import _DISHES  # static dish catalogue lives there
+    from utils.page_builders import _DISHES  # canonical location since Plan 4 refactor
 
     query       = ' '.join(request.args.get('q', '').split())
     search_type = request.args.get('type', 'all')
