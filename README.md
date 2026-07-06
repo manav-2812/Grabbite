@@ -1,4 +1,4 @@
-# 🍽️ GrabBite — Food Ordering Web Application
+# 🍽️ GrabBite — Full-Stack Food Ordering Platform
 
 <!-- CI badge -->
 
@@ -21,12 +21,14 @@
 ![GitHub issues](https://img.shields.io/github/issues/manav-2812/Grabbite?style=flat&logo=github&color=ef4444)
 ![GitHub last commit](https://img.shields.io/github/last-commit/manav-2812/Grabbite?style=flat&logo=github&color=10b981)
 
-GrabBite is a full-stack food ordering platform built with **Python (Flask)**. Customers can browse restaurants, explore menus, add dishes to a cart, and place orders online — with Razorpay payment integration, real-time order notifications via WebSockets, email confirmations, and a full admin panel.
+GrabBite is a production-grade, full-stack food ordering platform built with **Python (Flask)**. It mirrors the core flows of platforms like Zomato and Swiggy: customers browse restaurants, order food, and pay online — while restaurant owners manage menus and admins oversee everything from a live dashboard.
 
 ---
 
 ## 📋 Table of Contents
 
+- [Why This Is Interesting](#-why-this-is-interesting)
+- [Technical Highlights](#-technical-highlights--what-i-learned)
 - [Features](#-features)
 - [Tech Stack](#️-tech-stack)
 - [Architecture](#️-architecture)
@@ -43,6 +45,152 @@ GrabBite is a full-stack food ordering platform built with **Python (Flask)**. C
 - [Future Improvements](#-future-improvements)
 - [Author](#-author)
 - [Acknowledgements](#-acknowledgements)
+
+---
+
+## 🌟 Why This Is Interesting
+
+This is not a tutorial CRUD app. GrabBite solves the kinds of engineering problems that show up in real production systems — and the decisions made here are the same ones you'd face at a food-tech startup.
+
+### Scale & Scope
+
+| Metric | Value |
+|---|---|
+| **Database tables** | 16 (fully relational, with indexes and audit trails) |
+| **API endpoints** | 30+ (pages, JSON APIs, webhooks) |
+| **User roles** | 3 (Customer, Restaurant Owner, Admin) — each with distinct route guards |
+| **Test coverage** | 15 smoke tests across auth, routing, and JSON APIs via CI (GitHub Actions) |
+| **Lines of Python** | ~4,500 across 25+ modules |
+| **Payment flows** | 3 (COD, Razorpay online, GrabBite Wallet) |
+| **Order lifecycle states** | 8 (`placed → accepted → preparing → ready → picked → on_the_way → delivered / cancelled`) |
+
+### Real Problems Solved
+
+**1. Consistent money handling across three payment methods**
+The platform supports COD, Razorpay (UPI/card/net banking), and a built-in wallet — each with its own state machine. A single `Payment` model stores gateway IDs, HMAC signatures, and refund status so order reconciliation is always traceable. Razorpay webhooks are verified with `hmac.compare_digest` to prevent replay attacks.
+
+**2. Real-time order tracking without long-polling**
+Instead of hammering the server every few seconds, the app pushes order status changes to browsers via Flask-SocketIO. Users join authenticated rooms on connect; owners and admins join a separate `admin_users` room. This means a status update in the admin panel reflects instantly in the customer's browser — zero polling, zero extra load.
+
+**3. A cart that survives page reloads and logins**
+The cart is persisted in the database (not localStorage), so a customer can add items on mobile, log in on desktop, and pick up exactly where they left off. A `UniqueConstraint('user_id', 'food_item_id')` prevents duplicate rows; quantity is always an update, never an insert.
+
+**4. Security hardened from the ground up**
+Most Flask tutorials skip security. GrabBite didn't: custom CSRF protection on every state-changing request, `pbkdf2:sha256` password hashing, time-limited signed password-reset tokens via `itsdangerous`, `strong` session protection in production, rate limiting on login/signup/payment endpoints, and a full set of security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `HSTS`).
+
+**5. One codebase, three database backends**
+The `DATABASE_URL` env var switches between SQLite (dev), PostgreSQL (production), and MySQL/MariaDB — with the SQLAlchemy `postgres://` → `postgresql+psycopg2://` scheme fix applied automatically so Heroku deployments don't break silently.
+
+### Architecture Decisions Explained
+
+| Decision | Why |
+|---|---|
+| **Flask over Django** | Deliberately chosen for transparency — you see every wire-up (extensions, blueprints, CSRF). Django hides this; Flask forces you to understand it. |
+| **SQLite → PostgreSQL via `DATABASE_URL`** | Zero friction locally; swap one env var for production scale. SQLAlchemy ORM abstracts the difference. |
+| **Flask-SocketIO threading mode** | Avoids the eventlet monkey-patch footgun. Simpler, more debuggable, and sufficient for demo/small-scale production. Eventlet can be enabled with one line. |
+| **Custom CSRF (not Flask-WTF)** | WTF-CSRF exempts JSON APIs by default, which left gaps. The custom `before_request` hook covers form-encoded POST, JSON body, and header — all paths. |
+| **Blueprints for each domain** | `public`, `account`, `payment`, `api`, `admin`, `owner` — each owns its URL namespace and can be tested or deployed independently. |
+| **Dual order line-item storage** | `Order.order_items` (JSON) for backward compat + `OrderItem` table (normalized) for querying. New orders write both; old data isn't broken. |
+| **Session notification cache** | Notification count is cached in the session for 30 s to avoid a DB hit on every page render. Invalidated on write. |
+
+---
+
+## 🧠 Technical Highlights — What I Learned
+
+### 1. Building CSRF Protection from First Principles
+
+Flask-WTF's CSRF skips JSON endpoints by design. GrabBite's `before_request` hook validates a token from **four different locations** — `X-CSRF-Token` header, `X-CSRFToken` header (Django-style alias for admin templates), JSON body `_csrf` field, and form field `_csrf_token`. This closed a real gap where form-encoded POST requests (profile update, address save) had no CSRF protection at all.
+
+```python
+def _csrf_is_valid():
+    sent = (
+        request.headers.get('X-CSRF-Token', '')
+        or request.headers.get('X-CSRFToken', '')
+        or (request.get_json(silent=True) or {}).get('_csrf')
+        or request.form.get('_csrf_token', '')
+    )
+    stored = session.get('_csrf_token', '')
+    return bool(sent) and bool(stored) and hmac.compare_digest(sent, stored)
+```
+
+**Lesson:** `hmac.compare_digest` is essential — string `==` is vulnerable to timing attacks on auth tokens.
+
+### 2. Razorpay Webhook Security — HMAC Signature Verification
+
+Razorpay sends a `X-Razorpay-Signature` header with every webhook. The server verifies it by computing `HMAC-SHA256(webhook_secret, raw_body)` and comparing with `compare_digest`. Without this, any attacker who discovers the webhook URL can fake a "payment successful" event and get free food.
+
+```python
+def verify_webhook_signature(raw_body: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+```
+
+**Lesson:** Never trust payment gateway callbacks without cryptographic verification. The raw body (not parsed JSON) must be used for signing.
+
+### 3. WebSocket Room Architecture
+
+Flask-SocketIO's room system maps directly to user roles. On connect:
+- All authenticated users join `authenticated_users` — receives order updates
+- Admins additionally join `admin_users` — receives new-order alerts for the live dashboard
+
+The `broadcast_update()` helper is a single call-site throughout the app — it wraps `socketio.emit` with error suppression so a disconnected socket never crashes an order placement.
+
+**Lesson:** Rooms are the right primitive for role-scoped real-time events. Don't try to filter events client-side — filter them server-side at emit time.
+
+### 4. Blueprint Refactoring — Breaking Up a Monolith
+
+The project started as a single `app.py` file (common Flask beginner pattern). It was split into 6 blueprints (`public`, `account`, `payment`, `api`, `admin`, `owner`) and 12 utility modules. The critical challenge: **circular imports**. The solution was a `db.py` singleton (SQLAlchemy instance lives there, not in `app.py`) and an `extensions.py` for shared objects — both imported by blueprints without importing `app.py`.
+
+```
+db.py          ← SQLAlchemy instance (no Flask app import)
+extensions.py  ← mail, limiter, socketio instances
+models/        ← import from db.py only
+blueprints/    ← import from models, db, extensions
+app.py         ← imports everything, wires it up last
+```
+
+**Lesson:** The circular import problem in Flask is a design smell — it's solved by dependency injection and the application factory pattern, not by creative import ordering.
+
+### 5. Secure File Uploads with Server-Side Validation
+
+Uploaded images (profile photos, dish images, restaurant banners) are validated in two layers:
+1. **Extension allowlist** — only `{png, jpg, jpeg, gif, webp}` accepted
+2. **Magic-byte check** (`_looks_like_image`) — reads the first 12 bytes to verify the file is actually an image, not a renamed `.php` or `.exe`
+
+Filenames are sanitized with `werkzeug.secure_filename` before saving. Images are resized with Pillow to a max of 800×800 px to prevent disk exhaustion.
+
+**Lesson:** Client-supplied MIME types and extensions are untrusted. Always validate file content server-side.
+
+### 6. Production Secret Key Management
+
+The app refuses to start in production without `SECRET_KEY`. In development, a stable key is *derived* from the project path so sessions survive server restarts during iteration — without hardcoding a weak key. A warning is printed so developers know they're not running a real secret.
+
+```python
+def _resolve_secret_key() -> str:
+    key = os.environ.get('SECRET_KEY')
+    if key:
+        return key
+    if _is_production:
+        raise RuntimeError('SECRET_KEY is required in production.')
+    # Dev: derive stable key from file path — survives restarts, never committed
+    return hashlib.sha256((db_url + '|' + __file__).encode()).hexdigest()
+```
+
+**Lesson:** "Just use a random key in dev" causes constant session invalidation. Deriving from a stable seed is the ergonomic middle ground.
+
+### 7. Order Line-Item Migration Without Breaking Old Data
+
+The original `Order` model stored line items as a JSON blob (`order_items = db.Column(db.JSON)`). This is queryable but not relational — you can't ask "which food items appear most in orders?" without parsing JSON in Python.
+
+The fix: add a normalized `OrderItem` table (foreign-keyed to both `Order` and `FoodItem`) while keeping the JSON column for backward compatibility. New orders write to **both**. Old orders are still readable via the JSON column. A migration backfill script is provided.
+
+**Lesson:** Dual-write is a safe migration pattern for production systems where you can't afford downtime or data loss during schema changes.
+
+### 8. Rate Limiting with Graceful Degradation
+
+`Flask-Limiter` is imported inside a `try/except` block. If the library is missing, a `_NullLimiter` stub is injected so `@limiter.limit(...)` decorators on routes become no-ops rather than import errors. The same pattern applies to Razorpay — COD works without the SDK installed.
+
+**Lesson:** Optional dependencies should degrade gracefully, not crash. Use stub objects to keep decorator syntax working without the real library.
 
 ---
 
@@ -136,40 +284,86 @@ GrabBite is a full-stack food ordering platform built with **Python (Flask)**. C
 graph TB
     subgraph "Client Layer"
         A[User Browser]
+        WS[WebSocket Client<br/>Socket.IO]
     end
 
-    subgraph "Web Server"
-        B[Nginx / Gunicorn]
-        C[Flask App]
+    subgraph "Reverse Proxy"
+        B[Nginx]
     end
 
-    subgraph "Application Layer"
-        D[Blueprints]
-        E[Auth Routes]
-        F[Admin Routes]
-        G[API Endpoints]
-        H[Socket.IO Server]
+    subgraph "Application Server"
+        C[Gunicorn / Waitress<br/>WSGI]
+        D[Flask App Factory<br/>app.py]
+    end
+
+    subgraph "Blueprints — Route Handlers"
+        E[public_bp<br/>Home · Restaurants · Gallery · Search]
+        F[account_bp<br/>Login · Signup · Profile · Wishlist]
+        G[payment_bp<br/>COD · Razorpay · Webhook]
+        H[api_bp<br/>Cart · Orders · Search JSON]
+        I[admin_bp<br/>Dashboard · Users · Reports]
+        J[owner_bp<br/>Dishes · Order Status]
+    end
+
+    subgraph "Services"
+        K[Flask-SocketIO<br/>Room-based push events]
+        L[Flask-Limiter<br/>Rate limiting]
+        M[Flask-Mail<br/>SMTP email]
     end
 
     subgraph "Data Layer"
-        I[(SQLite / PostgreSQL)]
-        J[Static Files]
-        K[User Uploads]
+        N[(SQLite · PostgreSQL<br/>16 tables)]
+        O[static/uploads/<br/>Images]
     end
 
-    subgraph "External Services"
-        L[Razorpay API]
-        M[SMTP Server]
+    subgraph "External"
+        P[Razorpay API<br/>Payment + Webhook]
+        Q[SMTP Server<br/>Gmail / SendGrid]
     end
 
-    A --> B
+    A -->|HTTP| B
+    A <-->|WebSocket| B
     B --> C
-    C --> D & E & F & G & H
-    D & E & F & G --> I
-    H --> A
-    G --> L
-    E --> M
-    C --> J & K
+    C --> D
+    D --> E & F & G & H & I & J
+    E & F & G & H & I & J --> N
+    G -->|Create order| P
+    P -->|Webhook HMAC verify| G
+    D --> K
+    K -->|Emit order_update| WS
+    D --> L
+    F -->|Send email| M
+    M --> Q
+    D --> O
+```
+
+### Request Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Nginx
+    participant Flask
+    participant DB
+    participant Razorpay
+    participant SocketIO
+
+    Browser->>Nginx: POST /api/payment/create-order
+    Nginx->>Flask: Forward + X-Real-IP header
+    Flask->>Flask: CSRF token validation (before_request)
+    Flask->>Flask: @login_required check
+    Flask->>DB: Build order from cart items
+    Flask->>Razorpay: Create Razorpay order (REST)
+    Razorpay-->>Flask: razorpay_order_id
+    Flask-->>Browser: {razorpay_order_id, key_id}
+    Browser->>Razorpay: Open checkout modal
+    Razorpay-->>Browser: Payment success callback
+    Browser->>Flask: POST /api/payment/verify (signature)
+    Flask->>Flask: HMAC-SHA256 signature verify
+    Flask->>DB: Mark order paid, clear cart
+    Flask->>SocketIO: broadcast_update('order_update')
+    SocketIO-->>Browser: Real-time status push
+    Flask-->>Browser: {success: true, order_id}
 ```
 
 ### Database ER Diagram
@@ -235,6 +429,7 @@ erDiagram
         string method
         string status
         string razorpay_order_id
+        string gateway_signature
     }
 ```
 
@@ -247,6 +442,11 @@ Grabbite/
 │
 ├── app.py                    # App factory — config, extensions, blueprints, socket events
 ├── run.py                    # Entry point — dev server (Flask) or prod server (Waitress)
+├── db.py                     # SQLAlchemy db instance (avoids circular imports)
+├── extensions.py             # Shared extension objects (mail, limiter, socketio)
+├── config.py                 # Config class
+├── auth_routes.py            # Login, signup, logout, profile update
+│
 ├── models/                   # SQLAlchemy database models (one file per domain)
 │   ├── __init__.py           # Re-exports all classes — no import changes needed
 │   ├── constants.py          # Shared enums: ROLES, ORDER_STATUSES, PAYMENT_*
@@ -261,34 +461,126 @@ Grabbite/
 │   ├── support.py            # SupportTicket
 │   ├── wishlist.py           # Wishlist
 │   └── admin.py              # AdminActivity
-├── admin_routes.py           # Admin panel routes (/admin/*)
-├── auth_routes.py            # Login, signup, logout, profile update
-├── db.py                     # SQLAlchemy db instance (avoids circular imports)
-├── extensions.py             # Shared extension objects (mail, limiter, socketio)
-├── config.py                 # Config class
 │
 ├── blueprints/               # Flask blueprints (feature modules)
+│   ├── __init__.py           # Registers and exports all blueprints
 │   ├── public.py             # Public pages: home, restaurants, gallery, blogs, search
 │   ├── account.py            # User account: profile, addresses, wishlist, notifications
 │   ├── payment.py            # Checkout, Razorpay order creation & webhook
-│   ├── api_bp.py             # All /api/* JSON endpoints (cart, search, orders, etc.)
-│   └── owner/
-│       └── routes.py         # Restaurant owner dashboard routes
+│   ├── admin/                # Admin panel blueprint (split by resource)
+│   │   ├── __init__.py       # Registers admin sub-routes
+│   │   ├── dashboard.py      # Live stats & charts
+│   │   ├── users.py          # User management
+│   │   ├── restaurants.py    # Restaurant approvals & management
+│   │   ├── orders.py         # All orders view
+│   │   ├── dishes.py         # Dish management across restaurants
+│   │   ├── blogs.py          # Blog management
+│   │   ├── offers.py         # Discount coupons & offers
+│   │   ├── payments.py       # Payment records
+│   │   ├── reviews.py        # Customer reviews
+│   │   ├── support.py        # Support tickets
+│   │   ├── notifications.py  # Admin notifications
+│   │   ├── database.py       # Raw database viewer
+│   │   └── exports.py        # Data export utilities
+│   ├── api/                  # JSON API blueprint (split by resource)
+│   │   ├── __init__.py       # Registers all /api/* endpoints
+│   │   ├── cart.py           # Cart CRUD endpoints
+│   │   ├── search.py         # Search across restaurants, dishes, blogs
+│   │   ├── address.py        # Delivery address management
+│   │   ├── coupon.py         # Coupon validation & application
+│   │   ├── wishlist.py       # Wishlist add/remove
+│   │   ├── reviews.py        # Review submission
+│   │   ├── notifications.py  # Notification read/clear
+│   │   └── misc.py           # Miscellaneous helpers
+│   └── owner/                # Restaurant owner blueprint
+│       ├── __init__.py
+│       └── routes.py         # Owner dashboard, dish & order management
 │
 ├── utils/                    # Shared utilities
-│   ├── helpers.py            # Jinja2 template helpers, image URL resolver
+│   ├── helpers.py            # Jinja2 template helpers, image URL resolver, safe_next_url
 │   ├── mail.py               # Email functions (order confirm, password reset, welcome)
-│   └── decorators.py         # @admin_required, @owner_required decorators
+│   ├── decorators.py         # @admin_required, @owner_required decorators
+│   ├── order_helpers.py      # _build_order_from_cart, _create_order_record
+│   ├── razorpay_helpers.py   # HMAC signature verification, Razorpay client
+│   ├── socket_events.py      # WebSocket room registration and broadcast_update
+│   ├── uploads.py            # File validation (extension + magic-byte), resize, save
+│   ├── tokens.py             # Password-reset token generation & verification
+│   ├── seed_data.py          # Homepage showcase data seeder
+│   ├── image_data.py         # Seed image URLs for restaurants & dishes
+│   └── page_builders.py      # Heavy page-building logic extracted from blueprints
 │
 ├── templates/                # Jinja2 HTML templates
 │   ├── base.html             # Master layout (navbar, footer, cart drawer)
 │   ├── index.html            # Homepage
-│   ├── admin/                # Admin panel templates
-│   ├── owner/                # Restaurant owner templates
-│   └── emails/               # Transactional HTML email templates
+│   ├── login.html            # Login page
+│   ├── signup.html           # Customer registration
+│   ├── signup_owner.html     # Restaurant owner registration
+│   ├── restaurants.html      # Restaurant listing
+│   ├── restaurant_menu.html  # Restaurant menu & dishes
+│   ├── gallery.html          # Full dish catalogue
+│   ├── dish_detail.html      # Individual dish detail
+│   ├── cart.html             # Shopping cart
+│   ├── checkout.html         # Checkout & address selection
+│   ├── orders.html           # Order history
+│   ├── profile.html          # User profile & settings
+│   ├── address.html          # Address management
+│   ├── wishlist.html         # Saved dishes
+│   ├── notifications.html    # In-app notifications
+│   ├── blogs.html            # Blog listing
+│   ├── blog_detail.html      # Blog article
+│   ├── search.html           # Search results
+│   ├── payment_success.html  # Payment success confirmation
+│   ├── payment_failed.html   # Payment failure page
+│   ├── forgot_password.html  # Password reset request
+│   ├── reset_password.html   # Password reset form
+│   ├── about.html            # About page
+│   ├── help.html             # Help & FAQ
+│   ├── careers.html          # Careers page
+│   ├── offer_details.html    # Offer detail
+│   ├── database_viewer.html  # Raw DB viewer (admin)
+│   ├── admin/                # Admin panel templates (18 files)
+│   │   ├── base.html         # Admin layout
+│   │   ├── dashboard.html    # Live stats dashboard
+│   │   ├── users.html        # User management
+│   │   ├── restaurants.html  # Restaurant management
+│   │   ├── orders.html       # Orders overview
+│   │   ├── dishes.html       # Dishes management
+│   │   ├── blogs.html        # Blog management
+│   │   ├── add_blog.html     # Add blog form
+│   │   ├── edit_blog.html    # Edit blog form
+│   │   ├── add_dish.html     # Add dish form
+│   │   ├── edit_dish.html    # Edit dish form
+│   │   ├── add_restaurant.html
+│   │   ├── edit_restaurant.html
+│   │   ├── offers.html       # Offers & coupons
+│   │   ├── payments.html     # Payment records
+│   │   ├── reviews.html      # Customer reviews
+│   │   ├── support.html      # Support tickets
+│   │   └── notifications.html
+│   ├── owner/                # Restaurant owner templates (6 files)
+│   │   ├── base.html         # Owner layout
+│   │   ├── dashboard.html    # Owner dashboard
+│   │   ├── dishes.html       # Dish listing
+│   │   ├── dish_form.html    # Add/edit dish form
+│   │   ├── orders.html       # Incoming orders
+│   │   └── profile.html      # Owner profile
+│   ├── emails/               # Transactional HTML email templates (6 files)
+│   │   ├── order_confirmation.html
+│   │   ├── order_status.html
+│   │   ├── password_reset.html
+│   │   ├── password_reset_success.html
+│   │   ├── restaurant_approved.html
+│   │   └── welcome.html
+│   └── errors/               # HTTP error pages
+│       ├── 404.html
+│       └── 500.html          # (also 403.html)
 │
 ├── static/                   # Static assets served directly
-│   ├── css/                  # Stylesheets (modern.css, style.css, etc.)
+│   ├── css/                  # Stylesheets
+│   │   ├── modern.css        # Primary custom styles
+│   │   ├── style.css         # Base styles
+│   │   ├── search.css        # Search page styles
+│   │   └── offers.css        # Offers page styles
 │   ├── js/                   # JavaScript files
 │   ├── img/                  # Static images (placeholders, fallbacks)
 │   └── uploads/              # User-uploaded files (profile photos, dish images)
@@ -299,13 +591,13 @@ Grabbite/
 ├── docs/                     # Supplementary documentation
 │   └── DEPLOYMENT.md         # Full deployment guide (VPS, Docker, cloud)
 │
-├── migrations/               # Database migration files (Flask-Migrate)
+├── migrations/               # Database migration files (Flask-Migrate / Alembic)
 │
 ├── tests/                    # Test suite
-│   └── test_smoke.py         # Smoke tests (15 tests)
+│   └── test_smoke.py         # 15 smoke tests — auth, routing, JSON API, 404
 │
 ├── scripts/
-│   └── migrate_db.py         # Database migration helper script
+│   └── migrate_db.py         # Database initialisation & seed script
 │
 ├── .github/
 │   └── workflows/ci.yml      # GitHub Actions CI (Python 3.11 + 3.12)
@@ -510,6 +802,13 @@ Full documentation is in [`.env.example`](.env.example). Key variables:
 | `/admin/support`     | Support tickets                          |
 | `/admin/database`    | Raw database viewer                      |
 
+### Health Probes
+
+| Method | URL        | Description                              |
+| ------ | ---------- | ---------------------------------------- |
+| `GET`  | `/healthz` | Liveness probe — returns `200` if alive  |
+| `GET`  | `/readyz`  | Readiness probe — checks DB connectivity |
+
 ---
 
 ## 🗄️ Database Schema
@@ -525,7 +824,7 @@ The database has **16 tables**:
 | `orders`               | Placed orders with full status lifecycle                         |
 | `order_items`          | Individual items within an order (snapshot at purchase time)     |
 | `order_status_history` | Full audit trail of status changes with timestamps               |
-| `payments`             | Payment records (method, status, Razorpay IDs)                   |
+| `payments`             | Payment records (method, status, Razorpay IDs, HMAC signature)   |
 | `addresses`            | Multiple saved delivery addresses per user                       |
 | `reviews`              | Restaurant ratings and comments (one per user per restaurant)    |
 | `blogs`                | Blog posts with author, image, and content                       |
@@ -550,11 +849,13 @@ The database has **16 tables**:
 | **Session Protection**  | `strong` mode — rotates session on IP/user-agent change      |
 | **Rate Limiting**       | Login, signup, password reset, and payment endpoints         |
 | **CSRF Protection**     | Custom token validation on all state-changing POST requests  |
-| **File Upload Safety**  | Filenames sanitised with `secure_filename`; 16 MB size limit |
+| **File Upload Safety**  | Filenames sanitised with `secure_filename`; magic-byte check; 16 MB size limit |
 | **SQL Injection**       | SQLAlchemy ORM — all queries are parameterised               |
 | **Password Reset**      | Time-limited (30 min), signed tokens via `itsdangerous`      |
+| **Webhook Verification**| Razorpay webhooks verified with `HMAC-SHA256 + compare_digest` |
 | **Secret Key Guard**    | App refuses to start in production without `SECRET_KEY`      |
-| **Responsive Security** | Mobile-first; HTTPS auto-enforced in production config       |
+| **Security Headers**    | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `HSTS` (prod) |
+| **Open Redirect Guard** | `safe_next_url()` validates `?next=` against same-origin before redirect |
 
 ---
 
@@ -564,8 +865,6 @@ The database has **16 tables**:
 
 ![App Preview](assets/screenshots/installation.gif)
 _Animated walkthrough — Homepage → Login → Restaurants → Menu → Cart → Admin → Gallery_
-
----
 
 ### Homepage
 
@@ -741,6 +1040,8 @@ The included `Dockerfile` and `docker-compose.yml` are ready to use. Set your se
 - [ ] HTTPS / SSL certificate configured
 - [ ] SMTP credentials configured for emails
 - [ ] Razorpay **live** keys set (not test keys)
+- [ ] `RAZORPAY_WEBHOOK_SECRET` set and endpoint registered in Razorpay dashboard
+- [ ] `SOCKETIO_ALLOWED_ORIGINS` restricted to your domain
 
 ---
 
@@ -751,6 +1052,8 @@ The included `Dockerfile` and `docker-compose.yml` are ready to use. Set your se
 - **AI Chatbot** — order assistance and FAQs
 - **Mobile App** — React Native / Flutter client
 - **Multi-language Support** — i18n for regional languages
+- **Content Security Policy** — strict CSP once inline scripts are moved to external files
+- **Redis-backed Sessions** — for horizontal scaling across multiple Gunicorn workers
 
 ---
 
