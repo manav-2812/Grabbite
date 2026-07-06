@@ -18,10 +18,17 @@ try:
 except ImportError:
     serve = None
 
-# Railway injects PORT automatically; default to 8000 for Docker, 5000 for local dev
-HOST  = os.getenv('HOST',  '0.0.0.0')
-PORT  = int(os.getenv('PORT', 8000))
+# Railway / Render inject PORT at runtime. Guard against the literal '$PORT'
+# string that appears when CMD exec-form bypasses shell variable expansion.
+HOST  = os.getenv('HOST', '0.0.0.0')
+_port_raw = os.getenv('PORT', '8000').strip().lstrip('$')
+try:
+    PORT = int(_port_raw)
+except ValueError:
+    print(f"⚠️  Invalid PORT value '{_port_raw}', defaulting to 8000")
+    PORT = 8000
 DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
+
 
 def run_development_server():
     """Run the application in development mode"""
