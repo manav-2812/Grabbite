@@ -1,7 +1,7 @@
 # GrabBite — Full-Stack Food Delivery Platform
 
 [![CI](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml/badge.svg)](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=flat&logo=railway&logoColor=white)](https://grabbite.up.railway.app)
+[![Live on Railway](https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=flat&logo=railway&logoColor=white)](https://web-production-9db5f.up.railway.app)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Primary%20DB-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -20,7 +20,20 @@
 
 ---
 
+## 🚀 Live Demo
+
+> **Deployed on Railway** → [https://web-production-9db5f.up.railway.app](https://web-production-9db5f.up.railway.app)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Customer | `customer@demo.com` | `demo1234` |
+| Restaurant Owner | `owner@demo.com` | `demo1234` |
+| Admin | *(set via env on deploy)* | — |
+
+---
+
 ## Table of Contents
+
 
 - [Platform at a Glance](#platform-at-a-glance)
 - [Demo Accounts](#demo-accounts)

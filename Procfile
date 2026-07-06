@@ -1,1 +1,1 @@
-web: python run.py
+gweb: python run.py
