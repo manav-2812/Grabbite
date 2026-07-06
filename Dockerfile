@@ -35,8 +35,11 @@ COPY --from=builder /install /usr/local
 # Copy application source (excludes anything in .dockerignore)
 COPY . .
 
-# Copy Alembic migrations (lives at project root, one level above Grabbite/)
-COPY migrations/ ../migrations/
+# Copy Alembic migrations if present; create target dir either way so
+# Flask-Migrate / Alembic doesn't error at runtime.
+# NOTE: commit your migrations/env.py + migrations/versions/ once initialised.
+RUN mkdir -p ../migrations
+COPY migrat[i]ons/ ../migrations/
 
 
 # Create writable upload directory
