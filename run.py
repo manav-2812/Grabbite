@@ -1,17 +1,21 @@
 import os
 from app import app
 
-# Run DB migrations automatically on every startup.
-# Flask-Migrate / Alembic is idempotent — if already at head, this is a no-op.
-# This avoids a manual `flask db upgrade` step after every deploy.
-try:
-    from flask_migrate import upgrade as _db_upgrade
-    with app.app_context():
-        _db_upgrade()
-    print('✅ DB migrations applied (or already up to date)')
-except Exception as _mig_err:
-    print(f'⚠️  DB migration check failed: {_mig_err}')
-    # Don't crash the server — schema may still be usable.
+# Run DB migrations in a background thread so a slow DB connection
+# cannot block server startup and fail the healthcheck.
+import threading as _threading
+
+def _run_migrations():
+    try:
+        from flask_migrate import upgrade as _db_upgrade
+        with app.app_context():
+            _db_upgrade()
+        print('✅ DB migrations applied (or already up to date)')
+    except Exception as _mig_err:
+        print(f'⚠️  DB migration check failed: {_mig_err}')
+
+_threading.Thread(target=_run_migrations, daemon=True).start()
+
 
 try:
     from waitress import serve
