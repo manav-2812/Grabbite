@@ -448,7 +448,7 @@ _DISHES = {
 # ─────────────────────────────────────────────────────────────────────────────
 @public_bp.route('/')
 def index():
-    from app import _food_photo  # import from app to share the same Pexels cache dict
+    from utils.image_data import food_photo as _food_photo  # moved from app.py in Plan 2 refactor
     categories = [
         ('Pizza', 'fa-pizza-slice'), ('Burger', 'fa-burger'), ('Biryani', 'fa-bowl-rice'),
         ('Chinese', 'fa-bowl-food'), ('Momos', 'fa-utensils'), ('South Indian', 'fa-leaf'),

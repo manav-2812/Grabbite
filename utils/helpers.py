@@ -7,8 +7,7 @@ from urllib.parse import urlparse
 from flask import current_app
 
 
-# H3 fix: keep this in sync with the canonical implementation in app.py.
-# The DB stores legacy defaults with underscores ('food_default.jpg') but the
+# H3 fix: the DB stores legacy defaults with underscores ('food_default.jpg') but the
 # on-disk assets were renamed to dashes ('food-default.jpg'). Translate them.
 _UNDERSCORE_TO_DASH = {
     'food_default.jpg':       'food-default.jpg',
@@ -58,20 +57,22 @@ def food_image_url(image_field: str) -> str:
     if not image_field:
         return '/static/img/placeholder-food.jpg'
 
-    field = str(image_field).strip()
+    field = image_field.strip()
 
     if field.startswith(('http://', 'https://')):
         return field
 
     candidate = _UNDERSCORE_TO_DASH.get(field, field)
 
+    static_folder = current_app.static_folder or ''
+
     # Check uploads dir
-    upload_path = os.path.join(current_app.static_folder, 'uploads', field)
+    upload_path = os.path.join(static_folder, 'uploads', field)
     if os.path.exists(upload_path):
         return f'/static/uploads/{field}'
 
     # Check static/img for the dash-renamed asset first
-    img_dir = os.path.join(current_app.static_folder, 'img')
+    img_dir = os.path.join(static_folder, 'img')
     if os.path.exists(os.path.join(img_dir, candidate)):
         return f'/static/img/{candidate}'
     if os.path.exists(os.path.join(img_dir, field)):
@@ -85,6 +86,27 @@ def food_image_url(image_field: str) -> str:
 def format_currency(amount: float, symbol: str = '₹') -> str:
     """Format a float as an Indian Rupee string."""
     return f'{symbol}{amount:,.2f}'
+
+
+def _update_restaurant_rating(restaurant_id: int) -> None:
+    """Recalculate and persist the average rating for a restaurant.
+
+    Extracted from app.py (Plan 2 refactor). Safe to call from any blueprint
+    or utility that has an active app context.
+    """
+    from models import Review, Restaurant
+    from db import db
+    try:
+        reviews = Review.query.filter_by(restaurant_id=restaurant_id).all()
+        if reviews:
+            avg = sum(r.rating for r in reviews) / len(reviews)
+            restaurant = Restaurant.query.get(restaurant_id)
+            if restaurant:
+                restaurant.rating        = round(avg, 1)
+                restaurant.total_reviews = len(reviews)
+                db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f'_update_restaurant_rating error: {e}')
 
 
 def register_template_globals(app):

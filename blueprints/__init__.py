@@ -9,6 +9,6 @@ Exposes the four application blueprints:
 from .public  import public_bp
 from .account import account_bp
 from .payment import payment_bp
-from .api_bp  import api_bp
+from .api    import api_bp
 
 __all__ = ['public_bp', 'account_bp', 'payment_bp', 'api_bp']
