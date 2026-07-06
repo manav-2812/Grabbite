@@ -1,6 +1,7 @@
 # GrabBite — Full-Stack Food Delivery Platform
 
 [![CI](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml/badge.svg)](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=flat&logo=railway&logoColor=white)](https://grabbite.up.railway.app)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Primary%20DB-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -858,7 +859,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines. Pull requests are welco
 
 **Manav Baghel**
 
-Full-stack developer. Built GrabBite as a production-grade demonstration of Python (Flask) applied to a real-world food delivery domain — covering payment gateway integration, real-time WebSockets, role-based access control, and deployment on PostgreSQL + Railway.
+Built GrabBite as a production-grade demonstration of Python (Flask) applied to a real-world food delivery domain — covering payment gateway integration, real-time WebSockets, role-based access control, and deployment on PostgreSQL + Railway.
 
 - Email: [manavraj854@gmail.com](mailto:manavraj854@gmail.com)
 - GitHub: [@manav-2812](https://github.com/manav-2812)

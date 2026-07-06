@@ -26,6 +26,16 @@ from utils.razorpay_helpers import (
 
 payment_bp = Blueprint('payment', __name__)
 
+# ── Rate limiter — same fallback pattern as account.py
+try:
+    from app import limiter as _limiter  # type: ignore[import]
+except Exception:
+    class _NullLimiter:  # type: ignore[no-redef]
+        def limit(self, *a, **kw):
+            def deco(fn): return fn
+            return deco
+    _limiter = _NullLimiter()  # type: ignore[assignment]
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PAYMENT PAGES
@@ -63,6 +73,7 @@ def place_order():
 
 @payment_bp.route('/api/payment/cod', methods=['POST'])
 @login_required
+@_limiter.limit('20 per minute')
 def payment_cod():
     """Place a Cash on Delivery order directly."""
     try:
@@ -89,6 +100,7 @@ def payment_cod():
 
 @payment_bp.route('/api/payment/create-razorpay-order', methods=['POST'])
 @login_required
+@_limiter.limit('20 per minute')
 def create_razorpay_order():
     """Create a Razorpay order and a pending Order record. Returns gateway details to frontend."""
     try:
@@ -143,6 +155,7 @@ def create_razorpay_order():
 
 @payment_bp.route('/api/payment/verify', methods=['POST'])
 @login_required
+@_limiter.limit('20 per minute')
 def verify_payment():
     """Verify Razorpay HMAC-SHA256 signature and confirm the order as paid."""
     try:

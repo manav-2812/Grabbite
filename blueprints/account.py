@@ -15,6 +15,17 @@ from models import (User, Order, Cart, FoodItem, Restaurant, Address)
 
 account_bp = Blueprint('account', __name__)
 
+# ── Rate limiter — imported at module load; falls back to a no-op stub if
+# flask_limiter is not installed (matches app.py's _NullLimiter pattern).
+try:
+    from app import limiter as _limiter  # type: ignore[import]
+except Exception:
+    class _NullLimiter:  # type: ignore[no-redef]
+        def limit(self, *a, **kw):
+            def deco(fn): return fn
+            return deco
+    _limiter = _NullLimiter()  # type: ignore[assignment]
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TOKEN HELPERS (password reset)
@@ -46,6 +57,7 @@ def login():
 
 
 @account_bp.route('/login', methods=['POST'])
+@_limiter.limit('10 per minute')
 def login_post_route():
     from auth_routes import login_post
     return login_post()
@@ -59,6 +71,7 @@ def signup():
 
 
 @account_bp.route('/signup', methods=['POST'])
+@_limiter.limit('5 per minute')
 def signup_post_route():
     from auth_routes import signup_post
     return signup_post()
@@ -74,6 +87,7 @@ def signup_owner():
 
 
 @account_bp.route('/signup/restaurant', methods=['POST'])
+@_limiter.limit('5 per minute')
 def signup_owner_post_route():
     from auth_routes import signup_owner_post
     return signup_owner_post()

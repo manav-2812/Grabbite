@@ -8,12 +8,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, current_user, login_required
 from datetime import datetime, timezone
 import os
+import re
 import secrets
 
 from models import User, Notification, db
 from utils.uploads import allowed_file, _looks_like_image, resize_image, save_upload
 
 auth = Blueprint('auth', __name__)
+
+# Basic RFC-5322-inspired email regex — catches most typos without a library dep
+_EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
 
 
 
@@ -126,8 +130,12 @@ def signup_post():
         flash('Name must be at least 2 characters.', 'error')
         return redirect(url_for('account.signup'))
 
-    if len(password) < 6:
-        flash('Password must be at least 6 characters.', 'error')
+    if not _EMAIL_RE.match(email):
+        flash('Please enter a valid email address.', 'error')
+        return redirect(url_for('account.signup'))
+
+    if len(password) < 8:
+        flash('Password must be at least 8 characters.', 'error')
         return redirect(url_for('account.signup'))
 
     if password != confirm_password:
@@ -217,8 +225,8 @@ def update_profile():
         if not check_password_hash(user.password, current_password):
             flash('Current password is incorrect.', 'error')
             return redirect(url_for('account.profile'))
-        if len(new_password) < 6:
-            flash('New password must be at least 6 characters.', 'error')
+        if len(new_password) < 8:
+            flash('New password must be at least 8 characters.', 'error')
             return redirect(url_for('account.profile'))
         if new_password != confirm_password:
             flash('New passwords do not match.', 'error')
@@ -276,8 +284,12 @@ def signup_owner_post():
         flash('Please fill in all required fields.', 'error')
         return redirect(url_for('account.signup_owner'))
 
-    if len(password) < 6:
-        flash('Password must be at least 6 characters.', 'error')
+    if not _EMAIL_RE.match(email):
+        flash('Please enter a valid email address.', 'error')
+        return redirect(url_for('account.signup_owner'))
+
+    if len(password) < 8:
+        flash('Password must be at least 8 characters.', 'error')
         return redirect(url_for('account.signup_owner'))
 
     if password != confirm_password:

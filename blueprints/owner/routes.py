@@ -14,13 +14,12 @@ from flask_login import login_required, current_user
 from sqlalchemy import func
 from db import db
 from models import (
-    Restaurant, FoodItem, Order, OrderStatusHistory,
+    Restaurant, FoodItem, Order, OrderItem, OrderStatusHistory,
     Notification, AdminNotification,
 )
 from utils.decorators import owner_required
+from utils.uploads import save_upload
 from datetime import datetime, timezone, timedelta
-import os
-from werkzeug.utils import secure_filename
 
 owner_bp = Blueprint('owner', __name__, url_prefix='/owner')
 
@@ -37,14 +36,6 @@ def _get_owner_restaurant():
     if not restaurant:
         abort(403)
     return restaurant
-
-
-ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
-
-
-def _allowed_image(filename: str) -> bool:
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -71,12 +62,18 @@ def dashboard():
         Order.created_at >= week_ago,
     ).scalar() or 0.0
 
+    # Join through order_items so revenue is per-dish, not a cartesian product
     top_dishes = db.session.query(
-        FoodItem.name, func.sum(Order.total_amount).label('revenue')
-    ).join(Order, Order.restaurant_id == restaurant.id)\
-     .filter(FoodItem.restaurant_id == restaurant.id)\
+        FoodItem.name,
+        func.sum(OrderItem.price * OrderItem.quantity).label('revenue')
+    ).join(OrderItem, OrderItem.food_item_id == FoodItem.id)\
+     .join(Order, Order.id == OrderItem.order_id)\
+     .filter(
+         FoodItem.restaurant_id == restaurant.id,
+         Order.payment_status == 'paid',
+     )\
      .group_by(FoodItem.id)\
-     .order_by(func.sum(Order.total_amount).desc())\
+     .order_by(func.sum(OrderItem.price * OrderItem.quantity).desc())\
      .limit(5).all()
 
     recent_orders = Order.query.filter_by(restaurant_id=restaurant.id)\
@@ -139,14 +136,13 @@ def add_dish():
 
         image_filename = ''
         file = request.files.get('image')
-        if file and file.filename and _allowed_image(file.filename):
-            from flask import current_app
-            filename = secure_filename(file.filename)
-            assert current_app.static_folder is not None
-            upload_path = os.path.join(current_app.static_folder, 'uploads')
-            os.makedirs(upload_path, exist_ok=True)
-            file.save(os.path.join(upload_path, filename))
-            image_filename = filename
+        if file and file.filename:
+            saved = save_upload(file)
+            if saved:
+                image_filename = saved
+            else:
+                flash('Invalid image file. Use JPG, PNG, or WebP under 16 MB.', 'error')
+                return render_template('owner/dish_form.html', restaurant=restaurant, dish=None)
 
         dish = FoodItem(
             restaurant_id=restaurant.id,
@@ -184,14 +180,10 @@ def edit_dish(dish_id):
         dish.is_available = request.form.get('is_available', 'on') == 'on'
 
         file = request.files.get('image')
-        if file and file.filename and _allowed_image(file.filename):
-            from flask import current_app
-            filename = secure_filename(file.filename)
-            assert current_app.static_folder is not None
-            upload_path = os.path.join(current_app.static_folder, 'uploads')
-            os.makedirs(upload_path, exist_ok=True)
-            file.save(os.path.join(upload_path, filename))
-            dish.image = filename
+        if file and file.filename:
+            saved = save_upload(file)
+            if saved:
+                dish.image = saved
 
         db.session.commit()
         flash('Dish updated!', 'success')
@@ -320,14 +312,10 @@ def profile():
         restaurant.min_order     = request.form.get('min_order', type=float) or restaurant.min_order
 
         file = request.files.get('image')
-        if file and file.filename and _allowed_image(file.filename):
-            from flask import current_app
-            filename = secure_filename(file.filename)
-            assert current_app.static_folder is not None
-            upload_path = os.path.join(current_app.static_folder, 'uploads')
-            os.makedirs(upload_path, exist_ok=True)
-            file.save(os.path.join(upload_path, filename))
-            restaurant.image = filename
+        if file and file.filename:
+            saved = save_upload(file)
+            if saved:
+                restaurant.image = saved
 
         db.session.commit()
         flash('Restaurant profile updated!', 'success')

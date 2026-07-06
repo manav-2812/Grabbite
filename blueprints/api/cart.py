@@ -130,11 +130,12 @@ def api_cart_update():
         return jsonify({'success': False, 'message': 'Cart item not found'}), 404
 
     try:
+        quantity = max(1, int(quantity))   # floor at 1 — prevent zero/negative qty
         food_item = FoodItem.query.get(cart_item.food_item_id)
         if not food_item:
             return jsonify({'success': False, 'message': 'Food item not found'}), 404
 
-        cart_item.quantity = int(quantity)
+        cart_item.quantity = quantity
         cart_item.price    = food_item.price
         db.session.commit()
 
@@ -179,6 +180,7 @@ def api_cart_remove():
         return jsonify({'success': True, 'message': 'Item removed', 'cart_count': cart_count})
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'api_cart_remove error: {e}')
         return jsonify({'success': False, 'message': 'Error removing item'}), 500
 
 
@@ -191,4 +193,5 @@ def api_cart_clear():
         return jsonify({'success': True, 'message': 'Cart cleared'})
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'api_cart_clear error: {e}')
         return jsonify({'success': False, 'message': 'Error clearing cart'}), 500
