@@ -5,102 +5,16 @@ Handles login, signup, logout, and profile update for all user roles.
 from flask import (Blueprint, request, redirect, url_for, session,
                    flash, jsonify, current_app)
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, current_user, login_required
 from datetime import datetime, timezone
 import os
-import uuid
 import secrets
 
-# Pillow is optional — only used for image resizing
-try:
-    from PIL import Image as PILImage
-    _PIL_AVAILABLE = True
-except ImportError:
-    _PIL_AVAILABLE = False
-
 from models import User, Notification, db
+from utils.uploads import allowed_file, _looks_like_image, resize_image, save_upload
 
 auth = Blueprint('auth', __name__)
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────────────────────────────────────
-def allowed_file(filename: str) -> bool:
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-# H11 fix: validate that the upload's actual MIME / magic bytes match an
-# image type, not just the extension. Extension-only checks are bypassable.
-_IMAGE_MAGIC = (
-    b'\xff\xd8\xff',                       # JPEG
-    b'\x89PNG\r\n\x1a\n',                  # PNG
-    b'GIF87a', b'GIF89a',                   # GIF
-    b'RIFF',                                # WEBP
-)
-
-
-def _looks_like_image(file_storage) -> bool:
-    try:
-        head = file_storage.stream.read(12)
-    except Exception:
-        return False
-    finally:
-        try:
-            file_storage.stream.seek(0)
-        except Exception:
-            pass
-    if not head:
-        return False
-    for sig in _IMAGE_MAGIC:
-        if head.startswith(sig):
-            if sig == b'RIFF' and b'WEBP' not in head[:12]:
-                continue
-            return True
-    return False
-
-
-def resize_image(image_path: str, max_size: tuple = (800, 800)) -> None:
-    """Resize image to max_size while maintaining aspect ratio. Skips if PIL unavailable."""
-    if not _PIL_AVAILABLE:
-        return
-    try:
-        with PILImage.open(image_path) as img:
-            img.thumbnail(max_size, PILImage.Resampling.LANCZOS)
-            img.save(image_path, optimize=True, quality=85)
-    except Exception as e:
-        current_app.logger.warning(f'Image resize failed: {e}')
-
-
-def save_upload(file, subfolder: str = '') -> str | None:
-    """Save an uploaded file to the uploads directory and return filename."""
-    if not file or file.filename == '':
-        return None
-    if not allowed_file(file.filename):
-        return None
-    # H11 fix: extension check passed — now verify the file content is really
-    # an image (magic-byte sniff) before persisting to disk.
-    if not _looks_like_image(file):
-        current_app.logger.warning(
-            f'Upload rejected: extension says image but content is not. '
-            f'filename={file.filename!r}'
-        )
-        return None
-
-    filename       = secure_filename(file.filename)
-    unique_name    = f'{uuid.uuid4().hex}_{filename}'
-    upload_dir     = current_app.config['UPLOAD_FOLDER']
-    if subfolder:
-        upload_dir = os.path.join(upload_dir, subfolder)
-        os.makedirs(upload_dir, exist_ok=True)
-
-    file_path = os.path.join(upload_dir, unique_name)
-    file.save(file_path)
-    resize_image(file_path)
-    return os.path.join(subfolder, unique_name) if subfolder else unique_name
 
 
 # ─────────────────────────────────────────────────────────────────────────────

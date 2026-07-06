@@ -252,7 +252,7 @@ from auth_routes import auth as auth_blueprint, login_post, signup_post, update_
 #       routing conflict with the app-level proxy below.
 for rule in list(auth_blueprint.deferred_functions):
     pass  # Blueprint routes are applied at register time; conflict avoided by app proxy
-from admin_routes import admin as admin_blueprint
+from blueprints.admin import admin as admin_blueprint
 from blueprints.owner.routes import owner_bp
 
 # CRIT-4 fix: import the shared admin_required decorator for use on /database and
