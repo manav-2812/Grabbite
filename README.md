@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Primary%20DB-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-Realtime-010101?style=flat&logo=socket.io&logoColor=white)](https://socket.io/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Payments-02042B?style=flat&logo=razorpay&logoColor=white)](https://razorpay.com/)
@@ -48,7 +49,7 @@
 | Payment flows | 2 — Cash on Delivery + Razorpay (UPI / card / net banking) |
 | Order lifecycle states | 8 — `placed → accepted → preparing → ready → picked → on_the_way → delivered / cancelled` |
 | Real-time events | WebSocket push via Flask-SocketIO (order updates, admin alerts) |
-| CI | GitHub Actions — Python 3.11 + 3.12, SQLite in-memory |
+| CI | GitHub Actions — Python 3.11 + 3.12, SQLite in-memory, 85 tests |
 | Primary database | PostgreSQL (SQLite fallback for local dev without `DATABASE_URL`) |
 
 ---
@@ -143,9 +144,11 @@
 |---|---|
 | PostgreSQL | Primary database (production) |
 | SQLite | Local dev fallback (no `DATABASE_URL` needed) |
-| Waitress / Gunicorn | WSGI production server |
+| Waitress | Pure-Python WSGI production server (zero C deps, works on Windows + Linux) |
 | Nginx | Reverse proxy, static files, WebSocket upgrade |
-| GitHub Actions | CI — runs smoke tests on Python 3.11 + 3.12 |
+| Docker + docker-compose | Containerised deployment (app + PostgreSQL) |
+| GitHub Actions | CI — runs 85 tests on Python 3.11 + 3.12 |
+| Railway | One-click cloud deployment (see [Deployment](#deployment)) |
 
 ---
 
@@ -485,11 +488,16 @@ Grabbite/
 │   └── fix_sequences.py      # Resets PostgreSQL sequences to MAX(id) after a bulk import
 │
 ├── tests/
-│   └── test_smoke.py         # Smoke tests for auth, routing, and JSON APIs (run by CI)
+│   ├── test_smoke.py         # Smoke tests — app boot, routing, auth redirects, JSON APIs
+│   ├── test_order_logic.py   # Unit tests — Order/OrderItem models, pricing, coupon, _create_order_record
+│   └── test_payment_logic.py # Unit tests — Payment model, HMAC signatures, webhook DB side-effects
 │
 ├── docs/
-│   └── DEPLOYMENT.md         # Full production deployment guide (VPS, Docker, cloud platforms)
+│   └── DEPLOYMENT.md         # Full production deployment guide (VPS, Docker, Railway, cloud)
 │
+├── Dockerfile                # Multi-stage production image (python:3.11-slim)
+├── docker-compose.yml        # App + PostgreSQL for local Docker development
+├── .dockerignore             # Excludes .venv, .env, instance/, tests/ from the image
 ├── .env.example              # All supported environment variables with documentation
 ├── .github/workflows/ci.yml  # GitHub Actions CI pipeline
 ├── requirements.txt          # Python production dependencies (pinned)
@@ -564,7 +572,21 @@ On first boot the app will:
 - Seed demo restaurants, dishes, and blog posts
 - Print a one-time admin password to the terminal
 
-Open **http://127.0.0.1:5000** in your browser.
+Open **http://127.0.0.1:8000** in your browser.
+
+### Alternative — Docker (app + PostgreSQL in one command)
+
+```bash
+docker-compose up -d --build
+```
+
+This starts the Flask app on port `8000` and a PostgreSQL container. No manual DB setup needed. On first boot the app seeds demo data automatically.
+
+```bash
+docker-compose logs -f web    # follow app logs
+docker-compose down           # stop
+docker-compose down -v        # stop + wipe DB volume
+```
 
 ### 6. (Optional) Fix PostgreSQL sequences after a bulk import
 
@@ -579,6 +601,14 @@ PYTHONPATH=. python scripts/fix_sequences.py
 ```bash
 pytest tests/ -v
 ```
+
+The suite has 85 tests across three files:
+
+| File | Coverage |
+|---|---|
+| `test_smoke.py` | App boot, routing, auth redirects, JSON API responses |
+| `test_order_logic.py` | Order/OrderItem models, pricing rules, coupon validation, `_create_order_record` DB persistence |
+| `test_payment_logic.py` | Payment model, Razorpay HMAC signature verification, webhook signature, webhook DB side-effects |
 
 ---
 
@@ -743,11 +773,57 @@ All tables use integer primary keys with PostgreSQL sequences. Foreign key index
 
 ## Deployment
 
-See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full guide covering:
+### Railway (recommended — one-click from GitHub)
 
-- **Traditional VPS** (Ubuntu + Nginx + systemd + Let's Encrypt)
-- **Docker** (`docker-compose up -d --build`)
-- **Cloud platforms** (Heroku, Railway, Render)
+Railway automatically detects the `Dockerfile` and provides a managed PostgreSQL add-on.
+
+1. Push the repo to GitHub (already done)
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select `Grabbite`
+3. Add a **PostgreSQL** plugin from the Railway dashboard
+4. Set the following environment variables in the Railway service settings:
+
+```env
+SECRET_KEY=<generate a 64-byte random string>
+FLASK_ENV=production
+FLASK_DEBUG=0
+DATABASE_URL=<auto-filled by Railway PostgreSQL plugin>
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=<strong password>
+RAZORPAY_KEY_ID=<your live key>
+RAZORPAY_KEY_SECRET=<your live secret>
+RAZORPAY_WEBHOOK_SECRET=<your webhook secret>
+SOCKETIO_ALLOWED_ORIGINS=https://your-railway-domain.up.railway.app
+```
+
+5. Railway deploys automatically on every push to `main`. The `/healthz` endpoint is used as the health probe.
+
+> Railway injects `$PORT` at runtime — `run.py` reads it automatically.
+
+---
+
+### Docker (local or any VPS)
+
+```bash
+# Build and start app + PostgreSQL
+docker-compose up -d --build
+
+# App is available at http://localhost:8000
+# Follow logs
+docker-compose logs -f web
+
+# Stop
+docker-compose down
+```
+
+Override any environment variable by creating a `.env` file in the project root before running `docker-compose up`.
+
+---
+
+### Traditional VPS (Ubuntu + Nginx)
+
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full guide covering Nginx config, systemd service, and Let's Encrypt SSL.
+
+---
 
 ### Production checklist
 

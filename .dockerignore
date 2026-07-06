@@ -1,0 +1,51 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# ── Virtualenv ────────────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Secrets / local config ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── SQLite dev database (production uses Postgres) ────────────────────────────
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.github/
+
+# ── Dev / test artifacts ──────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── Docs / assets (not needed at runtime) ─────────────────────────────────────
+docs/
+assets/
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+SECURITY.md
+
+# ── Uploaded user files (mounted as a volume at runtime) ──────────────────────
+static/uploads/*
+!static/uploads/.gitkeep

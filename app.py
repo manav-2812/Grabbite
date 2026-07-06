@@ -362,7 +362,9 @@ def inject_csrf_token():
 # The Razorpay webhook uses HMAC signature verification instead, so it is exempt.
 CSRF_EXEMPT_ENDPOINTS = frozenset({
     'razorpay_webhook',
+    'payment.razorpay_webhook',   # blueprint-prefixed name used at runtime
     'verify_payment',
+    'payment.verify_payment',
     'healthz',    # MED-13: health probers have no session
     'readyz',     # MED-13: health probers have no session
     'api_payment_webhook_alias',  # alias kept for compatibility

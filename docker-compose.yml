@@ -1,0 +1,85 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GrabBite — docker-compose.yml
+#
+# Starts the Flask app + PostgreSQL together.
+# Usage:
+#   docker-compose up -d --build       # first run (builds image + starts DB)
+#   docker-compose up -d               # subsequent runs (reuses built image)
+#   docker-compose logs -f web         # follow app logs
+#   docker-compose down                # stop everything
+#   docker-compose down -v             # stop + wipe the DB volume
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       grabbite
+      POSTGRES_USER:     grabbite
+      POSTGRES_PASSWORD: grabbite_dev_password   # override via .env in production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grabbite -d grabbite"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grabbite_net
+
+  # ── GrabBite Flask app ──────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      # Flask
+      SECRET_KEY:      "${SECRET_KEY:-change-me-before-production}"
+      FLASK_ENV:       "${FLASK_ENV:-development}"
+      FLASK_DEBUG:     "${FLASK_DEBUG:-0}"
+      HOST:            "0.0.0.0"
+      PORT:            "8000"
+
+      # Database — points at the 'db' service above
+      DATABASE_URL: "postgresql+psycopg2://grabbite:grabbite_dev_password@db:5432/grabbite"
+
+      # Mail (leave blank to disable email in dev)
+      MAIL_SERVER:   "${MAIL_SERVER:-}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+
+      # Razorpay (leave blank to force COD-only in dev)
+      RAZORPAY_KEY_ID:      "${RAZORPAY_KEY_ID:-}"
+      RAZORPAY_KEY_SECRET:  "${RAZORPAY_KEY_SECRET:-}"
+      RAZORPAY_WEBHOOK_SECRET: "${RAZORPAY_WEBHOOK_SECRET:-}"
+
+      # Admin bootstrap (only used on first boot when no admin exists)
+      ADMIN_EMAIL:    "${ADMIN_EMAIL:-}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+
+      # WebSocket origins
+      SOCKETIO_ALLOWED_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
+    volumes:
+      # Persist user-uploaded images across container restarts
+      - uploads_data:/app/static/uploads
+    networks:
+      - grabbite_net
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  grabbite_net:
+    driver: bridge

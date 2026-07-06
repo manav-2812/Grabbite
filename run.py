@@ -6,12 +6,9 @@ try:
 except ImportError:
     serve = None
 
-# Configuration
-HOST = os.getenv('HOST', '0.0.0.0')
-PORT = int(os.getenv('PORT', 5000))
-# MED-12 fix: debug mode must default to OFF.
-# Leaving DEBUG=True as the default means a developer who forgets to
-# export FLASK_DEBUG=False in prod boots a publicly-reachable debugger.
+# Railway injects PORT automatically; default to 8000 for Docker, 5000 for local dev
+HOST  = os.getenv('HOST',  '0.0.0.0')
+PORT  = int(os.getenv('PORT', 8000))
 DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
 
 def run_development_server():
