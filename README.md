@@ -151,70 +151,228 @@
 
 ## Architecture
 
+### System Overview
+
+```mermaid
+flowchart TD
+    Browser(["🌐 Browser"])
+    WS(["⚡ WebSocket Client"])
+
+    subgraph Proxy["Reverse Proxy"]
+        Nginx["Nginx\n(HTTP + WS upgrade)"]
+    end
+
+    subgraph App["Application Server"]
+        WSGI["Waitress / Gunicorn\n(WSGI)"]
+        Flask["Flask App\napp.py"]
+    end
+
+    subgraph Blueprints["Blueprints — Route Handlers"]
+        public["public_bp\n/ · /restaurants · /gallery · /blogs"]
+        account["account_bp\n/login · /cart · /checkout · /orders"]
+        payment["payment_bp\n/api/payment/cod · /verify · /webhook"]
+        api["api_bp\n/api/cart · /api/search · /api/address"]
+        admin["admin_bp\n/admin/*"]
+        owner["owner_bp\n/owner/*"]
+    end
+
+    subgraph Services["Services"]
+        SocketIO["Flask-SocketIO\nRoom-based push events"]
+        Limiter["Flask-Limiter\nRate limiting"]
+        Mail["Flask-Mail\nSMTP email"]
+    end
+
+    subgraph Data["Data Layer"]
+        DB[("PostgreSQL\n19 tables")]
+        Uploads["static/uploads/\nUser images"]
+    end
+
+    subgraph External["External Services"]
+        Razorpay["Razorpay API\nPayments + Webhook"]
+        SMTP["SMTP Server\nGmail / SendGrid"]
+    end
+
+    Browser -->|HTTP| Nginx
+    Browser <-->|WebSocket| Nginx
+    Nginx --> WSGI --> Flask
+    Flask --> public & account & payment & api & admin & owner
+    payment -->|Create order| Razorpay
+    Razorpay -->|Webhook HMAC verify| payment
+    public & account & payment & api & admin & owner --> DB
+    Flask --> SocketIO -->|Emit order_update| WS
+    Flask --> Limiter
+    account -->|Send email| Mail --> SMTP
+    Flask --> Uploads
 ```
-Browser ──HTTP──▶ Nginx ──▶ Waitress/Gunicorn ──▶ Flask app
-       ◀──WS──▶           (WebSocket upgrade)     │
-                                                   ├── blueprints/
-                                                   │     public_bp    /  /restaurants  /gallery
-                                                   │     account_bp   /login  /cart  /orders
-                                                   │     payment_bp   /api/payment/*
-                                                   │     api_bp       /api/cart  /api/search  …
-                                                   │     admin_bp     /admin/*
-                                                   │     owner_bp     /owner/*
-                                                   │
-                                                   ├── utils/
-                                                   │     order_helpers     cart → order record
-                                                   │     razorpay_helpers  HMAC verify
-                                                   │     socket_events     broadcast_update()
-                                                   │     mail              SMTP email
-                                                   │     uploads           validate + resize
-                                                   │
-                                                   └── PostgreSQL (19 tables)
+
+### Razorpay Payment Flow
+
+```mermaid
+sequenceDiagram
+    actor Customer as Customer
+    participant Flask as Flask (payment_bp)
+    participant DB as PostgreSQL
+    participant RZ as Razorpay API
+    participant Socket as Flask-SocketIO
+
+    Customer->>Flask: POST /api/payment/create-razorpay-order
+    Flask->>Flask: CSRF check · @login_required
+    Flask->>DB: Build order from cart · apply coupon · calc totals
+    Flask->>RZ: rz.order.create(amount, currency)
+    RZ-->>Flask: razorpay_order_id
+    Flask->>DB: INSERT order (pending) + order_items + payment
+    Flask-->>Customer: { razorpay_order_id, key_id, amount }
+
+    Customer->>RZ: Open Razorpay checkout modal · complete payment
+    RZ-->>Customer: Payment success callback
+
+    Customer->>Flask: POST /api/payment/verify { razorpay_order_id, payment_id, signature }
+    Flask->>Flask: HMAC-SHA256 signature verify (compare_digest)
+    Flask->>DB: UPDATE order payment_status=paid
+    Flask->>DB: UPDATE payment record
+    Flask->>DB: DELETE cart rows
+    Flask->>DB: INSERT order_status_history + notifications
+    Flask->>Socket: broadcast_update(order_update)
+    Socket-->>Customer: Real-time status push
+    Flask-->>Customer: { success: true, redirect: /payment/success/<id> }
 ```
 
-### Order Placement Flow (Razorpay)
+### Database Schema
 
-```
-POST /api/payment/create-razorpay-order
-  └─ CSRF check → login check
-  └─ _build_order_from_cart()   validate cart, apply coupon, calculate totals
-  └─ rz.order.create()          Razorpay REST API
-  └─ _create_order_record()     INSERT order + order_items + payment (pending)
-  └─ return razorpay_order_id → browser
+```mermaid
+erDiagram
+    users {
+        int id PK
+        string name
+        string email
+        string password_hash
+        string role
+        float wallet_balance
+        string referral_code
+        datetime last_login
+    }
+    restaurants {
+        int id PK
+        int owner_id FK
+        string name
+        string location
+        string cuisine_type
+        float rating
+        bool is_active
+        bool is_approved
+    }
+    food_items {
+        int id PK
+        int restaurant_id FK
+        string name
+        float price
+        string category
+        bool is_available
+        bool is_vegetarian
+    }
+    orders {
+        int id PK
+        int user_id FK
+        int restaurant_id FK
+        string status
+        string payment_status
+        float total_amount
+        string payment_method
+        string razorpay_order_id
+    }
+    order_items {
+        int id PK
+        int order_id FK
+        int food_item_id FK
+        string name
+        float price
+        int quantity
+    }
+    order_status_history {
+        int id PK
+        int order_id FK
+        string status
+        string note
+        datetime created_at
+    }
+    payments {
+        int id PK
+        int order_id FK
+        int user_id FK
+        float amount
+        string payment_method
+        string status
+        string gateway_order_id
+        string gateway_payment_id
+        string gateway_signature
+    }
+    cart {
+        int id PK
+        int user_id FK
+        int food_item_id FK
+        int quantity
+        float price
+    }
+    addresses {
+        int id PK
+        int user_id FK
+        string label
+        string full_address
+        bool is_default
+    }
+    reviews {
+        int id PK
+        int user_id FK
+        int restaurant_id FK
+        int order_id FK
+        float rating
+        string comment
+    }
+    notifications {
+        int id PK
+        int user_id FK
+        string title
+        string type
+        bool is_read
+    }
+    offers {
+        int id PK
+        string code
+        string discount_type
+        float discount_value
+        int usage_limit
+        int used_count
+    }
+    coupon_usage {
+        int id PK
+        int offer_id FK
+        int user_id FK
+        int order_id FK
+    }
+    wishlist {
+        int id PK
+        int user_id FK
+        int restaurant_id FK
+    }
 
-Browser opens Razorpay modal → user pays
-
-POST /api/payment/verify
-  └─ HMAC-SHA256 signature check (hmac.compare_digest)
-  └─ UPDATE orders SET payment_status='paid'
-  └─ UPDATE payments record
-  └─ DELETE cart rows
-  └─ INSERT order_status_history, notifications
-  └─ broadcast_update() via SocketIO
-  └─ redirect → /payment/success/<order_id>
-```
-
-### Database ER Diagram
-
-```
-users ──< orders ──< order_items
-  │            └──< order_status_history
-  │            └──  payments
-  ├──< cart
-  ├──< addresses
-  ├──< wishlist ──▶ restaurants
-  ├──< notifications
-  ├──< support_tickets
-  └──< wallet_transactions
-
-restaurants ──< food_items ──< cart
-            ──< orders
-            ──< reviews ──▶ users
-
-offers ──< coupon_usage
-blogs
-admin_notifications
-admin_activities
+    users ||--o{ restaurants : owns
+    users ||--o{ orders : places
+    users ||--o{ cart : has
+    users ||--o{ addresses : has
+    users ||--o{ reviews : writes
+    users ||--o{ notifications : receives
+    users ||--o{ wishlist : saves
+    restaurants ||--o{ food_items : has
+    restaurants ||--o{ orders : receives
+    restaurants ||--o{ reviews : receives
+    food_items ||--o{ cart : in
+    food_items ||--o{ order_items : in
+    orders ||--o{ order_items : contains
+    orders ||--o{ order_status_history : tracks
+    orders ||--|| payments : has
+    orders ||--o{ coupon_usage : uses
+    offers ||--o{ coupon_usage : tracked-by
+    wishlist }o--|| restaurants : references
 ```
 
 ---
