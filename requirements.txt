@@ -51,7 +51,7 @@ python-dotenv==1.0.0            # Loads .env file variables into os.environ
 
 
 # ── Image Processing ──────────────────────────────────────────────────────────
-Pillow>=10.0.1                  # Resizes and validates uploaded images
+Pillow==10.3.0                  # Resizes and validates uploaded images
 
 
 # ── Payment Gateway ───────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ razorpay==1.4.1
 
 # ── Token Signing ─────────────────────────────────────────────────────────────
 # Generates and verifies time-limited signed password-reset URLs.
-itsdangerous>=2.1.2
+itsdangerous==2.2.0
 
 
 # ── Optional: Redis-backed rate limiter ──────────────────────────────────────

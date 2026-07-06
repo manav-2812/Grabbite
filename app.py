@@ -150,6 +150,9 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 from db import db
 db.init_app(app)
 
+from flask_migrate import Migrate
+migrate = Migrate(app, db)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'account.login'

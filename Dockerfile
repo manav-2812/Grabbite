@@ -35,6 +35,10 @@ COPY --from=builder /install /usr/local
 # Copy application source (excludes anything in .dockerignore)
 COPY . .
 
+# Copy Alembic migrations (lives at project root, one level above Grabbite/)
+COPY migrations/ ../migrations/
+
+
 # Create writable upload directory
 RUN mkdir -p static/uploads instance \
     && chmod 777 static/uploads instance

@@ -317,3 +317,14 @@ def notifications_page():
         .update({'is_read': True})
     db.session.commit()
     return render_template('notifications.html', notifications=notifs)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SEO / CRAWLER
+# ─────────────────────────────────────────────────────────────────────────────
+@public_bp.route('/robots.txt')
+def robots_txt():
+    from flask import send_from_directory
+    return send_from_directory(current_app.static_folder, 'robots.txt',
+                               mimetype='text/plain')
+
