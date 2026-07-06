@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
 
 jobs:
   test:
-    name: Build & Test (Python ${{ matrix.python-version }})
+    name: "Test — Python ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
 
     strategy:
@@ -17,25 +17,29 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
-      # ── Checkout ─────────────────────────────────────────────────────────
+      # ── 1. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Python setup ──────────────────────────────────────────────────────
+      # ── 2. Python ──────────────────────────────────────────────────────────
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      # ── Dependencies ──────────────────────────────────────────────────────
-      - name: Install dependencies
+      # ── 3. Install dependencies ────────────────────────────────────────────
+      - name: Install production dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -r requirements-dev.txt
 
-      # ── Environment ──────────────────────────────────────────────────────
+      - name: Install dev / test dependencies
+        run: pip install -r requirements-dev.txt
+
+      # ── 4. Create CI environment file ─────────────────────────────────────
+      #   - SQLite in-memory: no PostgreSQL service needed
+      #   - TESTING=1: disables rate limiter, dev admin seeding, etc.
       - name: Create .env for CI
         run: |
           echo "SECRET_KEY=ci-test-secret-key-not-for-production" >> .env
@@ -44,20 +48,25 @@ jobs:
           echo "DATABASE_URL=sqlite:///:memory:"                   >> .env
           echo "TESTING=1"                                         >> .env
 
-      # ── Verify imports ────────────────────────────────────────────────────
-      - name: Verify project imports
-        run: python -c "import app; print('✅ app imported successfully')"
+      # ── 5. Verify the app imports cleanly ─────────────────────────────────
+      - name: Verify app imports
+        run: python -c "from app import app; print('✅ App imported — blueprints:', list(app.blueprints.keys()))"
 
-      # ── Run tests ─────────────────────────────────────────────────────────
-      - name: Run smoke tests
+      # ── 6. Run the full test suite ─────────────────────────────────────────
+      - name: Run tests
         run: |
-          pytest tests/ -v --tb=short --cov=. --cov-report=term-missing
+          pytest tests/ \
+            -v \
+            --tb=short \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
 
-      # ── Upload coverage (optional) ────────────────────────────────────────
+      # ── 7. Upload coverage artifact (Python 3.11 only) ────────────────────
       - name: Upload coverage report
         if: matrix.python-version == '3.11'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: .coverage
-          retention-days: 7
+          path: coverage.xml
+          retention-days: 14
