@@ -152,13 +152,30 @@ def seed_demo_accounts() -> None:
     """Create fixed demo accounts on first boot if they don't already exist.
 
     Safe to call on every startup — skips any account whose email is already
-    in the database. Passwords are hashed with werkzeug pbkdf2:sha256.
+    in the database. Also repairs existing demo accounts with wrong roles.
+    Passwords are hashed with werkzeug pbkdf2:sha256.
     """
     from werkzeug.security import generate_password_hash
 
     for spec in _DEMO_ACCOUNTS:
-        if User.query.filter_by(email=spec['email']).first():
-            continue  # already seeded — skip
+        existing = User.query.filter_by(email=spec['email']).first()
+
+        if existing:
+            # Repair: fix role/is_admin if the account exists but was seeded wrong
+            changed = False
+            if existing.role != spec['role']:
+                existing.role = spec['role']
+                changed = True
+            if existing.is_admin != spec.get('is_admin', False):
+                existing.is_admin = spec.get('is_admin', False)
+                changed = True
+            if not existing.is_active:
+                existing.is_active = True
+                changed = True
+            if changed:
+                db.session.commit()
+                print(f'🔧 Demo account repaired: {spec["email"]}  ({spec["role"]})')
+            continue
 
         user = User(
             name=spec['name'],
