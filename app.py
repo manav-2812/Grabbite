@@ -37,6 +37,12 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 
+# Railway / Heroku / Render sit behind a reverse proxy.
+# Without ProxyFix, request.remote_addr is the proxy IP — not the client IP.
+# This breaks session_protection='strong' (IP changes per hop) and rate limiting.
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'instance')
 os.makedirs(db_path, exist_ok=True)
