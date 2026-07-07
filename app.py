@@ -275,54 +275,55 @@ from utils.seed_data import seed_homepage_showcase_data, seed_demo_accounts
 # DATABASE INIT
 # ─────────────────────────────────────────────────────────────────────────────
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
 
-    # Create default admin if missing
-    if not User.query.filter_by(email='admin@grabbite.com').first():
-        # CRIT-2 fix: do NOT seed an admin with a hardcoded password in production.
-        # In dev, generate a random password and print it once so the developer can
-        # log in. In production, refuse to create one — the deployer must run
-        # `flask create-admin` (or set ADMIN_EMAIL/ADMIN_PASSWORD env vars) explicitly.
-        if _is_production:
-            admin_email = os.environ.get('ADMIN_EMAIL')
-            admin_password = os.environ.get('ADMIN_PASSWORD')
-            if admin_email and admin_password:
+        # Create default admin if missing
+        if not User.query.filter_by(email='admin@grabbite.com').first():
+            if _is_production:
+                admin_email = os.environ.get('ADMIN_EMAIL')
+                admin_password = os.environ.get('ADMIN_PASSWORD')
+                if admin_email and admin_password:
+                    admin = User(
+                        name='Admin',
+                        username='admin',
+                        email=admin_email,
+                        password=generate_password_hash(admin_password),
+                        role='admin',
+                        is_admin=True,
+                        is_active=True,
+                    )
+                    db.session.add(admin)
+                    db.session.commit()
+                    print(f'✅ Created production admin from env: {admin_email}')
+                else:
+                    print(
+                        '⚠️  No admin user found in production and ADMIN_EMAIL/ADMIN_PASSWORD '
+                        'are not set. Skipping admin seeding. Run `flask create-admin` or '
+                        'create one manually before going live.'
+                    )
+            else:
+                _dev_password = secrets.token_urlsafe(16)
                 admin = User(
                     name='Admin',
                     username='admin',
-                    email=admin_email,
-                    password=generate_password_hash(admin_password),
+                    email='admin@grabbite.com',
+                    password=generate_password_hash(_dev_password),
                     role='admin',
                     is_admin=True,
                     is_active=True,
                 )
                 db.session.add(admin)
                 db.session.commit()
-                print(f'✅ Created production admin from env: {admin_email}')
-            else:
-                print(
-                    '⚠️  No admin user found in production and ADMIN_EMAIL/ADMIN_PASSWORD '
-                    'are not set. Skipping admin seeding. Run `flask create-admin` or '
-                    'create one manually before going live.'
-                )
-        else:
-            # Dev only — random password, printed once.
-            _dev_password = secrets.token_urlsafe(16)
-            admin = User(
-                name='Admin',
-                username='admin',
-                email='admin@grabbite.com',
-                password=generate_password_hash(_dev_password),
-                role='admin',
-                is_admin=True,
-                is_active=True,
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print(f'✅ Dev admin created — email: admin@grabbite.com  password: {_dev_password}')
+                print(f'✅ Dev admin created — email: admin@grabbite.com  password: {_dev_password}')
 
-    seed_homepage_showcase_data()
-    seed_demo_accounts()
+        seed_homepage_showcase_data()
+        seed_demo_accounts()
+
+    except Exception as _db_init_err:
+        print(f'⚠️  DB init skipped at startup: {_db_init_err}')
+        print(f'    DATABASE_URL in use: {_db_url[:40]}...' if len(_db_url) > 40 else f'    DATABASE_URL: {_db_url}')
+        print('    The app will still start. Ensure DATABASE_URL is set and the DB is reachable.')
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONTEXT PROCESSORS

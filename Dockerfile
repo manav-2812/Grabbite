@@ -58,8 +58,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"
 
-# Default start command. Shell form is required so $PORT / $HOST are expanded.
-# Railway / Render / Fly.io inject PORT at runtime — exec form ["python","run.py"]
-# does NOT expand shell variables, causing "Error: '$PORT' is not a valid port number."
-CMD python run.py
+# Default start command (JSON array — avoids OS signal handling issues).
+# Railway injects $PORT at runtime; run.py reads os.getenv('PORT', 8000).
+CMD ["python", "run.py"]
 
