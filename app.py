@@ -167,7 +167,7 @@ login_manager.login_message_category = 'info'
 # M8 fix: 'strong' session protection rotates the session cookie's identifier
 # when the user's IP or user-agent changes, mitigating session-fixation / hijack.
 # Falling back to 'basic' in dev to keep local iteration painless.
-login_manager.session_protection = 'strong' if _is_production else 'basic'
+login_manager.session_protection = 'basic'
 
 # Resolve allowed SocketIO origins from env (comma-separated).
 # In production, Railway sets SOCKETIO_ALLOWED_ORIGINS to the app domain.
