@@ -163,11 +163,20 @@ login_manager.login_message_category = 'info'
 # Falling back to 'basic' in dev to keep local iteration painless.
 login_manager.session_protection = 'strong' if _is_production else 'basic'
 
-# Resolve allowed SocketIO origins from env (comma-separated). Defaults to localhost for dev.
-_socketio_origins = os.environ.get('SOCKETIO_ALLOWED_ORIGINS', 'http://localhost:5000,http://127.0.0.1:5000')
+# Resolve allowed SocketIO origins from env (comma-separated).
+# In production, Railway sets SOCKETIO_ALLOWED_ORIGINS to the app domain.
+# If not set, fall back to '*' so the app doesn't break on first deploy —
+# tighten this once the domain is known.
+_socketio_origins_raw = os.environ.get('SOCKETIO_ALLOWED_ORIGINS', '')
+if _socketio_origins_raw.strip():
+    _socketio_origins = [o.strip() for o in _socketio_origins_raw.split(',') if o.strip()]
+else:
+    # No explicit allowlist — accept all origins (safe to narrow later)
+    _socketio_origins = '*'
+
 socketio = SocketIO(
     app,
-    cors_allowed_origins=[o.strip() for o in _socketio_origins.split(',') if o.strip()],
+    cors_allowed_origins=_socketio_origins,
     async_mode='threading',
 )
 
