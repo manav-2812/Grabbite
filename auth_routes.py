@@ -175,9 +175,13 @@ def signup_post():
         try:
             from utils.mail import send_welcome_email
             import threading
+            _app = current_app._get_current_object()
+            def _send_welcome(app, user):
+                with app.app_context():
+                    send_welcome_email(user)
             threading.Thread(
-                target=send_welcome_email,
-                args=(new_user,),
+                target=_send_welcome,
+                args=(_app, new_user),
                 daemon=True,
             ).start()
         except Exception as _me:
