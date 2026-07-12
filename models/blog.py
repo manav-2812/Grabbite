@@ -78,7 +78,7 @@ class Blog(db.Model):
             suffix = _sec.token_hex(2)          # 4 hex chars — short but unique enough
             candidate = f'{base}-{suffix}'
 
-        # Fallback: full hex to guarantee no collision
+        # Fallback:- full hex to guarantee no collision
         self.slug = f'{base}-{_sec.token_hex(4)}'
         return self.slug
 
