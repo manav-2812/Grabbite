@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Restaurants - GrabBite{% endblock %}
+{% block title %}Explore Restaurants - GrabBite{% endblock %}
+
+{% block meta_description %}Browse the best local restaurants near you, view their menus, check ratings, and place your order for fast delivery.{% endblock %}
+
+{% block og_title %}Explore Restaurants - GrabBite{% endblock %}
+{% block og_description %}Browse the best local restaurants near you, view their menus, check ratings, and place your order for fast delivery.{% endblock %}
+
+{% block twitter_title %}Explore Restaurants - GrabBite{% endblock %}
+{% block twitter_description %}Browse the best local restaurants near you, view their menus, check ratings, and place your order for fast delivery.{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
@@ -119,8 +127,8 @@
                                        style="font-size: 1.1rem; height: 60px;"
                                        required>
                                 <input type="hidden" name="type" value="all">
-                                <button class="btn btn-danger px-4" type="submit" id="search-button" style="border-radius: 0 50px 50px 0; font-weight: 600; font-size: 1.1rem;">
-                                    <i class="fas fa-search me-2"></i>Search
+                                <button class="btn btn-danger px-4" type="submit" id="search-button" aria-label="Search restaurants" style="border-radius: 0 50px 50px 0; font-weight: 600; font-size: 1.1rem;">
+                                    <i class="fas fa-search me-2"></i><span class="d-none d-sm-inline">Search</span>
                                 </button>
                             </div>
                             <div id="restaurant-search-suggestions" class="search-suggestions"></div>
@@ -245,7 +253,7 @@
                  data-restaurant-rating="{{ restaurant.rating or 0 }}">
                 <div class="card restaurant-card h-100 section-animate">
                     <div class="position-relative">
-                        <img src="{{ restaurant.image or 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=900' }}" 
+                        <img src="{{ (restaurant.image or 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=900') | resize_image(360) }}" 
                              class="card-img-top" alt="{{ restaurant.name }}" loading="lazy"
                              onerror="this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=900'">
                         <span class="rating-badge">

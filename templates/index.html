@@ -2,6 +2,14 @@
 
 {% block title %}GrabBite - Premium Food Delivery{% endblock %}
 
+{% block meta_description %}Order fresh, delicious meals from the best local restaurants with GrabBite. Fast delivery, real-time order tracking, and exclusive discounts.{% endblock %}
+
+{% block og_title %}GrabBite - Premium Food Delivery{% endblock %}
+{% block og_description %}Order fresh, delicious meals from the best local restaurants with GrabBite. Fast delivery, real-time order tracking, and exclusive discounts.{% endblock %}
+
+{% block twitter_title %}GrabBite - Premium Food Delivery{% endblock %}
+{% block twitter_description %}Order fresh, delicious meals from the best local restaurants with GrabBite. Fast delivery, real-time order tracking, and exclusive discounts.{% endblock %}
+
 {% block styles %}
 <style>
 :root {
@@ -283,7 +291,7 @@ body { background: #fffaf7; }
                 <form class="home-search-form" id="home-search-form">
                     <span class="search-icon-wrap"><i class="fas fa-search"></i></span>
                     <input id="hero-search" type="search" autocomplete="off" placeholder="Search pizza, KFC, biryani, momos, blogs...">
-                    <button id="hero-search-btn" type="submit"><i class="fas fa-search"></i> Search</button>
+                    <button id="hero-search-btn" type="submit"><i class="fas fa-search"></i> <span class="d-none d-sm-inline">Search</span></button>
                 </form>
                 <div class="quick-tags">
                     {% for tag in ['Pizza','Burger','KFC','Chicken','Chinese','Biryani','Desserts','Healthy Food'] %}
@@ -305,7 +313,7 @@ body { background: #fffaf7; }
         <div class="gb-container offer-track">
             {% for offer in offers %}
             <a class="offer-card" href="{{ offer.url }}">
-                <img src="{{ offer.image }}" alt="{{ offer.title }}" loading="lazy">
+                <img src="{{ offer.image | resize_image(480) }}" alt="{{ offer.title }}" loading="lazy">
                 <p class="section-kicker text-white mb-1">Limited-time offer</p>
                 <h3 class="mb-1 fw-bold">{{ offer.title }}</h3>
                 <span>{{ offer['copy'] }}</span>
@@ -324,7 +332,7 @@ body { background: #fffaf7; }
             <div class="category-grid">
                 {% for cat in categories %}
                 <a class="category-card" href="{{ cat.url }}" data-category="{{ cat.name }}">
-                    <img src="{{ cat.image }}" alt="{{ cat.name }}" loading="lazy">
+                    <img src="{{ cat.image | resize_image(240) }}" alt="{{ cat.name }}" loading="lazy">
                     <span><i class="fas {{ cat.icon }} me-1 text-danger"></i>{{ cat.name }}</span>
                 </a>
                 {% endfor %}
@@ -343,7 +351,7 @@ body { background: #fffaf7; }
                 <article class="gb-card">
                     <a href="{{ url_for('public.restaurant_menu', restaurant_id=r.id) }}">
                         <div class="card-media">
-                            <img src="{{ r.image }}" alt="{{ r.name }}" loading="lazy">
+                            <img src="{{ r.image | resize_image(360) }}" alt="{{ r.name }}" loading="lazy">
                             <span class="badge-float">{{ 20 + loop.index * 3 }}% OFF</span>
                             <button type="button" class="favorite-btn" aria-label="Save {{ r.name }}"><i class="far fa-heart"></i></button>
                         </div>
@@ -390,7 +398,7 @@ body { background: #fffaf7; }
                 <article class="gb-card" style="min-width:260px;">
                     <a href="{{ url_for('public.restaurant_menu', restaurant_id=d.restaurant_id) }}">
                         <div class="card-media">
-                            <img src="{{ d.image }}" alt="{{ d.name }}" loading="lazy">
+                            <img src="{{ d.image | resize_image(280) }}" alt="{{ d.name }}" loading="lazy">
                             {% if d.is_bestseller %}<span class="badge-float">Bestseller</span>{% endif %}
                         </div>
                         <div class="card-body-premium">
@@ -428,7 +436,7 @@ body { background: #fffaf7; }
             <div class="collection-grid">
                 {% for c in collections %}
                 <a href="{{ c.url }}" class="collection-card">
-                    <img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy">
+                    <img src="{{ c.image | resize_image(360) }}" alt="{{ c.title }}" loading="lazy">
                     <div><h4 class="fw-bold mb-1">{{ c.title }}</h4><span>{{ c.count }}</span></div>
                 </a>
                 {% endfor %}
@@ -446,7 +454,7 @@ body { background: #fffaf7; }
                 {% for r in top_restaurants[:6] %}
                 <a class="info-card text-decoration-none text-dark" href="{{ url_for('public.restaurant_menu', restaurant_id=r.id) }}" style="min-width:260px;">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="{{ r.image }}" alt="{{ r.name }}" loading="lazy" style="width:74px;height:74px;border-radius:12px;object-fit:cover;">
+                        <img src="{{ r.image | resize_image(150) }}" alt="{{ r.name }}" loading="lazy" style="width:74px;height:74px;border-radius:12px;object-fit:cover;">
                         <div>
                             <strong>{{ r.name }}</strong>
                             <div class="text-muted small">{{ r.delivery_time or 25 }} min · {{ '%.1f'|format(r.rating or 4.2) }} ★</div>
@@ -469,7 +477,7 @@ body { background: #fffaf7; }
                 {% for b in latest_blogs %}
                 <article class="gb-card">
                     <a href="{{ url_for('public.blog_detail', blog_id=b.id) }}">
-                        <div class="card-media"><img src="{{ b.image }}" alt="{{ b.title }}" loading="lazy"></div>
+                        <div class="card-media"><img src="{{ b.image | resize_image(360) }}" alt="{{ b.title }}" loading="lazy"></div>
                         <div class="card-body-premium">
                             <span class="section-kicker">{{ b.category }}</span>
                             <h6 class="fw-bold">{{ b.title }}</h6>

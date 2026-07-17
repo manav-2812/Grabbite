@@ -76,4 +76,4 @@ itsdangerous==2.2.0
 # Flask-SocketIO runs in threading mode by default (async_mode='threading').
 # To switch to eventlet for higher WebSocket concurrency, uncomment below
 # and add eventlet.monkey_patch() at the top of run.py.
-# eventlet==0.33.3
+eventlet==0.41.1

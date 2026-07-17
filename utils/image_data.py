@@ -181,4 +181,8 @@ _DISH_IMAGES_BY_NAME = {
 
 def food_photo(seed: str, term: str = '', width: int = 900, height: int = 650) -> str:
     """Return a curated image URL for a given seed key, falling back to the fallback image."""
-    return _FOOD_IMAGES.get(seed, _FALLBACK_IMG)
+    import re
+    url = _FOOD_IMAGES.get(seed, _FALLBACK_IMG)
+    if 'pexels.com' in url:
+        url = re.sub(r'([?&]|&amp;)w=\d+', r'\g<1>w=' + str(width), url)
+    return url

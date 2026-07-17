@@ -14,8 +14,7 @@
   function initPageLoader() {
     const loader = $('gb-page-loader');
     if (!loader) return;
-    window.addEventListener('load', () => setTimeout(() => loader.classList.add('hidden'), 300));
-    setTimeout(() => loader && loader.classList.add('hidden'), 3000);
+    setTimeout(() => loader.classList.add('hidden'), 50);
   }
 
   /* ── Scroll Progress + Back-to-Top + Sticky Nav ──────────── */

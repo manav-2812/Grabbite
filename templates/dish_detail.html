@@ -1,6 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}{{ dish.name }} – GrabBite{% endblock %}
+{% block title %}{{ dish.name }} | Gourmet Dishes – GrabBite{% endblock %}
+
+{% block meta_description %}Savor {{ dish.name }}, prepared fresh by leading kitchens. Check ingredients, prep times, calories, and order yours today!{% endblock %}
+
+{% block og_title %}{{ dish.name }} | Gourmet Dishes – GrabBite{% endblock %}
+{% block og_description %}Savor {{ dish.name }}, prepared fresh by leading kitchens. Check ingredients, prep times, calories, and order yours today!{% endblock %}
+{% block og_image -%}
+  {%- if dish.image.startswith('http') -%}
+    {{- dish.image -}}
+  {%- else -%}
+    {{- request.url_root.rstrip('/') -}}{{- dish.image -}}
+  {%- endif -%}
+{%- endblock %}
+
+{% block twitter_title %}{{ dish.name }} | Gourmet Dishes – GrabBite{% endblock %}
+{% block twitter_description %}Savor {{ dish.name }}, prepared fresh by leading kitchens. Check ingredients, prep times, calories, and order yours today!{% endblock %}
+{% block twitter_image -%}
+  {%- if dish.image.startswith('http') -%}
+    {{- dish.image -}}
+  {%- else -%}
+    {{- request.url_root.rstrip('/') -}}{{- dish.image -}}
+  {%- endif -%}
+{%- endblock %}
 
 {% block content %}
 
@@ -101,8 +123,7 @@
                 <div class="d-flex gap-3 align-items-center flex-wrap">
                     <button
                         class="btn-add-cart add-to-cart-btn"
-                        data-food-id="{{ dish.id }}"
-                        onclick="addToCart({{ dish.id }})">
+                        data-food-id="{{ dish.id }}">
                         <i class="fas fa-cart-plus me-2"></i>Add to Cart
                     </button>
                     <a href="/gallery" class="btn-back">

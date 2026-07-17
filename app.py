@@ -180,10 +180,20 @@ else:
     # No explicit allowlist — accept all origins (safe to narrow later)
     _socketio_origins = '*'
 
+# Try to dynamically use eventlet if it is active/monkey patched, fallback to threading
+_async_mode = 'threading'
+try:
+    import eventlet
+    from eventlet.patcher import is_monkey_patched
+    if is_monkey_patched('socket'):
+        _async_mode = 'eventlet'
+except ImportError:
+    pass
+
 socketio = SocketIO(
     app,
     cors_allowed_origins=_socketio_origins,
-    async_mode='threading',
+    async_mode=_async_mode,
 )
 
 # ── Flask-Mail ───────────────────────────────────────────────────────────────
@@ -485,6 +495,15 @@ def currency_filter(value):
         return f'₹{float(value):,.2f}'
     except (TypeError, ValueError):
         return '₹0.00'
+
+
+@app.template_filter('resize_image')
+def resize_image_filter(url, width):
+    """Dynamic Pexels image width resizing filter."""
+    import re
+    if url and 'pexels.com' in url:
+        return re.sub(r'([?&]|&amp;)w=\d+', r'\g<1>w=' + str(width), url)
+    return url
 
 
 # ─────────────────────────────────────────────────────────────────────────────

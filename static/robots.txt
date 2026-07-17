@@ -11,3 +11,5 @@ Disallow: /notifications
 
 Allow: /
 
+Sitemap: https://grabbite.up.railway.app/sitemap.xml
+

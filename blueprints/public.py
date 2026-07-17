@@ -328,3 +328,76 @@ def robots_txt():
     return send_from_directory(current_app.static_folder, 'robots.txt',
                                mimetype='text/plain')
 
+
+@public_bp.route('/sitemap.xml')
+def sitemap_xml():
+    import xml.etree.ElementTree as ET
+    from flask import make_response
+    
+    base_url = request.url_root.rstrip('/')
+    
+    # Static pages
+    pages = [
+        {'loc': f"{base_url}/", 'changefreq': 'daily', 'priority': '1.0'},
+        {'loc': f"{base_url}/restaurants", 'changefreq': 'daily', 'priority': '0.9'},
+        {'loc': f"{base_url}/gallery", 'changefreq': 'weekly', 'priority': '0.8'},
+        {'loc': f"{base_url}/blogs", 'changefreq': 'weekly', 'priority': '0.7'},
+        {'loc': f"{base_url}/about", 'changefreq': 'monthly', 'priority': '0.5'},
+        {'loc': f"{base_url}/careers", 'changefreq': 'monthly', 'priority': '0.5'},
+        {'loc': f"{base_url}/help", 'changefreq': 'monthly', 'priority': '0.5'},
+    ]
+    
+    # Dynamic restaurants
+    try:
+        restaurants = Restaurant.query.filter_by(is_active=True).all()
+        for r in restaurants:
+            pages.append({
+                'loc': f"{base_url}/restaurant/{r.id}",
+                'changefreq': 'weekly',
+                'priority': '0.8'
+            })
+    except Exception:
+        pass
+        
+    # Dynamic blogs
+    try:
+        blogs = Blog.query.filter_by(status='published').all()
+        for b in blogs:
+            pages.append({
+                'loc': f"{base_url}/blog/{b.id}",
+                'changefreq': 'monthly',
+                'priority': '0.6'
+            })
+    except Exception:
+        pass
+        
+    # Dynamic dishes
+    try:
+        dishes = FoodItem.query.filter_by(is_available=True).all()
+        for d in dishes:
+            pages.append({
+                'loc': f"{base_url}/dish/{d.id}",
+                'changefreq': 'weekly',
+                'priority': '0.6'
+            })
+    except Exception:
+        pass
+
+    # Build XML
+    urlset = ET.Element('urlset', xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
+    for page in pages:
+        url = ET.SubElement(urlset, 'url')
+        loc = ET.SubElement(url, 'loc')
+        loc.text = page['loc']
+        
+        changefreq = ET.SubElement(url, 'changefreq')
+        changefreq.text = page['changefreq']
+        
+        priority = ET.SubElement(url, 'priority')
+        priority.text = page['priority']
+        
+    xml_str = ET.tostring(urlset, encoding='utf-8', method='xml')
+    response = make_response(b'<?xml version="1.0" encoding="utf-8"?>\n' + xml_str)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+

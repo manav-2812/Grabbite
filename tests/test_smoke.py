@@ -144,3 +144,22 @@ def test_api_search_empty_query(client, db_tables):
 def test_404_page(client):
     response = client.get("/this-route-definitely-does-not-exist-12345")
     assert response.status_code == 404
+
+
+# ── SEO ───────────────────────────────────────────────────────────────────────
+
+def test_robots_txt(client):
+    """Robots.txt responds with plain text and status 200."""
+    response = client.get("/robots.txt")
+    assert response.status_code == 200
+    assert "text/plain" in response.content_type
+    assert b"User-agent:" in response.data
+    assert b"Sitemap:" in response.data
+
+def test_sitemap_xml(client, db_tables):
+    """Sitemap.xml responds with XML and status 200."""
+    response = client.get("/sitemap.xml")
+    assert response.status_code == 200
+    assert "application/xml" in response.content_type
+    assert b"<urlset" in response.data
+    assert b"<loc>" in response.data
