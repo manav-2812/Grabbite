@@ -2,17 +2,16 @@
 Grabbite — Authentication Routes
 Handles login, signup, logout, and profile update for all user roles.
 """
-from flask import (Blueprint, request, redirect, url_for, session,
+from flask import (Blueprint, request, redirect, url_for,
                    flash, jsonify, current_app)
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, current_user, login_required
+from flask_login import login_user, current_user
 from datetime import datetime, timezone
 import os
 import re
-import secrets
 
 from models import User, Notification, db
-from utils.uploads import allowed_file, _looks_like_image, resize_image, save_upload
+from utils.uploads import save_upload
 
 auth = Blueprint('auth', __name__)
 
