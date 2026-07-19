@@ -65,7 +65,7 @@
 | Payment flows | 2 — Cash on Delivery + Razorpay (UPI / card / net banking) |
 | Order lifecycle states | 8 — `placed → accepted → preparing → ready → picked → on_the_way → delivered / cancelled` |
 | Real-time events | WebSocket push via Flask-SocketIO (order updates, admin alerts) |
-| CI | GitHub Actions — Python 3.11 + 3.12, SQLite in-memory, 85 tests |
+| CI | GitHub Actions — Python 3.11 + 3.12, SQLite in-memory, 87 tests |
 | Primary database | PostgreSQL (SQLite fallback for local dev without `DATABASE_URL`) |
 
 ---
@@ -177,7 +177,7 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 | Waitress | Pure-Python WSGI production server (zero C deps, works on Windows + Linux) |
 | Nginx | Reverse proxy, static files, WebSocket upgrade |
 | Docker + docker-compose | Containerised deployment (app + PostgreSQL) |
-| GitHub Actions | CI — runs 85 tests on Python 3.11 + 3.12 |
+| GitHub Actions | CI — runs 87 tests on Python 3.11 + 3.12 |
 | Railway | One-click cloud deployment (see [Deployment](#deployment)) |
 
 ---
@@ -634,7 +634,7 @@ PYTHONPATH=. python scripts/fix_sequences.py
 pytest tests/ -v
 ```
 
-The suite has 85 tests across three files:
+The suite has 87 tests across three files:
 
 | File | Coverage |
 |---|---|
@@ -803,9 +803,16 @@ Real, concrete metrics tested and verified directly on the application:
 ### Lighthouse Audit Scores
 Mobile performance and accessibility were optimized against Google Lighthouse standards, achieving excellent scores under simulated throttled network and CPU conditions:
 * **SEO (Mobile & Desktop):** **100 / 100**
-* **Accessibility (Mobile):** **95 / 100** *(WCAG AA compliant color contrast ratio ≥ 4.5:1)*
-* **Accessibility (Desktop):** **93 / 100**
+* **Accessibility (Mobile):** **90 / 100** *(WCAG AA compliant color contrast ratio ≥ 4.5:1)*
+* **Accessibility (Desktop):** **90 / 100**
+* **Best Practices:** **73 / 100**
+* **Performance:** **51 / 100** *(Waitress WSGI Local Dev)*
 * **Liveness / Readiness Probe Latency:** **< 2 ms**
+
+### Theme System & Mobile Layout Redesign
+* **Unified CSS Custom Properties (Design Tokens):** Migrated hardcoded hex colors to a centralized CSS variable system defined in `theme.css`. Implemented robust light and dark themes with zero visual bleeding, full WCAG AA contrast compliance, and FOUC-prevention scripts executing in the HTML `<head>` across all blueprints (including isolated Owner and Admin panels).
+* **Sleek Mobile Navigation & Header:** Redesigned the top mobile header for viewport widths below `600px` to deliver a premium, native app-like experience. Transformed the brand logo into a compact rounded badge, turned the location picker into an interactive pill, and unified all actions (notification bell, theme toggle, and hamburger menus) into circular buttons with touch-active scaling.
+* **Persistent Theme State Sync:** Bound both desktop and profile theme toggles to the same event-driven JS listener, ensuring synchronized icon changes, tooltip label updates, and storage persistence across restarts.
 
 ### Mobile Page Load Optimizations
 * **Non-blocking Fonts & Icon Stylesheets:** Google Fonts and Font Awesome are configured to load asynchronously (`media="print" onload="this.media='all'"`), removing them from the critical render-blocking path and accelerating First Contentful Paint (FCP).
