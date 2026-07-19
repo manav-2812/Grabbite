@@ -16,7 +16,6 @@ app still boots in dev without any SMTP credentials.
 """
 from __future__ import annotations
 
-import os
 import logging
 from typing import TYPE_CHECKING
 
@@ -129,30 +128,6 @@ def send_order_confirmation(user, order) -> bool:
     )
 
 
-def send_order_status_update(user, order, new_status: str) -> bool:
-    """Notify the user every time their order status changes."""
-    status_labels = {
-        'accepted':   '👍 Order Accepted',
-        'preparing':  '👨‍🍳 Being Prepared',
-        'ready':      '📦 Ready for Pickup',
-        'picked':     '🏍️ Picked Up',
-        'on_the_way': '🚴 On the Way',
-        'delivered':  '🎉 Delivered!',
-        'cancelled':  '❌ Order Cancelled',
-        'refunded':   '💰 Refund Initiated',
-    }
-    label = status_labels.get(new_status, new_status.replace('_', ' ').title())
-    html = render_template(
-        'emails/order_status.html',
-        user=user, order=order, new_status=new_status, label=label,
-    )
-    return send_mail(
-        to=user.email,
-        subject=f'GrabBite Order #{order.id} — {label}',
-        html=html,
-    )
-
-
 def send_password_reset_email(user, token: str) -> bool:
     """Password-reset link email. Token is a URL-safe signed string."""
     from flask import url_for
@@ -174,20 +149,5 @@ def send_password_reset_success(user) -> bool:
     return send_mail(
         to=user.email,
         subject='🔐 GrabBite — Your password has been changed',
-        html=html,
-    )
-
-
-def send_restaurant_approved_email(user, restaurant) -> bool:
-    """Notify a restaurant owner that their listing was approved by admin."""
-    from flask import url_for
-    dashboard_url = url_for('owner.dashboard', _external=True)
-    html = render_template(
-        'emails/restaurant_approved.html',
-        user=user, restaurant=restaurant, dashboard_url=dashboard_url,
-    )
-    return send_mail(
-        to=user.email,
-        subject=f'🚀 GrabBite — "{restaurant.name}" is now live!',
         html=html,
     )
