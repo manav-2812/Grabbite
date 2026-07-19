@@ -6,31 +6,42 @@
 
 /* ── CSS Variables ───────────────────────────────────────────── */
 :root {
-  --gb-red:        #e53935;
-  --gb-red-dark:   #c62828;
-  --gb-red-soft:   rgba(229,57,53,.10);
-  --gb-ink:        #111827;
-  --gb-muted:      #6b7280;
-  --bg-base:       #fffaf7;
-  --bg-card:       #ffffff;
-  --bg-elevated:   #f9f9f9;
-  --border:        rgba(0,0,0,.08);
-  --shadow-sm:     0 2px 8px rgba(0,0,0,.06);
-  --shadow-md:     0 8px 24px rgba(0,0,0,.10);
-  --shadow-lg:     0 20px 48px rgba(0,0,0,.14);
-  --radius-sm:     8px;
-  --radius-md:     14px;
-  --radius-lg:     20px;
-  --radius-xl:     28px;
-  --transition:    .22s cubic-bezier(.4,0,.2,1);
-  --font:          'Poppins', sans-serif;
-  --skeleton-base: #f0f0f0;
-  --skeleton-shine:#e0e0e0;
-  --nav-height:    72px;
+  /* Legacy + alias vars pointing at the canonical theme.css tokens so dark
+     mode cascades everywhere without renaming classes. The accent stays the
+     same red in both themes (brand consistency).
+
+     NOTE: --gb-red / --gb-accent are owned by theme.css (defined as literal
+     #ff4757) and must NOT be re-aliased here — doing so (e.g.
+     `--gb-red: var(--gb-accent)`) creates a cyclic reference that resolves to
+     the guaranteed-invalid value and wipes the entire accent system. */
+  --gb-red-dark: var(--gb-accent-dark);
+  --gb-red-soft: var(--gb-accent-soft);
+  --gb-ink: var(--gb-text-primary);
+  --gb-muted: var(--gb-text-muted);
+  --bg-base: var(--gb-bg);
+  --bg-card: var(--gb-surface);
+  --bg-elevated: var(--gb-surface-2);
+  --border: var(--gb-border);
+  --shadow-sm: var(--gb-shadow-sm);
+  --shadow-md: var(--gb-shadow);
+  --shadow-lg: var(--gb-shadow-lg);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --transition: .22s cubic-bezier(.4,0,.2,1);
+  --font: 'Poppins', sans-serif;
+  --skeleton-base: var(--gb-surface-3);
+  --skeleton-shine: var(--gb-border);
+  --nav-height: 72px;
 }
 
 /* ── Base Reset ──────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
+/* overflow-x:hidden on BOTH html and body — html prevents horizontal viewport
+   drift (if only body has it, the html element can still scroll on touch/swipe,
+   shifting the visual viewport and making fixed elements appear off-centre even
+   when their left/right offsets are equal). */
 html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
@@ -43,7 +54,7 @@ body {
 /* ── Page Loader ─────────────────────────────────────────────── */
 #gb-page-loader {
   position: fixed; inset: 0; z-index: 99999;
-  background: #fffaf7;
+  background: var(--gb-surface-2);
   display: flex; align-items: center; justify-content: center;
   flex-direction: column; gap: 18px;
   transition: opacity .4s ease, visibility .4s ease;
@@ -58,7 +69,7 @@ body {
   0%,100% { transform: scale(1); opacity: 1; }
   50%      { transform: scale(1.07); opacity: .8; }
 }
-.loader-bar { width: 180px; height: 3px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
+.loader-bar { width: 180px; height: 3px; background: var(--gb-surface-3); border-radius: 99px; overflow: hidden; }
 .loader-bar-fill {
   height: 100%; background: var(--gb-red); border-radius: 99px;
   animation: loaderBar 1.4s ease-in-out infinite;
@@ -72,7 +83,7 @@ body {
 /* ── Scroll Progress Bar ─────────────────────────────────────── */
 #gb-scroll-progress {
   position: fixed; top: 0; left: 0; height: 3px;
-  background: linear-gradient(90deg, var(--gb-red), #ff8a80);
+  background: linear-gradient(90deg, var(--gb-red), var(--gb-accent-hover));
   z-index: 99998; width: 0%; transition: width .1s linear;
 }
 
@@ -82,7 +93,7 @@ body {
   height: var(--nav-height);
   display: flex; align-items: center;
   padding: 0 24px; gap: 10px;
-  background: #ffffff;
+  background: var(--gb-surface);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition);
@@ -97,7 +108,7 @@ header.gb-navbar {
   display: flex !important; align-items: center !important;
   justify-content: flex-start !important;
   flex-wrap: nowrap !important; gap: 10px !important;
-  background: #ffffff !important;
+  background: var(--gb-surface) !important;
 }
 
 .gb-navbar-brand {
@@ -113,9 +124,9 @@ header.gb-navbar {
 /* Location button */
 .gb-location-btn {
   display: flex; align-items: center; gap: 8px;
-  background: #f9f9f9; border: 1.5px solid rgba(0,0,0,.08);
+  background: var(--gb-surface-2); border: 1.5px solid rgba(0,0,0,.08);
   border-radius: 99px; padding: 7px 14px;
-  color: #111827; cursor: pointer;
+  color: var(--gb-text-primary); cursor: pointer;
   transition: all var(--transition);
   min-width: 0; max-width: 220px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -130,7 +141,7 @@ header.gb-navbar {
 .gb-nav-link {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px; border-radius: 99px;
-  color: #111827; font-size: .88rem; font-weight: 600;
+  color: var(--gb-text-primary); font-size: .88rem; font-weight: 600;
   text-decoration: none; transition: all var(--transition);
   position: relative; white-space: nowrap;
 }
@@ -146,18 +157,19 @@ header.gb-navbar {
 .gb-cart-badge {
   position: absolute; top: -4px; right: -4px;
   min-width: 18px; height: 18px;
-  background: var(--gb-red); color: #fff;
+  background: var(--gb-red); color: var(--gb-on-accent);
   border-radius: 99px; font-size: 10px; font-weight: 800;
   display: none; align-items: center; justify-content: center;
-  border: 2px solid #fff; padding: 0 3px;
+  border: 2px solid var(--gb-on-accent); padding: 0 3px;
 }
 .gb-cart-badge.visible { display: flex; }
+.gb-cart-badge.bump { animation: gbBadgePop .35s var(--gb-ease); }
 
 /* Icon button (bell, menu, etc.) */
 .gb-icon-btn {
   position: relative; width: 40px; height: 40px;
   border-radius: 50%; border: 1.5px solid rgba(0,0,0,.08);
-  background: #f9f9f9; color: #111827;
+  background: var(--gb-surface-2); color: var(--gb-text-primary);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; flex-shrink: 0;
   font-size: 1rem; transition: all var(--transition); outline: none;
@@ -168,7 +180,7 @@ header.gb-navbar {
 .gb-hamburger {
   display: flex; width: 40px; height: 40px;
   border-radius: 50%; border: 1.5px solid rgba(0,0,0,.08);
-  background: #f9f9f9; color: #111827;
+  background: var(--gb-surface-2); color: var(--gb-text-primary);
   align-items: center; justify-content: center;
   cursor: pointer; font-size: 1rem;
   transition: all var(--transition); flex-shrink: 0;
@@ -199,7 +211,7 @@ header.gb-navbar {
 .gb-mobile-drawer {
   position: fixed; top: 0; right: -100%;
   width: min(320px, 90vw); height: 100vh;
-  background: #ffffff; z-index: 10001;
+  background: var(--gb-surface); z-index: 10001;
   box-shadow: -8px 0 40px rgba(0,0,0,.2);
   display: flex; flex-direction: column;
   transition: right .35s cubic-bezier(.4,0,.2,1); overflow-y: auto;
@@ -220,18 +232,18 @@ header.gb-navbar {
 }
 .gb-drawer-close {
   width: 36px; height: 36px; border-radius: 50%;
-  border: 1.5px solid rgba(0,0,0,.08); background: #f9f9f9;
-  color: #111827; display: flex; align-items: center;
+  border: 1.5px solid rgba(0,0,0,.08); background: var(--gb-surface-2);
+  color: var(--gb-text-primary); display: flex; align-items: center;
   justify-content: center; cursor: pointer; font-size: .95rem;
   transition: all var(--transition);
 }
-.gb-drawer-close:hover { background: var(--gb-red); color: #fff; border-color: var(--gb-red); }
+.gb-drawer-close:hover { background: var(--gb-red); color: var(--gb-on-accent); border-color: var(--gb-red); }
 
 .gb-drawer-links { padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
 .gb-drawer-link {
   display: flex; align-items: center; gap: 12px;
   padding: 13px 14px; border-radius: var(--radius-md);
-  color: #111827; text-decoration: none;
+  color: var(--gb-text-primary); text-decoration: none;
   font-weight: 600; font-size: .95rem; transition: all var(--transition);
 }
 .gb-drawer-link i { width: 22px; color: var(--gb-red); font-size: 1rem; text-align: center; }
@@ -240,7 +252,7 @@ header.gb-navbar {
 
 /* ── Skeleton Loading ────────────────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--gb-surface-3) 25%, var(--gb-surface-3) 50%, var(--gb-surface-3) 75%);
   background-size: 400% 100%;
   animation: skeletonShimmer 1.4s ease-in-out infinite;
   border-radius: var(--radius-sm);
@@ -249,7 +261,7 @@ header.gb-navbar {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
-.skeleton-card  { background: #fff; border-radius: var(--radius-md); overflow: hidden; border: 1px solid rgba(0,0,0,.08); }
+.skeleton-card  { background: var(--gb-surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid rgba(0,0,0,.08); }
 .skeleton-img   { height: 190px; width: 100%; }
 .skeleton-line  { height: 14px; margin: 10px 16px 0; border-radius: 99px; }
 .skeleton-line.short  { width: 55%; }
@@ -262,7 +274,7 @@ header.gb-navbar {
 
 /* ── Modern Cards ────────────────────────────────────────────── */
 .gb-card {
-  background: #ffffff; border: 1px solid rgba(0,0,0,.08);
+  background: var(--gb-surface); border: 1px solid var(--gb-border);
   border-radius: var(--radius-md); overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
@@ -270,111 +282,30 @@ header.gb-navbar {
 }
 .gb-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: rgba(229,57,53,.18); }
 
-.gb-card-media { position: relative; overflow: hidden; aspect-ratio: 16/9; }
-.gb-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
-.gb-card:hover .gb-card-media img { transform: scale(1.07); }
-
-.gb-card-body   { padding: 16px; }
-.gb-card-title  { font-size: .98rem; font-weight: 800; color: #111827; margin: 0 0 5px; line-height: 1.3; }
-.gb-card-sub    { font-size: .8rem; color: #6b7280; margin: 0 0 10px; }
-.gb-card-meta   { display: flex; flex-wrap: wrap; gap: 6px; font-size: .76rem; color: #6b7280; }
-
-.gb-rating { background: #138a43; color: #fff; border-radius: 6px; padding: 3px 7px; font-weight: 800; font-size: .76rem; }
-
-.gb-badge-float {
-  position: absolute; top: 10px; left: 10px;
-  background: rgba(255,255,255,.94); color: var(--gb-red);
-  border-radius: 99px; padding: 4px 10px; font-weight: 900;
-  font-size: .73rem; box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
-}
-.gb-favorite-btn {
-  position: absolute; top: 10px; right: 10px;
-  width: 34px; height: 34px; border: none; border-radius: 50%;
-  background: rgba(255,255,255,.92); color: var(--gb-red);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: var(--shadow-sm);
-  transition: all var(--transition); backdrop-filter: blur(6px);
-}
-.gb-favorite-btn:hover { transform: scale(1.15); }
-.gb-favorite-btn.active { background: var(--gb-red); color: #fff; }
 
 /* ── Animation Utilities ─────────────────────────────────────── */
 .reveal       { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
 .reveal.visible { opacity: 1; transform: none; }
-.reveal-left  { opacity: 0; transform: translateX(-28px); transition: opacity .55s ease, transform .55s ease; }
-.reveal-right { opacity: 0; transform: translateX( 28px); transition: opacity .55s ease, transform .55s ease; }
-.reveal-left.visible, .reveal-right.visible { opacity: 1; transform: none; }
-.reveal-delay-1 { transition-delay: .1s; }
-.reveal-delay-2 { transition-delay: .2s; }
-.reveal-delay-3 { transition-delay: .3s; }
-.reveal-delay-4 { transition-delay: .4s; }
 
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.float { animation: float 3.6s ease-in-out infinite; }
 
-.ripple { position: relative; overflow: hidden; }
 
-@keyframes pulseDot {
-  0%,100% { box-shadow: 0 0 0 0 rgba(229,57,53,.6); }
-  70%      { box-shadow: 0 0 0 8px rgba(229,57,53,0); }
-}
-.pulse-dot { width: 10px; height: 10px; background: var(--gb-red); border-radius: 50%; display: inline-block; animation: pulseDot 1.8s infinite; }
 
-@keyframes shimmerText { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-.shimmer-text {
-  background: linear-gradient(90deg, var(--gb-red), #ff8a80, var(--gb-red));
-  background-size: 200% auto;
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text; animation: shimmerText 3s linear infinite;
-}
 
-.gradient-border { position: relative; border-radius: var(--radius-md); background: #fff; }
-.gradient-border::before {
-  content: ''; position: absolute; inset: -2px;
-  border-radius: calc(var(--radius-md) + 2px);
-  background: linear-gradient(135deg, var(--gb-red), #ff8a80, var(--gb-red));
-  z-index: -1; opacity: 0; transition: opacity var(--transition);
-}
-.gradient-border:hover::before { opacity: 1; }
 
 /* ── Back to Top ─────────────────────────────────────────────── */
 #gb-back-top {
   position: fixed; bottom: 88px; right: 22px;
-  width: 44px; height: 44px; background: var(--gb-red); color: #fff;
+  width: 44px; height: 44px; background: var(--gb-red); color: var(--gb-on-accent);
   border: none; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; box-shadow: 0 6px 20px rgba(229,57,53,.4);
-  z-index: 1040; opacity: 0; transform: translateY(16px);
+  z-index: 990; opacity: 0; transform: translateY(16px);
   transition: opacity var(--transition), transform var(--transition); font-size: .95rem;
 }
 #gb-back-top.visible { opacity: 1; transform: translateY(0); }
 #gb-back-top:hover   { background: var(--gb-red-dark); transform: translateY(-3px); }
 
 /* ── Loading Indicators ──────────────────────────────────────── */
-.gb-spinner { width: 28px; height: 28px; border: 3px solid rgba(0,0,0,.08); border-top-color: var(--gb-red); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
-.gb-spinner.sm { width: 18px; height: 18px; border-width: 2px; }
-.gb-spinner.lg { width: 44px; height: 44px; border-width: 4px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.gb-dots { display: inline-flex; gap: 5px; align-items: center; }
-.gb-dots span { width: 7px; height: 7px; background: var(--gb-red); border-radius: 50%; animation: dotBounce 1.2s ease-in-out infinite; }
-.gb-dots span:nth-child(2) { animation-delay: .2s; }
-.gb-dots span:nth-child(3) { animation-delay: .4s; }
-@keyframes dotBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-
-.gb-section-loader {
-  position: absolute; inset: 0; background: rgba(255,255,255,.85);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 10; border-radius: inherit; backdrop-filter: blur(2px);
-}
-.gb-btn-loading { pointer-events: none; opacity: .75; }
-.gb-btn-loading .btn-text { visibility: hidden; }
-.gb-btn-loading::after {
-  content: ''; position: absolute; width: 16px; height: 16px;
-  border: 2px solid transparent; border-top-color: currentColor;
-  border-radius: 50%; animation: spin .6s linear infinite;
-  left: 50%; top: 50%; transform: translate(-50%, -50%);
-}
 
 /* ── Toast System ────────────────────────────────────────────── */
 #gb-toast-zone {
@@ -384,54 +315,54 @@ header.gb-navbar {
 }
 .gb-toast {
   display: flex; align-items: flex-start; gap: 12px;
-  background: #ffffff; border: 1px solid rgba(0,0,0,.08);
+  background: var(--gb-surface); border: 1px solid rgba(0,0,0,.08);
   border-radius: var(--radius-md); padding: 14px 16px;
   min-width: 280px; max-width: 360px;
   box-shadow: var(--shadow-lg); pointer-events: all;
   animation: toastIn .35s cubic-bezier(.34,1.56,.64,1);
-  border-left: 4px solid var(--gb-red); color: #111827;
+  border-left: 4px solid var(--gb-red); color: var(--gb-text-primary);
 }
-.gb-toast.success { border-left-color: #16a34a; }
-.gb-toast.warning { border-left-color: #d97706; }
-.gb-toast.info    { border-left-color: #2563eb; }
+.gb-toast.success { border-left-color: var(--gb-success); }
+.gb-toast.warning { border-left-color: var(--gb-warning); }
+.gb-toast.info    { border-left-color: var(--gb-info); }
 .gb-toast.removing { animation: toastOut .3s ease forwards; }
 @keyframes toastIn  { from { opacity: 0; transform: translateX(30px) scale(.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
 @keyframes toastOut { to   { opacity: 0; transform: translateX(30px) scale(.92); } }
 .gb-toast-icon  { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
 .gb-toast-body  { flex: 1; }
-.gb-toast-title { font-weight: 700; font-size: .9rem; margin: 0 0 2px; color: #111827; }
-.gb-toast-msg   { font-size: .82rem; color: #6b7280; margin: 0; line-height: 1.4; }
-.gb-toast-close { background: none; border: none; color: #6b7280; cursor: pointer; font-size: .85rem; flex-shrink: 0; padding: 0; transition: color var(--transition); }
+.gb-toast-title { font-weight: 700; font-size: .9rem; margin: 0 0 2px; color: var(--gb-text-primary); }
+.gb-toast-msg   { font-size: .82rem; color: var(--gb-text-muted); margin: 0; line-height: 1.4; }
+.gb-toast-close { background: none; border: none; color: var(--gb-text-muted); cursor: pointer; font-size: .85rem; flex-shrink: 0; padding: 0; transition: color var(--transition); }
 .gb-toast-close:hover { color: var(--gb-red); }
 @media (max-width: 480px) { #gb-toast-zone { bottom: 80px; right: 12px; left: 12px; } .gb-toast { min-width: unset; max-width: 100%; } }
 
 /* ── Modern Footer ───────────────────────────────────────────── */
-.gb-footer { background: #0a0a0a; color: #ccc; border-top: 1px solid #1a1a1a; }
+.gb-footer { background: var(--gb-surface-strong); color: var(--gb-text-faint); border-top: 1px solid var(--gb-border-strong); }
 .gb-footer-newsletter { background: linear-gradient(135deg, var(--gb-red), var(--gb-red-dark)); padding: 28px 0; }
 .gb-footer-body { padding: 56px 0 32px; }
-.gb-footer-brand-name { font-size: 1.8rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
-.gb-footer-desc { color: #a1a1aa; font-size: .85rem; line-height: 1.8; max-width: 230px; margin: 12px 0 18px; }
-.gb-footer-heading { font-size: .72rem; font-weight: 700; color: #fff; letter-spacing: 1.4px; text-transform: uppercase; border-bottom: 2px solid var(--gb-red); display: inline-block; padding-bottom: 7px; margin-bottom: 16px; }
-.gb-footer-link { display: block; color: #a1a1aa; font-size: .84rem; text-decoration: none; padding: 4px 0; transition: color var(--transition), padding-left var(--transition); background: none; border: none; cursor: pointer; text-align: left; line-height: 1.7; }
+.gb-footer-brand-name { font-size: 1.8rem; font-weight: 900; color: var(--gb-on-accent); letter-spacing: -0.5px; }
+.gb-footer-desc { color: var(--gb-text-faint); font-size: .85rem; line-height: 1.8; max-width: 230px; margin: 12px 0 18px; }
+.gb-footer-heading { font-size: .72rem; font-weight: 700; color: var(--gb-on-accent); letter-spacing: 1.4px; text-transform: uppercase; border-bottom: 2px solid var(--gb-red); display: inline-block; padding-bottom: 7px; margin-bottom: 16px; }
+.gb-footer-link { display: block; color: var(--gb-text-faint); font-size: .84rem; text-decoration: none; padding: 4px 0; transition: color var(--transition), padding-left var(--transition); background: none; border: none; cursor: pointer; text-align: left; line-height: 1.7; }
 .gb-footer-link:hover { color: var(--gb-red); padding-left: 5px; }
-.gb-social-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; color: #fff; text-decoration: none; font-size: .9rem; transition: transform var(--transition), box-shadow var(--transition); }
+.gb-social-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; color: var(--gb-on-accent); text-decoration: none; font-size: .9rem; transition: transform var(--transition), box-shadow var(--transition); }
 .gb-social-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.4); }
-.gb-footer-divider { border-color: #1e1e1e; margin: 0; }
-.gb-footer-bottom  { padding: 18px 0; font-size: .78rem; color: #a1a1aa; }
-.gb-footer-badge   { display: inline-flex; align-items: center; gap: 5px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 4px 10px; font-size: .72rem; color: #a1a1aa; }
-.gb-app-btn { display: flex; align-items: center; gap: 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 14px; text-decoration: none; color: #fff; width: fit-content; transition: border-color var(--transition); }
-.gb-app-btn:hover { border-color: var(--gb-red); color: #fff; }
+.gb-footer-divider { border-color: var(--gb-border-strong); margin: 0; }
+.gb-footer-bottom  { padding: 18px 0; font-size: .78rem; color: var(--gb-text-faint); }
+.gb-footer-badge   { display: inline-flex; align-items: center; gap: 5px; background: var(--gb-surface-strong); border: 1px solid var(--gb-border-strong); border-radius: 6px; padding: 4px 10px; font-size: .72rem; color: var(--gb-text-faint); }
+.gb-app-btn { display: flex; align-items: center; gap: 10px; background: var(--gb-surface-strong); border: 1px solid var(--gb-border-strong); border-radius: 10px; padding: 10px 14px; text-decoration: none; color: var(--gb-on-accent); width: fit-content; transition: border-color var(--transition); }
+.gb-app-btn:hover { border-color: var(--gb-red); color: var(--gb-on-accent); }
 
 /* ── Mobile Bottom Nav ───────────────────────────────────────── */
 .gb-bottom-nav {
   display: none; position: fixed; bottom: 0; left: 0; right: 0;
-  height: 62px; background: #ffffff; border-top: 1px solid rgba(0,0,0,.08);
+  height: 62px; background: var(--gb-surface); border-top: 1px solid rgba(0,0,0,.08);
   z-index: 999; align-items: center; justify-content: space-around;
   box-shadow: 0 -4px 20px rgba(0,0,0,.08);
 }
 .gb-bottom-nav-item {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
-  text-decoration: none; color: #4b5563; font-size: .64rem; font-weight: 600;
+  text-decoration: none; color: var(--gb-text-secondary); font-size: .64rem; font-weight: 600;
   padding: 8px 12px; border-radius: var(--radius-sm);
   transition: all var(--transition); position: relative;
 }
@@ -443,40 +374,25 @@ header.gb-navbar {
   white-space: nowrap;
   text-align: center;
 }
-.gb-bottom-nav-item.active, .gb-bottom-nav-item:hover { color: #d32f2f; }
-.gb-bottom-nav-item.active i, .gb-bottom-nav-item:hover i { color: #d32f2f; }
+.gb-bottom-nav-item.active, .gb-bottom-nav-item:hover { color: var(--gb-accent-dark); }
+.gb-bottom-nav-item.active i, .gb-bottom-nav-item:hover i { color: var(--gb-accent-dark); }
 
 .gb-bottom-badge {
   position: absolute; top: 4px; right: 6px;
   min-width: 16px; height: 16px;
-  background: var(--gb-red); color: #fff; border-radius: 99px;
+  background: var(--gb-red); color: var(--gb-on-accent); border-radius: 99px;
   font-size: 9px; font-weight: 800;
   display: none; align-items: center; justify-content: center;
-  padding: 0 3px; border: 2px solid #fff;
+  padding: 0 3px; border: 2px solid var(--gb-on-accent);
 }
 .gb-bottom-badge.show { display: flex; }
 
-@media (max-width: 767px) {
-  .gb-bottom-nav {
-    display: flex;
-    bottom: 16px !important;
-    left: 16px !important;
-    right: 16px !important;
-    border-radius: 99px !important;
-    border: 1px solid rgba(0,0,0,.08) !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,.12) !important;
-  }
-  main { padding-bottom: 96px !important; }
-  #back-home-fab { bottom: 96px !important; }
-  #gb-back-top   { bottom: 96px !important; }
-}
 @media (max-width: 575px) {
   .gb-card { border-radius: var(--radius-sm); }
   .premium-grid  { grid-template-columns: 1fr !important; }
   .collection-grid { grid-template-columns: 1fr 1fr !important; }
   .why-grid, .steps-grid { grid-template-columns: 1fr !important; }
   .category-grid { grid-template-columns: repeat(4, 1fr) !important; }
-  .gb-card-body  { padding: 12px; }
 }
 
 /* ── Page transition ─────────────────────────────────────────── */
@@ -488,7 +404,7 @@ main { animation: pageIn .35s ease; }
 img             { transition: opacity .3s ease; }
 img[loading="lazy"] { opacity: 0; }
 img.loaded      { opacity: 1; }
-::selection     { background: rgba(229,57,53,.2); color: #111827; }
+::selection     { background: rgba(229,57,53,.2); color: var(--gb-text-primary); }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(229,57,53,.35); border-radius: 99px; }
@@ -497,7 +413,7 @@ img.loaded      { opacity: 1; }
 
 /* Legacy header-link compatibility */
 .header-link {
-  color: #111827 !important; background: #f9f9f9 !important;
+  color: var(--gb-text-primary) !important; background: var(--gb-surface-2) !important;
   border: 1.5px solid rgba(0,0,0,.08) !important; border-radius: 99px !important;
   padding: 7px 16px !important; font-size: .86rem !important; font-weight: 600 !important;
   text-decoration: none !important; display: inline-flex !important;
@@ -534,14 +450,15 @@ img.loaded      { opacity: 1; }
     display: none !important;
   }
 
-  /* Horizontal scroll track for filter pills in Eat page */
+  /* Horizontal scroll track for filter pills in Eat page.
+     NO negative margins — those pushed the strip 15px past each viewport edge
+     and caused the page's horizontal overflow that knocked the fixed bottom
+     nav off-center. The inner .container already supplies the side inset. */
   .filter-section {
     justify-content: flex-start !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
-    padding: 8px 16px !important;
-    margin-left: -15px !important;
-    margin-right: -15px !important;
+    padding: 8px 4px !important;
     scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch !important;
   }
@@ -646,3 +563,569 @@ img.loaded      { opacity: 1; }
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   PHASE 2/3/4/5 — Theme surfaces, animations, mobile & iOS polish
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Global body/surface theming so dark mode cascades everywhere ── */
+body { background-color: var(--gb-bg); color: var(--gb-text-primary); }
+
+/* Named surface utility — use on any card/panel that should follow the theme */
+.gb-benefits-card {
+  background-color: var(--gb-surface);
+  border: 1px solid var(--gb-border);
+  transition: background-color .3s ease, border-color .3s ease;
+}
+
+.gb-theme-surface,
+.card, .modal-content, .dropdown-menu, .list-group-item, .offcanvas, .gb-benefits-card {
+  background-color: var(--gb-surface);
+  color: var(--gb-text-primary);
+  border-color: var(--gb-border);
+}
+.modal-header, .modal-footer, .card-header, .card-footer { border-color: var(--gb-border); }
+.table { color: var(--gb-text-primary); }
+.text-muted { color: var(--gb-text-muted) !important; }
+hr { border-color: var(--gb-border); }
+
+/* ── DARK-MODE SAFETY NET ───────────────────────────────────────
+   Neutralize Bootstrap utility classes that hard-code white/light via
+   !important (bg-white, bg-light, text-dark, border-light) so they follow
+   the dark theme instead of punching white holes into dark pages.
+   Scoped to [data-theme="dark"] so light mode is untouched. */
+[data-theme="dark"] .bg-white   { background-color: var(--gb-surface) !important; }
+[data-theme="dark"] .bg-light   { background-color: var(--gb-surface-2) !important; }
+[data-theme="dark"] .text-dark  { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .border-light { border-color: var(--gb-border) !important; }
+[data-theme="dark"] .border-white { border-color: var(--gb-border) !important; }
+[data-theme="dark"] .text-white-50 { color: var(--gb-text-muted) !important; }
+
+
+/* Bootstrap form controls respond to theme */
+.form-control, .form-select, .input-group-text, textarea, select, input {
+  background-color: var(--gb-surface);
+  color: var(--gb-text-primary);
+  border-color: var(--gb-border);
+}
+.form-control::placeholder, textarea::placeholder { color: var(--gb-text-faint); }
+.form-control:focus, .form-select:focus {
+  background-color: var(--gb-surface);
+  color: var(--gb-text-primary);
+  border-color: var(--gb-accent);
+  box-shadow: 0 0 0 .2rem var(--gb-accent-soft);
+}
+
+/* Notification panel / bell / toasts follow the theme */
+#notif-panel { background: var(--gb-surface); color: var(--gb-text-primary); }
+.notif-item { border-bottom-color: var(--gb-border); }
+.notif-item:hover { background: var(--gb-surface-2); }
+.notif-title { color: var(--gb-text-primary); }
+.notif-msg { color: var(--gb-text-muted); }
+.notif-footer { border-top-color: var(--gb-border); }
+
+/* ── Theme toggle icon button ── */
+#gb-theme-toggle { cursor: pointer; }
+#gb-theme-toggle i { transition: transform .4s var(--gb-ease, ease); }
+#gb-theme-toggle:hover i { transform: rotate(20deg) scale(1.12); }
+
+/* ── PHASE 3: Animations & smoothness (GPU-friendly transform/opacity) ── */
+:root { --gb-ease: cubic-bezier(0.22, 0.61, 0.36, 1); }
+
+/* Theme cross-fade */
+html { transition: background-color .3s ease; }
+body, .card, .modal-content, .gb-navbar, .gb-bottom-nav, .form-control,
+.form-select, .dropdown-menu, #notif-panel, .gb-card {
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+
+/* Page-content fade-in on load */
+.gb-page-fade { animation: gbFadeIn .4s var(--gb-ease) both; }
+@keyframes gbFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Card hover / press states */
+.gb-card, .card { transition: transform .2s var(--gb-ease), box-shadow .2s var(--gb-ease), background-color .3s ease, border-color .3s ease; }
+.gb-card:hover, .card.gb-hoverable:hover { transform: translateY(-4px); box-shadow: var(--gb-shadow-lg); }
+.gb-card:active, .card.gb-hoverable:active { transform: translateY(-1px) scale(.995); }
+
+/* Button press feedback */
+.btn, .gb-btn { transition: transform .12s var(--gb-ease), box-shadow .2s var(--gb-ease), background-color .2s ease, border-color .2s ease; }
+.btn:active, .gb-btn:active { transform: scale(.96); }
+
+/* Cart-add micro-interaction on the bottom badge */
+.gb-bottom-badge.show { animation: gbBadgePop .35s var(--gb-ease); }
+@keyframes gbBadgePop { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.gb-bottom-badge.bump { animation: gbBadgePop .35s var(--gb-ease); }
+
+/* Modal & toast enter/exit */
+.gb-toast { animation: gbToastIn .28s var(--gb-ease); }
+.gb-toast.removing { animation: gbToastOut .3s var(--gb-ease) forwards; }
+@keyframes gbToastIn  { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes gbToastOut { to { opacity: 0; transform: translateX(24px); } }
+.modal.fade .modal-dialog { transition: transform .3s var(--gb-ease), opacity .3s ease; }
+
+/* ── Skeleton loaders ── */
+.gb-skeleton {
+  position: relative; overflow: hidden;
+  background: var(--gb-surface-3); border-radius: var(--radius-sm);
+}
+.gb-skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--gb-border), transparent);
+  animation: gbShimmer 1.3s infinite;
+}
+@keyframes gbShimmer { 100% { transform: translateX(100%); } }
+.gb-skeleton-card { height: 240px; }
+.gb-skeleton-line { height: 12px; margin: 8px 0; }
+.gb-skeleton-line.sm { width: 45%; }
+.gb-skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+
+/* ── PHASE 4: Mobile bottom pill nav — real fixes ── */
+@media (max-width: 767px) {
+  /* Mobile bottom nav: floating pill, safe-area aware, ≥44px tap targets.
+     Single source of truth. */
+  .gb-bottom-nav {
+    display: flex;
+    /* ── Why left+right, not left+transform ─────────────────────────────
+       left:50%+translateX(-50%)+width:100vw looks symmetric on paper but
+       breaks whenever a scrollbar lives INSIDE the viewport (Chrome DevTools
+       emulation, Android WebView): 100vw counts the scrollbar gutter, but
+       left:50% doesn't, so the pill's right edge overshoots and the right
+       gap looks narrower than the left.
+
+       left:12px + right:12px + width:auto: the browser pins both edges of
+       the fixed element to the same containing block with the same offset.
+       Width is computed as (viewport − 24px).  Both gaps are 12px by
+       definition — no vw math, no transform, no rounding, no scrollbar edge
+       cases. */
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    transform: none !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 99px !important;
+    border: 1px solid var(--gb-border) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18) !important;
+    height: auto !important;
+    min-height: 56px;
+    gap: 4px;
+    padding: 6px 10px !important;
+  }
+  .gb-bottom-nav-item {
+    /* Keep a comfortable touch height while allowing five items to share a
+       narrow viewport without widening the bar. */
+    min-width: 0; min-height: 52px;
+    justify-content: center;
+    padding: 6px 6px !important;
+    flex: 1 1 0;
+  }
+  .gb-bottom-nav-item i { font-size: 1.15rem; }
+  .gb-bottom-nav-item > span:not(.gb-bottom-badge) {
+    max-width: 100%;            /* no clipping at 360px */
+    font-size: .6rem;
+    line-height: 1.1;
+  }
+  /* Universal bottom clearance: body padding (not just <main>) covers every
+     template, so the floating pill never collides with the last card or its
+     favorite/heart button. 120px = 12px offset + ~56px nav + ~52px breathing
+     room, all plus the safe-area inset. */
+  body { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important; }
+  #back-home-fab { bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important; }
+  /* The floating arrow covered card actions, including “View Menu & Order”,
+     on the restaurants page. Native mobile scrolling makes it unnecessary. */
+  #gb-back-top   { display: none !important; }
+}
+
+/* Extra-narrow phones (≤360px): shrink label, keep tap target */
+@media (max-width: 360px) {
+  .gb-bottom-nav-item > span:not(.gb-bottom-badge) { font-size: .55rem; }
+  .gb-bottom-nav-item i { font-size: 1.05rem; }
+}
+
+/* Kill horizontal overflow on small screens — html+body both covered (see line ~41). */
+@media (max-width: 767px) {
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .premium-grid, .collection-grid, .category-grid, .why-grid, .steps-grid { max-width: 100%; }
+
+  /* Bootstrap adds padding-right to <body> when a modal opens to compensate
+     for the disappearing scrollbar.  A fixed element anchored by both left
+     and right simultaneously cannot be displaced by body padding — both
+     edges recompute against the viewport, not the body box. */
+  .modal-open .gb-bottom-nav {
+    left: 12px !important;
+    right: 12px !important;
+    transform: none !important;
+  }
+}
+
+/* ── PHASE 5: iOS / Safari specifics ── */
+/* Prevent input zoom-on-focus (needs font-size ≥16px) */
+@media (max-width: 767px) {
+  input, select, textarea, .form-control, .form-select, .search-input {
+    font-size: 16px !important;
+  }
+}
+/* Backdrop blur — prefixed + standard for full browser coverage */
+.search-container, #notif-overlay, .gb-navbar.scrolled, .modal-backdrop {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+/* Remove ugly gray tap flash on iOS */
+a, button, .btn, .gb-card, .gb-bottom-nav-item, .gb-nav-link, [role="button"] {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+/* ── PHASE 3: Respect reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  main { animation: none !important; }
+}
+
+/* ── Theme cross-fade ──────────────────────────────────────────
+   Applied only for ~350ms during an explicit toggle (the .gb-theme-transition
+   class is added then removed by JS). This cross-fades surfaces/text without
+   ever affecting initial paint or per-element hover transitions.
+   Wrapped in no-preference so reduced-motion users get an instant switch. */
+@media (prefers-reduced-motion: no-preference) {
+  html.gb-theme-transition,
+  html.gb-theme-transition *,
+  html.gb-theme-transition *::before,
+  html.gb-theme-transition *::after {
+    transition: background-color .3s var(--gb-ease),
+                color .3s var(--gb-ease),
+                border-color .3s var(--gb-ease),
+                box-shadow .3s var(--gb-ease),
+                fill .3s var(--gb-ease) !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   RESTAURANTS ("EAT") PAGE — mobile card & badge consistency
+   Goal: restaurant cards must read as the same card system as .gb-card
+   (Home), with no horizontal overflow, a contained rating badge, and
+   comfortable internal spacing that matches the desktop layout.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Pull the restaurant card onto the .gb-card visual system (surface, 1px
+   border, radius, elevation). In dark mode this replaces the invisible
+   light-only 0 5px 15px shadow with --gb-shadow so the card no longer looks
+   like a disconnected hard-black block. */
+.restaurant-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0;                 /* vertical rhythm owned by .restaurant-item */
+  overflow: hidden;                 /* keep the rating badge clipped inside */
+}
+
+/* Rating badge: sit fully inside the card, above the image, but below any
+   floating chrome (back-to-top z-index 990 / bottom nav z-index 999) so it
+   can never visually punch through them while the user scrolls. */
+.restaurant-card .rating-badge {
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .28);
+}
+
+/* Comfortable, consistent internal padding + type rhythm on mobile so cards
+   don't look tight/misaligned vs the desktop version. */
+@media (max-width: 767px) {
+  .restaurant-card .card-body { padding: 16px 16px 18px; }
+  .restaurant-card .card-title { font-size: 1.05rem; margin-bottom: .3rem; line-height: 1.25; }
+  .restaurant-card .card-text { font-size: .9rem; line-height: 1.45; }
+  .restaurant-card .card-text.text-muted { margin-bottom: .5rem; }
+  .restaurant-card .row.text-center { margin-top: .25rem !important; }
+  .restaurant-card .row.text-center > div { padding: 0 2px; }
+  .restaurant-card .row.text-center small.text-muted { font-size: .68rem; }
+  .restaurant-card .row.text-center .fw-bold { font-size: .82rem; }
+  .restaurant-card .mt-3 .btn,
+  .restaurant-card .mt-3 a.btn { padding: 11px 14px; font-size: .92rem; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DARK MODE — EXTENDED OVERRIDES
+   Everything below is scoped to [data-theme="dark"] so light mode is untouched.
+   Ordered: Bootstrap components → semantic components → page-specific patches.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Bootstrap btn-outline-* ─────────────────────────────────────────────── */
+[data-theme="dark"] .btn-outline-secondary {
+  color: var(--gb-text-secondary);
+  border-color: var(--gb-border-strong);
+}
+[data-theme="dark"] .btn-outline-secondary:hover,
+[data-theme="dark"] .btn-outline-secondary:focus {
+  background-color: var(--gb-surface-3);
+  border-color: var(--gb-border-strong);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .btn-outline-primary {
+  color: var(--gb-info);
+  border-color: var(--gb-info);
+}
+[data-theme="dark"] .btn-outline-primary:hover {
+  background-color: var(--gb-info);
+  color: #fff;
+}
+[data-theme="dark"] .btn-outline-danger {
+  color: var(--gb-accent);
+  border-color: var(--gb-accent);
+}
+[data-theme="dark"] .btn-outline-danger:hover {
+  background-color: var(--gb-accent);
+  color: #fff;
+}
+[data-theme="dark"] .btn-outline-success {
+  color: var(--gb-success);
+  border-color: var(--gb-success);
+}
+[data-theme="dark"] .btn-outline-success:hover {
+  background-color: var(--gb-success);
+  color: #fff;
+}
+[data-theme="dark"] .btn-outline-warning {
+  color: var(--gb-warning);
+  border-color: var(--gb-warning);
+}
+[data-theme="dark"] .btn-outline-warning:hover {
+  background-color: var(--gb-warning);
+  color: #111;
+}
+[data-theme="dark"] .btn-close { filter: invert(1) grayscale(1); }
+
+/* ── Bootstrap tables ────────────────────────────────────────────────────── */
+[data-theme="dark"] .table {
+  --bs-table-bg: var(--gb-surface);
+  --bs-table-striped-bg: var(--gb-surface-2);
+  --bs-table-hover-bg: var(--gb-surface-3);
+  --bs-table-border-color: var(--gb-border);
+  --bs-table-color: var(--gb-text-primary);
+}
+[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: var(--gb-surface-2);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .table-hover > tbody > tr:hover > * {
+  background-color: var(--gb-surface-3);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] thead th,
+[data-theme="dark"] .table thead th {
+  background-color: var(--gb-surface-2) !important;
+  color: var(--gb-text-muted) !important;
+  border-color: var(--gb-border) !important;
+}
+
+/* ── Bootstrap badges / pills ────────────────────────────────────────────── */
+[data-theme="dark"] .badge.bg-success   { background-color: var(--gb-success) !important; }
+[data-theme="dark"] .badge.bg-danger    { background-color: var(--gb-danger) !important; }
+[data-theme="dark"] .badge.bg-warning   { background-color: var(--gb-warning) !important; color: #111 !important; }
+[data-theme="dark"] .badge.bg-info      { background-color: var(--gb-info) !important; }
+[data-theme="dark"] .badge.bg-secondary { background-color: var(--gb-surface-3) !important; color: var(--gb-text-primary) !important; }
+
+/* ── Input group ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] .input-group-text {
+  background-color: var(--gb-surface-2);
+  color: var(--gb-text-muted);
+  border-color: var(--gb-border);
+}
+
+/* ── Bootstrap alerts ────────────────────────────────────────────────────── */
+[data-theme="dark"] .alert-success {
+  background-color: rgba(34,197,94,.15);
+  border-color: rgba(34,197,94,.3);
+  color: #86efac;
+}
+[data-theme="dark"] .alert-danger {
+  background-color: rgba(248,113,113,.15);
+  border-color: rgba(248,113,113,.3);
+  color: #fca5a5;
+}
+[data-theme="dark"] .alert-warning {
+  background-color: rgba(245,158,11,.15);
+  border-color: rgba(245,158,11,.3);
+  color: #fcd34d;
+}
+[data-theme="dark"] .alert-info {
+  background-color: rgba(96,165,250,.15);
+  border-color: rgba(96,165,250,.3);
+  color: #93c5fd;
+}
+
+/* ── Bootstrap nav-tabs / nav-pills ─────────────────────────────────────── */
+[data-theme="dark"] .nav-tabs { border-color: var(--gb-border); }
+[data-theme="dark"] .nav-tabs .nav-link {
+  color: var(--gb-text-muted);
+  border-color: transparent;
+}
+[data-theme="dark"] .nav-tabs .nav-link:hover { border-color: var(--gb-border); color: var(--gb-text-primary); }
+[data-theme="dark"] .nav-tabs .nav-link.active {
+  background-color: var(--gb-surface);
+  border-color: var(--gb-border) var(--gb-border) var(--gb-surface);
+  color: var(--gb-text-primary);
+}
+
+/* ── Status-step badges (owner & admin) ──────────────────────────────────── */
+/* Map each semantic status to dark-friendly semi-transparent colours so they
+   remain readable but never blind against dark card backgrounds. */
+[data-theme="dark"] .status-placed    { background: rgba(251,191,36,.18)  !important; color: #fcd34d !important; }
+[data-theme="dark"] .status-accepted  { background: rgba(96,165,250,.18)  !important; color: #93c5fd !important; }
+[data-theme="dark"] .status-preparing { background: rgba(167,139,250,.18) !important; color: #c4b5fd !important; }
+[data-theme="dark"] .status-ready     { background: rgba(34,197,94,.18)   !important; color: #86efac !important; }
+[data-theme="dark"] .status-delivered { background: rgba(34,197,94,.15)   !important; color: #4ade80 !important; }
+[data-theme="dark"] .status-cancelled { background: rgba(248,113,113,.18) !important; color: #fca5a5 !important; }
+[data-theme="dark"] .status-on_the_way{ background: rgba(56,189,248,.18)  !important; color: #7dd3fc !important; }
+/* Owner dishes page status-badge variants */
+[data-theme="dark"] .status-badge[style*="#d1fae5"] { background: rgba(34,197,94,.18)  !important; color: #86efac !important; }
+[data-theme="dark"] .status-badge[style*="#f3f4f6"] { background: var(--gb-surface-3)  !important; color: var(--gb-text-muted) !important; }
+
+/* ── Order track — status banner ─────────────────────────────────────────── */
+/* The banner has inline style="background:#f0fdf4; border-color:#86efac"
+   We override with a dark-appropriate green tint. */
+[data-theme="dark"] .status-banner {
+  background: rgba(34,197,94,.1) !important;
+  border-color: rgba(34,197,94,.3) !important;
+}
+[data-theme="dark"] .status-banner .sb-icon {
+  background: rgba(34,197,94,.2) !important;
+  color: #86efac !important;
+}
+
+/* ── signup_owner.html — benefits sticky card (#fff) ────────────────────── */
+/* The card uses inline style="background:#fff; border:1px solid rgba(0,0,0,.08)" */
+[data-theme="dark"] .signup-benefits-card,
+[data-theme="dark"] [style*="background:#fff"][style*="border-radius:18px"] {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+}
+
+/* ── Muted text colours appearing as inline styles ───────────────────────── */
+/* reset_password, forgot_password use style="color:#666" / "color:#aaa" */
+[data-theme="dark"] [style*="color:#666"],
+[data-theme="dark"] [style*="color: #666"],
+[data-theme="dark"] [style*="color:#aaa"],
+[data-theme="dark"] [style*="color: #aaa"] {
+  color: var(--gb-text-muted) !important;
+}
+
+/* ── Owner dashboard — stat-icon pastel backgrounds ─────────────────────── */
+/* style="background:#fef3c7" (yellow) and "background:#fee2e2" (red) */
+[data-theme="dark"] .stat-icon[style*="#fef3c7"] { background: rgba(251,191,36,.2) !important; }
+[data-theme="dark"] .stat-icon[style*="#fee2e2"] { background: rgba(248,113,113,.2) !important; }
+[data-theme="dark"] .stat-icon[style*="#dbeafe"] { background: rgba(96,165,250,.2) !important; }
+[data-theme="dark"] .stat-icon[style*="#d1fae5"] { background: rgba(34,197,94,.2) !important; }
+
+/* ── Owner dishes — category/bestseller inline backgrounds ───────────────── */
+[data-theme="dark"] [style*="background:#f3f4f6"] {
+  background: var(--gb-surface-3) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] [style*="background:#fef3c7"] {
+  background: rgba(251,191,36,.2) !important;
+  color: #fcd34d !important;
+}
+
+/* ── Bootstrap list-group ────────────────────────────────────────────────── */
+[data-theme="dark"] .list-group-item {
+  background-color: var(--gb-surface);
+  border-color: var(--gb-border);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .list-group-item:hover { background-color: var(--gb-surface-2); }
+[data-theme="dark"] .list-group-item.active {
+  background-color: var(--gb-accent);
+  border-color: var(--gb-accent);
+  color: #fff;
+}
+
+/* ── Bootstrap breadcrumb ────────────────────────────────────────────────── */
+[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before { color: var(--gb-text-faint); }
+[data-theme="dark"] .breadcrumb-item.active { color: var(--gb-text-muted); }
+[data-theme="dark"] .breadcrumb-item a { color: var(--gb-accent); }
+
+/* ── Bootstrap pagination ────────────────────────────────────────────────── */
+[data-theme="dark"] .page-link {
+  background-color: var(--gb-surface);
+  border-color: var(--gb-border);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .page-link:hover {
+  background-color: var(--gb-surface-2);
+  border-color: var(--gb-border-strong);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .page-item.active .page-link {
+  background-color: var(--gb-accent);
+  border-color: var(--gb-accent);
+  color: #fff;
+}
+[data-theme="dark"] .page-item.disabled .page-link {
+  background-color: var(--gb-surface);
+  border-color: var(--gb-border);
+  color: var(--gb-text-faint);
+}
+
+/* ── Scrollbar (dark theme) ──────────────────────────────────────────────── */
+[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--gb-surface-2); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--gb-border-strong); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--gb-accent); }
+
+/* ── Selection highlight ─────────────────────────────────────────────────── */
+[data-theme="dark"] ::selection { background: rgba(255,71,87,.3); color: var(--gb-text-primary); }
+
+/* ── Focus ring ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] :focus-visible { outline-color: var(--gb-accent-hover); }
+
+/* ── Bootstrap accordion ─────────────────────────────────────────────────── */
+[data-theme="dark"] .accordion-item {
+  background-color: var(--gb-surface);
+  border-color: var(--gb-border);
+}
+[data-theme="dark"] .accordion-button {
+  background-color: var(--gb-surface);
+  color: var(--gb-text-primary);
+  box-shadow: none;
+}
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+  background-color: var(--gb-surface-2);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .accordion-button::after { filter: invert(1); }
+[data-theme="dark"] .accordion-body { background-color: var(--gb-surface); }
+
+/* ── Bootstrap progress ──────────────────────────────────────────────────── */
+[data-theme="dark"] .progress { background-color: var(--gb-surface-3); }
+
+/* ── Bootstrap tooltip / popover ─────────────────────────────────────────── */
+[data-theme="dark"] .tooltip .tooltip-inner { background-color: var(--gb-surface-3); color: var(--gb-text-primary); }
+[data-theme="dark"] .popover {
+  background-color: var(--gb-surface);
+  border-color: var(--gb-border);
+}
+[data-theme="dark"] .popover-header {
+  background-color: var(--gb-surface-2);
+  border-color: var(--gb-border);
+  color: var(--gb-text-primary);
+}
+[data-theme="dark"] .popover-body { color: var(--gb-text-primary); }
+
+/* ── Misc Bootstrap helpers that sneak through ───────────────────────────── */
+[data-theme="dark"] .shadow-sm  { box-shadow: var(--gb-shadow-sm) !important; }
+[data-theme="dark"] .shadow     { box-shadow: var(--gb-shadow) !important; }
+[data-theme="dark"] .shadow-lg  { box-shadow: var(--gb-shadow-lg) !important; }
+[data-theme="dark"] .border     { border-color: var(--gb-border) !important; }
+[data-theme="dark"] .border-top    { border-color: var(--gb-border) !important; }
+[data-theme="dark"] .border-bottom { border-color: var(--gb-border) !important; }
+[data-theme="dark"] .text-secondary { color: var(--gb-text-secondary) !important; }
+[data-theme="dark"] .bg-body    { background-color: var(--gb-bg) !important; }
+[data-theme="dark"] .bg-secondary { background-color: var(--gb-surface-3) !important; }
