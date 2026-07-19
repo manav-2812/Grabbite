@@ -15,7 +15,7 @@ from sqlalchemy import func
 from db import db
 from models import (
     Restaurant, FoodItem, Order, OrderItem, OrderStatusHistory,
-    Notification, AdminNotification,
+    Notification,
 )
 from utils.decorators import owner_required
 from utils.uploads import save_upload
