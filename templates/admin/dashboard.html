@@ -72,6 +72,16 @@
         50% { opacity: 0.5; }
         100% { opacity: 1; }
     }
+
+    /* ── Dark mode overrides for admin dashboard ── */
+    [data-theme="dark"] .admin-sidebar   { background: #1a1e27; color: var(--gb-text-primary); }
+    [data-theme="dark"] .admin-sidebar a { color: var(--gb-text-muted); }
+    [data-theme="dark"] .admin-sidebar a:hover  { background: rgba(255,255,255,.07); color: var(--gb-text-primary); }
+    [data-theme="dark"] .admin-sidebar a.active { background: var(--gb-accent); color: #fff; }
+    [data-theme="dark"] .admin-main      { background: var(--gb-bg); }
+    [data-theme="dark"] .stat-card       { background: var(--gb-surface); color: var(--gb-text-primary); box-shadow: var(--gb-shadow); }
+    [data-theme="dark"] .stat-card h3    { color: var(--gb-text-primary); }
+    [data-theme="dark"] .activity-item   { background: var(--gb-surface-2); }
 </style>
 {% endblock %}
 
