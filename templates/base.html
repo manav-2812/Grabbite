@@ -2,7 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ff4757">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.svg') }}">
+    <!-- Theme: apply data-theme before first paint to prevent flash of wrong theme -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('gb-theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+      })();
+    </script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <!-- Preconnect / Resource Hints -->
@@ -117,10 +131,12 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"></noscript>
     
+    <!-- Theme tokens (must load before other CSS) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=1.0.0">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.2">
     <!-- Modern Design System -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}?v=1.0.2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}?v=1.0.4">
     {% block styles %}{% endblock %}
     
     <!-- Toast CSS + Notification Panel -->
@@ -762,6 +778,11 @@
       </button>
       {% endif %}
 
+      <!-- Theme toggle (sun/moon) -->
+      <button id="gb-theme-toggle" class="gb-icon-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+      </button>
+
       <!-- Hamburger (mobile only — opens full drawer) -->
       <button class="gb-hamburger" id="gb-hamburger" aria-label="Open menu">
         <i class="fas fa-bars"></i>
@@ -863,7 +884,7 @@
     {% endwith %}
 
     <!-- Main Content -->
-    <main>
+    <main class="gb-page-fade">
         {% block content %}{% endblock %}
     </main>
 
@@ -882,9 +903,9 @@
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        background: #fff;
-        color: #e53935;
-        border: 2px solid #e53935;
+        background: var(--gb-surface);
+        color: var(--gb-accent-dark);
+        border: 2px solid var(--gb-accent-dark);
         border-radius: 999px;
         padding: 10px 20px 10px 16px;
         font-weight: 700;
@@ -895,8 +916,8 @@
         letter-spacing: 0.2px;
       }
       #back-home-fab:hover {
-        background: #e53935;
-        color: #fff;
+        background: var(--gb-accent-dark);
+        color: var(--gb-on-accent);
         transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(229,57,53,0.32);
       }
@@ -1138,9 +1159,15 @@
                 const count = data.count || 0;
                 if (badge) {
                     if (count > 0) {
+                        const prevTop = parseInt(badge.textContent) || 0;
                         badge.textContent = count;
                         badge.classList.add('visible');
                         badge.style.display = 'flex';
+                        if (count > prevTop) {
+                            badge.classList.remove('bump');
+                            void badge.offsetWidth; /* reflow to restart animation */
+                            badge.classList.add('bump');
+                        }
                     } else {
                         badge.classList.remove('visible');
                         badge.style.display = 'none';
@@ -1148,8 +1175,15 @@
                 }
                 if (bottomBadge) {
                     if (count > 0) {
+                        const prev = parseInt(bottomBadge.textContent) || 0;
                         bottomBadge.textContent = count;
                         bottomBadge.classList.add('show');
+                        // Cart-add micro-interaction: bump when count increases
+                        if (count > prev) {
+                            bottomBadge.classList.remove('bump');
+                            void bottomBadge.offsetWidth; /* reflow to restart animation */
+                            bottomBadge.classList.add('bump');
+                        }
                     } else {
                         bottomBadge.classList.remove('show');
                     }
