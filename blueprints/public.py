@@ -11,7 +11,7 @@ from flask_login import current_user, login_required
 from collections import OrderedDict
 
 from db import db
-from models import (Restaurant, FoodItem, Blog, Notification, Offer,
+from models import (Restaurant, FoodItem, Blog, Notification,
                     Wishlist, Review)
 from utils.page_builders import _static_offers, _DISHES
 
