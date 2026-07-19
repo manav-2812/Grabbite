@@ -22,9 +22,6 @@ from utils.uploads import (                                  # noqa: F401
 
 admin = Blueprint('admin', __name__)
 
-# Legacy alias used by some routes
-handle_image_upload = save_image
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SHARED HELPERS
