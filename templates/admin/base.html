@@ -6,7 +6,7 @@
 {{ super() }}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-    /* Admin Panel Styles */
+    /* ── Admin Panel base styles ────────────────────────────────── */
     .sidebar {
         min-height: calc(100vh - 56px);
         background: #343a40;
@@ -128,6 +128,33 @@
         .main-content {
             padding: 15px;
         }
+    }
+
+    /* ── Dark-mode overrides (admin panel inherits data-theme from base.html) */
+    [data-theme="dark"] .card-header {
+        background-color: var(--gb-surface-2);
+        border-color: var(--gb-border);
+    }
+    [data-theme="dark"] .card-title   { color: var(--gb-text-primary); }
+    [data-theme="dark"] .table th     { color: var(--gb-text-muted); border-color: var(--gb-border); }
+    [data-theme="dark"] .table td     { border-color: var(--gb-border); color: var(--gb-text-primary); }
+    [data-theme="dark"] .status-active   { background: rgba(34,197,94,.18);   color: #86efac; }
+    [data-theme="dark"] .status-inactive { background: rgba(248,113,113,.18); color: #fca5a5; }
+    [data-theme="dark"] .toast-warning   { background-color: #92400e; color: #fef3c7; }
+    [data-theme="dark"] .main-content    { background: transparent; }
+    /* admin per-page status pills defined in template <style> blocks */
+    [data-theme="dark"] .badge.bg-warning.text-dark { color: #111 !important; }
+    /* Row hover & stripe for admin tables */
+    [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+        background-color: var(--gb-surface-2);
+    }
+    [data-theme="dark"] .table-hover tbody tr:hover {
+        background-color: var(--gb-surface-3);
+    }
+    /* admin/base user-avatar placeholder */
+    [data-theme="dark"] [style*="background:#e5e7eb"] {
+        background: var(--gb-surface-3) !important;
+        color: var(--gb-text-muted) !important;
     }
 </style>
 {% endblock %}
