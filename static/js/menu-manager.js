@@ -37,7 +37,7 @@ class MenuManager {
             this.renderMenuItems(data.items);
         } catch (error) {
             console.error('Error loading menu items:', error);
-            AdminToast.show('error', 'Failed to load menu items');
+            showToast('Failed to load menu items', 'error');
         } finally {
             AdminUtils.hideLoadingSpinner();
         }
@@ -102,7 +102,7 @@ class MenuManager {
         return `
             <tr>
                 <td>
-                    <img src="${item.image || '/static/img/default-food.jpg'}" 
+                    <img src="${item.image || '/static/img/food-default.jpg'}" 
                          alt="${item.name}" 
                          class="menu-item-image"
                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
@@ -140,11 +140,11 @@ class MenuManager {
                 is_available: isAvailable
             });
             if (response.success) {
-                AdminToast.show('success', `Item ${isAvailable ? 'enabled' : 'disabled'} successfully`);
+                showToast(`Item ${isAvailable ? 'enabled' : 'disabled'} successfully`, 'success');
             }
         } catch (error) {
             console.error('Error toggling availability:', error);
-            AdminToast.show('error', 'Failed to update item availability');
+            showToast('Failed to update item availability', 'error');
             // Revert toggle state
             const toggle = document.querySelector(`#availability-${itemId}`);
             if (toggle) toggle.checked = !isAvailable;
@@ -204,11 +204,11 @@ class MenuManager {
             const file = imageInput.files[0];
             if (!file.type.startsWith('image/')) {
                 imageInput.classList.add('is-invalid');
-                AdminToast.show('error', 'Please select a valid image file');
+                showToast('Please select a valid image file', 'error');
                 isValid = false;
             } else if (file.size > 5 * 1024 * 1024) {
                 imageInput.classList.add('is-invalid');
-                AdminToast.show('error', 'Image file size should be less than 5MB');
+                showToast('Image file size should be less than 5MB', 'error');
                 isValid = false;
             }
         }
@@ -236,34 +236,17 @@ class MenuManager {
                 AdminUtils.updateResource(`/admin/api/menu-item/${itemId}`, formData) :
                 AdminUtils.createResource('/admin/api/menu-item', formData));
 
-            AdminToast.show('success', `Menu item ${isEdit ? 'updated' : 'added'} successfully`);
+            showToast(`Menu item ${isEdit ? 'updated' : 'added'} successfully`, 'success');
             this.hideAddItemForm();
             this.loadMenuItems();
         } catch (error) {
             console.error('Error submitting menu item:', error);
-            AdminToast.show('error', `Failed to ${isEdit ? 'update' : 'add'} menu item`);
+            showToast(`Failed to ${isEdit ? 'update' : 'add'} menu item`, 'error');
         } finally {
             AdminUtils.hideLoadingSpinner();
         }
     }
 
-    async deleteMenuItem(itemId) {
-        if (!AdminUtils.confirmDelete('Are you sure you want to delete this menu item?')) {
-            return;
-        }
-
-        try {
-            AdminUtils.showLoadingSpinner();
-            await AdminUtils.deleteResource(`/admin/api/menu-item/${itemId}`);
-            AdminToast.show('success', 'Menu item deleted successfully');
-            this.loadMenuItems();
-        } catch (error) {
-            console.error('Error deleting menu item:', error);
-            AdminToast.show('error', 'Failed to delete menu item');
-        } finally {
-            AdminUtils.hideLoadingSpinner();
-        }
-    }
 }
 
 // Initialize the menu manager
