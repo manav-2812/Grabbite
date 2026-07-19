@@ -55,7 +55,7 @@ class AdminUtils {
             }
             return await response.json();
         } catch (error) {
-            AdminToast.show('error', error.message || 'An error occurred');
+            showToast(error.message || 'An error occurred', 'error');
             throw error;
         }
     }
