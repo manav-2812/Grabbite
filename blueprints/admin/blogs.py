@@ -19,10 +19,6 @@ def admin_blogs():
     return render_template('admin/blogs.html', blogs=blog_list)
 
 
-# Alias expected by some broadcast redirects
-admin_blogs_list = admin_blogs
-
-
 @admin.route('/blogs/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
