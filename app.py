@@ -3,12 +3,11 @@ Grabbite — Main Application Entry Point
 Flask app factory with all route registrations, extensions, and configuration.
 """
 from flask import (Flask, render_template, request, redirect, url_for,
-                   flash, session, jsonify, abort)
-from flask_socketio import SocketIO, emit, join_room, leave_room
-from flask_login import (LoginManager, current_user, login_user,
-                          logout_user, login_required)
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta, timezone
+                   flash, session, jsonify)
+from flask_socketio import SocketIO
+from flask_login import (LoginManager, current_user)
+from werkzeug.security import generate_password_hash
+from datetime import datetime, timedelta
 
 # Optional rate limiter — Flask-Limiter (C9 fix: wire it up so we can rate-limit
 # sensitive endpoints: login, signup, password reset, payment verify, etc.)
@@ -23,7 +22,6 @@ except ImportError:
 import os
 import secrets
 import hmac
-import hashlib
 
 # Load .env variables FIRST so os.environ.get() picks them up below
 try:
@@ -197,12 +195,7 @@ socketio = SocketIO(
 )
 
 # ── Flask-Mail ───────────────────────────────────────────────────────────────
-from utils.mail import (
-    init_mail,
-    send_password_reset_email,   # MED-18: was a local import inside forgot_password route
-    send_password_reset_success, # MED-18: was a local import inside forgot_password_reset route
-    send_order_confirmation,     # MED-18: was a local import inside _create_order_record
-)
+from utils.mail import init_mail
 init_mail(app)
 
 # ── Rate limiter (C9 fix) ────────────────────────────────────────────────────
@@ -253,8 +246,6 @@ def load_user(user_id):
 from auth_routes import auth as auth_blueprint, login_post, signup_post, update_profile, signup_owner_post
 # NOTE: auth blueprint registers /login POST — we strip it to avoid Werkzeug
 #       routing conflict with the app-level proxy below.
-for rule in list(auth_blueprint.deferred_functions):
-    pass  # Blueprint routes are applied at register time; conflict avoided by app proxy
 from blueprints.admin import admin as admin_blueprint
 from blueprints.owner.routes import owner_bp
 
