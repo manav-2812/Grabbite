@@ -447,7 +447,6 @@
         const textarea = document.getElementById('delivery-address');
         if (!textarea || textarea.value.trim() || !location) return;
         textarea.value = formatAddress(location);
-        textarea.dataset.locationApplied = 'true';
     }
 
     function applyPageLocation(location) {
