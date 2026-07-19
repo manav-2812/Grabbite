@@ -1,0 +1,106 @@
+/* ============================================================================
+   GrabBite Theme System — Design Tokens
+   Light is the default :root; [data-theme="dark"] overrides.
+   The --gb-red accent is kept identical in both themes (premium consistency).
+   Loaded FIRST so every later stylesheet can consume these variables.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ── Accent (brand red — consistent across themes) ── */
+  --gb-red: #ff4757;
+  --gb-accent: var(--gb-red);
+  --gb-accent-hover: #ff6b6b;
+  --gb-accent-dark: #e53935;
+  --gb-accent-soft: rgba(255, 71, 87, 0.12);
+  --gb-on-accent: #ffffff;
+
+  /* ── Surfaces / backgrounds ── */
+  --gb-bg: #f5f6f8;
+  --gb-surface: #ffffff;
+  --gb-surface-2: #f6f7f9;
+  --gb-surface-3: #eef0f3;
+  --gb-surface-strong: #111827;   /* dark sections (footers, heroes) */
+
+  /* ── Borders ── */
+  --gb-border: #e6e8ec;
+  --gb-border-strong: #d3d7dd;
+
+  /* ── Text ── */
+  --gb-text-primary: #111827;
+  --gb-text-secondary: #374151;
+  --gb-text-muted: #6b7280;
+  --gb-text-faint: #9aa1ad;
+
+  /* ── Status ── */
+  --gb-success: #16a34a;
+  --gb-warning: #d97706;
+  --gb-info: #2563eb;
+  --gb-danger: #dc2626;
+
+  /* ── Shadows (lighter/diffuse read fine on light) ── */
+  --gb-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --gb-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --gb-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+
+  /* ── Radii ── */
+  --gb-radius-sm: 10px;
+  --gb-radius: 14px;
+  --gb-radius-lg: 22px;
+
+  /* ── Layout ── */
+  --gb-nav-h: 64px;
+  --gb-bottom-nav-h: 64px;
+
+  /* ── Motion (overridden in dark for softer feel) ── */
+  --gb-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Accent stays vibrant & identical to light (brand consistency) */
+  --gb-red: #ff4757;
+  --gb-accent: var(--gb-red);
+  --gb-accent-hover: #ff6b6b;
+  --gb-accent-dark: #e53935;
+  --gb-accent-soft: rgba(255, 71, 87, 0.20);
+  --gb-on-accent: #ffffff;
+
+  /* Near-black (NOT pure #000) backgrounds, subtly elevated surfaces */
+  --gb-bg: #0e0f13;
+  --gb-surface: #16181d;
+  --gb-surface-2: #1c1f26;
+  --gb-surface-3: #232733;
+  --gb-surface-strong: #0a0b0e;
+
+  /* Soft borders instead of hard lines */
+  --gb-border: #272b33;
+  --gb-border-strong: #353c47;
+
+  /* Text tuned for dark contrast (WCAG AA on --gb-surface) */
+  --gb-text-primary: #f2f4f7;
+  --gb-text-secondary: #cfd4dc;
+  --gb-text-muted: #9aa1ad;
+  --gb-text-faint: #6b7280;
+
+  --gb-success: #22c55e;
+  --gb-warning: #f59e0b;
+  --gb-info: #60a5fa;
+  --gb-danger: #f87171;
+
+  /* Lighter, more diffuse shadows read better on dark */
+  --gb-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --gb-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  --gb-shadow-lg: 0 12px 44px rgba(0, 0, 0, 0.6);
+}
+
+/* Respect user preference when no explicit choice is stored.
+   The inline <head> script sets data-theme before first paint, so this is a
+   graceful fallback for any edge cases. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+  }
+}
