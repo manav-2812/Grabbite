@@ -24,21 +24,6 @@ def admin_required(f):
     return decorated
 
 
-def role_required(*roles):
-    """Allow access only to users with one of the given roles."""
-    def decorator(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            if not current_user.is_authenticated:
-                return redirect(url_for('auth.login'))
-            if current_user.role not in roles and not current_user.is_administrator():
-                flash('You do not have permission to access this page.', 'error')
-                abort(403)
-            return f(*args, **kwargs)
-        return decorated
-    return decorator
-
-
 def owner_required(f):
     """Require the logged-in user to be a restaurant owner or admin."""
     @wraps(f)
