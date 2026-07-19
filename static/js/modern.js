@@ -35,10 +35,21 @@
 
   /* ── Reveal Animations ───────────────────────────────────── */
   function initReveal() {
+    /* Auto-tag common content cards so the reveal-on-scroll effect works
+       across the whole app, not just templates that opt in manually. */
+    const CARD_SEL = '.gb-card, .blog-card, .restaurant-card, .offer-card, .dish-card, .featured-blog-card, .product-card';
+    qsa(CARD_SEL).forEach(el => {
+      if (!el.classList.contains('reveal') &&
+          !el.classList.contains('reveal-left') &&
+          !el.classList.contains('reveal-right')) {
+        el.classList.add('reveal');
+      }
+    });
+
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
     }, { threshold: 0.10, rootMargin: '0px 0px -40px 0px' });
-    qsa('.reveal, .reveal-left, .reveal-right').forEach(el => io.observe(el));
+    qsa('.reveal').forEach(el => io.observe(el));
   }
 
   /* ── Lazy Image Fade-in ──────────────────────────────────── */
@@ -110,6 +121,41 @@
     syncBadge();
   }
 
+  /* ── Theme Toggle ───────────────────────────────────────── */
+  const GbTheme = {
+    toggle() {
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const next = dark ? 'light' : 'dark';
+      const root = document.documentElement;
+      /* Enable the cross-fade only for the duration of the switch. */
+      root.classList.add('gb-theme-transition');
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('gb-theme', next); } catch (e) {}
+      this.sync();
+      window.dispatchEvent(new CustomEvent('gb-theme-change'));
+      setTimeout(() => root.classList.remove('gb-theme-transition'), 360);
+    },
+    sync() {
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.querySelectorAll('#gb-theme-toggle, #profile-theme-toggle').forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+        btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        const label = btn.querySelector('.gb-theme-label');
+        if (label) label.textContent = dark ? 'Light' : 'Dark';
+      });
+    }
+  };
+  window.GbTheme = GbTheme;
+
+  function initThemeToggle() {
+    GbTheme.sync();
+    document.querySelectorAll('#gb-theme-toggle, #profile-theme-toggle').forEach(btn => {
+      btn.addEventListener('click', () => GbTheme.toggle());
+    });
+    window.addEventListener('gb-theme-change', () => GbTheme.sync());
+  }
+
   /* ── Toast System ────────────────────────────────────────── */
   function initToasts() {
     const icons = {
@@ -138,7 +184,7 @@
   /* ── Favorite Button Toggle ──────────────────────────────── */
   function initFavorites() {
     document.addEventListener('click', e => {
-      const btn = e.target.closest('.gb-favorite-btn, .favorite-btn');
+      const btn = e.target.closest('.favorite-btn');
       if (!btn) return;
       e.preventDefault(); e.stopPropagation();
       const active = btn.classList.toggle('active');
@@ -150,7 +196,7 @@
   /* ── Ripple Effect ───────────────────────────────────────── */
   function initRipple() {
     document.addEventListener('click', e => {
-      const el = e.target.closest('.ripple');
+      const el = e.target.closest('.btn');
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const size = Math.max(rect.width, rect.height) * 2;
@@ -194,6 +240,7 @@
     initMobileDrawer();
     initActiveNav();
     initBottomNav();
+    initThemeToggle();
     initToasts();
     initFavorites();
     initRipple();
