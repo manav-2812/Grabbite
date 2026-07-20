@@ -8,44 +8,74 @@
 <meta http-equiv="Expires" content="0">
 <style>
     .cart-item {
-        background: white;
-        border: 1px solid #e0e0e0;
+        background: var(--gb-surface);
+        border: 1px solid var(--gb-border);
+        color: var(--gb-text-primary);
         transition: all 0.3s ease;
         margin-bottom: 1rem;
-        border-radius: 8px;
+        border-radius: var(--gb-radius-sm);
         padding: 1rem;
     }
 
     .cart-item:hover {
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--gb-shadow);
+        border-color: var(--gb-border-strong);
     }
 
     .quantity-btn {
         width: 30px;
         height: 30px;
-        border: 1px solid #ddd;
-        background: #f8f9fa;
+        border: 1px solid var(--gb-border);
+        background: var(--gb-surface-2);
+        color: var(--gb-text-primary);
         border-radius: 4px;
         font-weight: bold;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
     }
 
     .quantity-btn:hover {
-        background: #e9ecef;
+        background: var(--gb-surface-3);
+        color: var(--gb-text-primary);
     }
 
     .quantity-input {
         width: 50px;
         text-align: center;
         margin: 0 5px;
+        background: var(--gb-surface);
+        border: 1px solid var(--gb-border);
+        color: var(--gb-text-primary);
+    }
+    
+    .quantity-input:focus {
+        background: var(--gb-surface);
+        border-color: var(--gb-accent);
+        color: var(--gb-text-primary);
+        box-shadow: none;
     }
 
     .order-summary {
-        background: #f8f9fa;
-        border-radius: 8px;
+        background: var(--gb-surface);
+        border: 1px solid var(--gb-border);
+        color: var(--gb-text-primary);
+        border-radius: var(--gb-radius-sm);
         padding: 1.5rem;
         position: sticky;
         top: 1rem;
+        box-shadow: var(--gb-shadow-sm);
+    }
+    
+    .order-summary hr {
+        border-color: var(--gb-border);
+        opacity: 1;
+    }
+    
+    .order-summary .text-primary {
+        color: var(--gb-accent) !important;
     }
 </style>
 {% endblock %}

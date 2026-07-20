@@ -103,6 +103,7 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 | Blog | Read food-related articles |
 | Search | AJAX search across restaurants, dishes, and blog posts |
 | Password reset | Time-limited, signed email link via `itsdangerous` |
+| Zomato-Style Dark Mode | Full theme support with automatic user preference persistence and high-contrast, premium styling |
 
 ### For Restaurant Owners
 
@@ -161,7 +162,7 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 |---|---|
 | HTML5 + Jinja2 | Server-side templating |
 | Bootstrap 5 | Responsive layout and components |
-| Custom CSS | `modern.css`, `style.css`, `search.css`, `offers.css` |
+| Custom CSS | `theme.css` (Design tokens / color variables), `dark-mode-fixes.css` (Global overrides), `modern.css`, `style.css`, `search.css`, `offers.css` |
 | Vanilla JS (ES6) | Cart, search, order management, admin utilities |
 | Socket.IO (client) | Live order status subscription |
 | Razorpay Checkout.js | Payment modal |
@@ -954,6 +955,20 @@ Built GrabBite as a production-grade demonstration of Python (Flask) applied to 
 
 - Email: [manavraj854@gmail.com](mailto:manavraj854@gmail.com)
 - GitHub: [@manav-2812](https://github.com/manav-2812)
+
+## 🎨 Design System & Zomato-Style Dark Mode
+
+GrabBite features a fully theme-aware interface designed around a Zomato-like high-contrast aesthetic. It automatically adapts to user preferences and maintains state across session reloads.
+
+### Key Highlights
+- **Default Theme**: Dark mode is set as the default state for new users, offering a premium dark canvas (`#0e0f13` body background, matching Zomato's web appearance).
+- **Persistent State**: The user-controlled toggle (☀️/🌙) writes directly to `localStorage` key `gb-theme`. An inline `<head>` script applies the setting before the page finishes rendering to completely prevent "white flashes" on page load.
+- **Glassmorphism & Glows**: Active headers utilize `-webkit-backdrop-filter: blur(20px)` and frosted translucent backgrounds (`rgba(22, 24, 29, 0.92)`). Card elements feature subtle borders (`--gb-border` / `--gb-border-strong`) and elevated neon-hover shadows in dark mode.
+- **Unified Variables**: Handled using standard CSS custom properties defined in `theme.css`:
+  - Backgrounds: `--gb-bg`, `--gb-surface`, `--gb-surface-2`, `--gb-surface-3`
+  - Text colors: `--gb-text-primary`, `--gb-text-secondary`, `--gb-text-muted`, `--gb-text-faint`
+  - Accents: `--gb-red` (brand signature)
+- **Comprehensive Overrides**: Implemented via `dark-mode-fixes.css` to gracefully override hardcoded inline styles, Bootstrap interactive modules (Accordions, Modals, Forms, Tables), and custom widgets.
 
 ---
 

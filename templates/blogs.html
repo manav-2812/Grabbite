@@ -23,13 +23,13 @@
             <div class="row justify-content-center">
                 <div class="col-lg-8 col-md-10">
                     <form action="{{ url_for('public.search_page') }}" method="get" id="blog-search-form" class="mb-4">
-                        <div class="search-container mb-4 shadow-lg" style="background: rgba(255,255,255,0.95); border-radius: 50px; overflow: hidden;">
+                        <div class="search-container mb-4 shadow-lg blog-search-bar">
                             <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-white border-0" style="padding: 0 20px;">
+                                <span class="input-group-text blog-search-icon border-0" style="padding: 0 20px;">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="text" 
-                                       class="form-control border-0 shadow-none" 
+                                       class="form-control border-0 shadow-none blog-search-input" 
                                        id="blog-search" 
                                        name="q"
                                        placeholder="Search for articles, recipes, or guides..."

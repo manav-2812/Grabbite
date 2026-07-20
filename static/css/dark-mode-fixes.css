@@ -1,0 +1,866 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   GrabBite Dark Mode – Comprehensive Override Layer
+   Loaded LAST so it wins over all inline <style> blocks in base.html.
+   This neutralises every hardcoded #fff / #222 / rgba(255,255,255,…) that
+   punches white holes into the dark-mode surface.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Root body/html – these are overridden by base.html's inline <style>
+        which sets body { background:#fff; color:#222 }
+        We re-assert the token values at a higher specificity. ── */
+[data-theme="dark"] body,
+html[data-theme="dark"] body {
+  background-color: var(--gb-bg) !important;
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 2. Header / navbar – base.html forces header { background:#fff !important }
+        We restore the theme surface token. ── */
+[data-theme="dark"] header,
+[data-theme="dark"] header.gb-navbar {
+  background: var(--gb-surface) !important;
+  border-bottom-color: var(--gb-border) !important;
+}
+
+/* ── 3. Sections – base.html says section:not(.hero-section-bg) { background:#fff !important }
+        Dark mode must override that across every section. ── */
+[data-theme="dark"] section:not(.hero-section-bg):not(.hero-premium) {
+  background: transparent !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] section {
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 4. Location dropdown – hardcoded #fff background ── */
+[data-theme="dark"] .location-dropdown {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  box-shadow: var(--gb-shadow-lg) !important;
+}
+[data-theme="dark"] .location-dropdown-title { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .location-current-address { color: var(--gb-text-muted) !important; }
+[data-theme="dark"] .location-toggle {
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .location-toggle:hover,
+[data-theme="dark"] .location-toggle[aria-expanded="true"] {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .location-label { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .location-detail { color: var(--gb-text-muted) !important; }
+[data-theme="dark"] .location-toggle .fa-chevron-down { color: var(--gb-text-faint) !important; }
+
+[data-theme="dark"] .location-action {
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-accent) !important;
+  color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .location-action.primary {
+  background: var(--gb-accent) !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .location-search-input {
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .location-search-input::placeholder { color: var(--gb-text-faint) !important; }
+[data-theme="dark"] .location-search-input:focus {
+  border-color: var(--gb-accent) !important;
+  box-shadow: 0 0 0 .15rem var(--gb-accent-soft) !important;
+}
+[data-theme="dark"] .location-results {
+  border-color: var(--gb-border) !important;
+  background: var(--gb-surface) !important;
+}
+[data-theme="dark"] .location-result-item {
+  background: var(--gb-surface) !important;
+  border-bottom-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .location-result-item:hover { background: var(--gb-surface-2) !important; }
+[data-theme="dark"] .location-result-item strong { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .location-result-item small,
+[data-theme="dark"] .location-result-empty { color: var(--gb-text-muted) !important; }
+[data-theme="dark"] .location-status { color: var(--gb-text-muted) !important; }
+
+/* ── 5. Header link pill buttons ── */
+[data-theme="dark"] .header-link,
+[data-theme="dark"] .header-link:visited {
+  color: var(--gb-text-primary) !important;
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .header-link:hover {
+  background: var(--gb-accent) !important;
+  color: #fff !important;
+  border-color: var(--gb-accent) !important;
+}
+
+/* ── 6. Notification panel ── */
+[data-theme="dark"] #notif-panel {
+  background: var(--gb-surface) !important;
+  color: var(--gb-text-primary) !important;
+  border-left-color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .notif-item {
+  border-bottom-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .notif-item:hover { background: var(--gb-surface-2) !important; }
+[data-theme="dark"] .notif-item.unread {
+  background: color-mix(in srgb, var(--gb-accent) 8%, var(--gb-surface)) !important;
+  border-left-color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .notif-title { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .notif-msg { color: var(--gb-text-muted) !important; }
+[data-theme="dark"] .notif-time { color: var(--gb-text-faint) !important; }
+[data-theme="dark"] .notif-footer {
+  border-top-color: var(--gb-border) !important;
+  background: var(--gb-surface) !important;
+}
+[data-theme="dark"] .notif-empty { color: var(--gb-text-muted) !important; }
+
+/* Notification icon type colors (pastels → dark-friendly) */
+[data-theme="dark"] .notif-icon.order   { background: rgba(255,71,87,.15) !important; color: #fca5a5 !important; }
+[data-theme="dark"] .notif-icon.promo   { background: rgba(34,197,94,.15) !important; color: #86efac !important; }
+[data-theme="dark"] .notif-icon.general { background: rgba(96,165,250,.15) !important; color: #93c5fd !important; }
+[data-theme="dark"] .notif-icon.system  { background: rgba(167,139,250,.15) !important; color: #c4b5fd !important; }
+
+/* ── 7. Notification bell button ── */
+[data-theme="dark"] #notif-bell-btn {
+  background: var(--gb-accent-soft) !important;
+}
+[data-theme="dark"] #notif-bell-btn i { color: var(--gb-accent) !important; }
+[data-theme="dark"] #notif-bell-btn:hover { background: var(--gb-accent) !important; }
+[data-theme="dark"] #notif-bell-btn:hover i { color: #fff !important; }
+[data-theme="dark"] #notif-badge { border-color: var(--gb-surface) !important; }
+
+/* ── 8. Popup toast ── */
+[data-theme="dark"] .notif-popup-toast {
+  background: var(--gb-surface) !important;
+  border-left-color: var(--gb-accent) !important;
+  box-shadow: var(--gb-shadow-lg) !important;
+}
+[data-theme="dark"] .notif-popup-toast .npt-title { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .notif-popup-toast .npt-msg { color: var(--gb-text-muted) !important; }
+[data-theme="dark"] .notif-popup-toast .npt-close { color: var(--gb-text-faint) !important; }
+
+/* ── 9. Hero section overlay adjustment for dark mode ── */
+[data-theme="dark"] .hero-section-bg::before {
+  background: rgba(0, 0, 0, 0.55) !important; /* darker overlay instead of the rgba(255,255,255,.85) */
+}
+[data-theme="dark"] .hero-content h1 { color: #f2f4f7 !important; text-shadow: 0 2px 12px rgba(0,0,0,.6) !important; }
+[data-theme="dark"] .hero-content p { color: #cfd4dc !important; }
+
+/* ── 10. Footer ── */
+[data-theme="dark"] .footer-link { color: var(--gb-text-faint) !important; }
+[data-theme="dark"] .footer-link:hover { color: var(--gb-accent) !important; }
+[data-theme="dark"] .footer-heading { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .footer-badge-item {
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-faint) !important;
+}
+/* Footer store buttons (app download) */
+[data-theme="dark"] .footer-store-btn {
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .footer-store-btn:hover { border-color: var(--gb-accent) !important; }
+/* Footer newsletter input override */
+[data-theme="dark"] #newsletter-email {
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.25) !important;
+}
+[data-theme="dark"] #newsletter-email::placeholder { color: rgba(255,255,255,.55) !important; }
+
+/* ── 11. Bootstrap card overrides (light bg-white punching through) ── */
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-body {
+  background-color: var(--gb-surface) !important;
+  color: var(--gb-text-primary) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .card-text { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+  background-color: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+}
+
+/* ── 12. Location search wrapper icon ── */
+[data-theme="dark"] .location-search-wrap .fa-search { color: var(--gb-text-faint) !important; }
+
+/* ── 13. Notif overlay dark ── */
+[data-theme="dark"] #notif-overlay {
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ── 14. Theme toggle icon hover effect ── */
+[data-theme="dark"] #gb-theme-toggle { color: var(--gb-text-primary) !important; }
+
+/* ── 15. Page transition — ensure background is always dark in dark mode ── */
+[data-theme="dark"] main {
+  background-color: transparent !important;
+}
+[data-theme="dark"] html,
+[data-theme="dark"] body {
+  background-color: var(--gb-bg) !important;
+}
+
+/* ── 16. Drawer dark-mode ── */
+[data-theme="dark"] .gb-mobile-drawer {
+  background: var(--gb-surface) !important;
+}
+[data-theme="dark"] .gb-drawer-header {
+  border-bottom-color: var(--gb-border) !important;
+}
+
+/* ── 17. Scrolled navbar glow ── */
+[data-theme="dark"] .gb-navbar.scrolled {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── 18. Bottom nav in dark ── */
+[data-theme="dark"] .gb-bottom-nav {
+  background: var(--gb-surface) !important;
+  border-top-color: var(--gb-border) !important;
+  border-color: var(--gb-border) !important;
+}
+
+/* ── 19. Smooth html/body transition on toggle ── */
+html {
+  transition: background-color 0.3s ease;
+}
+
+/* ── 20. Premium dark Zomato-style glow on red accents ── */
+[data-theme="dark"] .gb-navbar-brand { color: var(--gb-accent) !important; }
+[data-theme="dark"] .gb-nav-link.active,
+[data-theme="dark"] .gb-nav-link:hover {
+  background: var(--gb-accent-soft) !important;
+  color: var(--gb-accent) !important;
+}
+
+/* ── 21. Page-body full dark background ── */
+[data-theme="dark"] {
+  background-color: var(--gb-bg);
+}
+
+/* ── 22. Ensure html background is also dark (prevents white flash on scroll) ── */
+html[data-theme="dark"] {
+  background-color: var(--gb-bg);
+}
+
+/* ── 23. Nav badge border on dark ── */
+[data-theme="dark"] .gb-cart-badge { border-color: var(--gb-surface) !important; }
+
+/* ── 24. Force consistent dark page background even on `:root` ── */
+[data-theme="dark"] #gb-page-loader {
+  background: var(--gb-surface-2) !important;
+}
+
+/* ── 25. Inline-style white backgrounds — deep override for template-level inline styles ── */
+/* These catch any remaining [style="background:#fff"] or [style="background:white"] */
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background:white"],
+[data-theme="dark"] [style*="background: white"] {
+  background: var(--gb-surface) !important;
+}
+
+[data-theme="dark"] [style*="background:#f5f5f5"],
+[data-theme="dark"] [style*="background: #f5f5f5"],
+[data-theme="dark"] [style*="background:#f0f0f0"],
+[data-theme="dark"] [style*="background:#fafafa"],
+[data-theme="dark"] [style*="background: #fafafa"],
+[data-theme="dark"] [style*="background:#f8f9fa"],
+[data-theme="dark"] [style*="background: #f8f9fa"] {
+  background: var(--gb-surface-2) !important;
+}
+
+/* ── 26. Force text contrast on inlined dark text colours ── */
+[data-theme="dark"] [style*="color:#222"],
+[data-theme="dark"] [style*="color: #222"],
+[data-theme="dark"] [style*="color:#333"],
+[data-theme="dark"] [style*="color: #333"],
+[data-theme="dark"] [style*="color:#111"],
+[data-theme="dark"] [style*="color: #111"],
+[data-theme="dark"] [style*="color:#2c3e50"],
+[data-theme="dark"] [style*="color: #2c3e50"],
+[data-theme="dark"] [style*="color:#34495e"],
+[data-theme="dark"] [style*="color: #34495e"] {
+  color: var(--gb-text-primary) !important;
+}
+
+[data-theme="dark"] [style*="color:#555"],
+[data-theme="dark"] [style*="color: #555"],
+[data-theme="dark"] [style*="color:#666"],
+[data-theme="dark"] [style*="color: #666"],
+[data-theme="dark"] [style*="color:#777"],
+[data-theme="dark"] [style*="color: #777"],
+[data-theme="dark"] [style*="color:#888"],
+[data-theme="dark"] [style*="color: #888"],
+[data-theme="dark"] [style*="color:#999"],
+[data-theme="dark"] [style*="color: #999"] {
+  color: var(--gb-text-muted) !important;
+}
+
+/* ── 27. Border overrides ── */
+[data-theme="dark"] [style*="border-color:#f0f0f0"],
+[data-theme="dark"] [style*="border-color: #f0f0f0"],
+[data-theme="dark"] [style*="border:1px solid #f0"],
+[data-theme="dark"] [style*="border-bottom:1px solid #f0f0f0"],
+[data-theme="dark"] [style*="border-bottom: 1px solid #f0f0f0"] {
+  border-color: var(--gb-border) !important;
+}
+
+/* ── 28. HR / divider ── */
+[data-theme="dark"] hr,
+[data-theme="dark"] [style*="border-color:#1e1e1e"],
+[data-theme="dark"] [style*="border-color: #1e1e1e"] {
+  border-color: var(--gb-border) !important;
+}
+
+/* ── 29. Any inline-style white text on dark sections (footer) should remain white ── */
+[data-theme="dark"] .gb-footer [style*="color:#fff"],
+[data-theme="dark"] .gb-footer [style*="color: #fff"],
+[data-theme="dark"] .gb-footer [style*="color:white"],
+[data-theme="dark"] .gb-footer .text-white {
+  color: #fff !important; /* intentionally keep white for footer dark sections */
+}
+
+/* ── 30. Ensure full-page dark – catch any stray Bootstrap container ── */
+[data-theme="dark"] .container,
+[data-theme="dark"] .container-fluid,
+[data-theme="dark"] .container-sm,
+[data-theme="dark"] .container-md,
+[data-theme="dark"] .container-lg,
+[data-theme="dark"] .container-xl {
+  color: var(--gb-text-primary);
+}
+
+/* ── Premium glows & Zomato-like elevations in dark mode ── */
+[data-theme="dark"] .gb-card:hover,
+[data-theme="dark"] .card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--gb-border-strong) !important;
+}
+[data-theme="dark"] .gb-navbar.scrolled {
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  background: rgba(22, 24, 29, 0.92) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INDEX.HTML — HOME PAGE COMPONENT OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 31. Home page body background override ── */
+[data-theme="dark"] .home-shell,
+[data-theme="dark"] body { background: var(--gb-bg) !important; }
+
+/* ── 32. Category cards (white bg + "Order by craving") ── */
+[data-theme="dark"] .category-card {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+[data-theme="dark"] .category-card:hover {
+  background: var(--gb-surface-2) !important;
+  border-color: rgba(229,57,53,0.45) !important;
+  box-shadow: 0 10px 28px rgba(229,57,53,0.18) !important;
+  transform: translateY(-5px);
+}
+[data-theme="dark"] .category-card span {
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 33. gb-card (trending dishes, blogs, restaurants) ── */
+[data-theme="dark"] .gb-card {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45) !important;
+}
+[data-theme="dark"] .gb-card h5,
+[data-theme="dark"] .gb-card h6,
+[data-theme="dark"] .gb-card .fw-bold {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .card-body-premium {
+  background: var(--gb-surface) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .meta-row {
+  color: var(--gb-text-muted) !important;
+}
+[data-theme="dark"] .badge-float {
+  background: rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(8px) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+}
+
+/* ── 34. Dish name text on trending cards (was invisible/muted on white) ── */
+[data-theme="dark"] .gb-card h6.fw-bold {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .gb-card .text-dark {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .gb-card .text-muted,
+[data-theme="dark"] .card-body-premium .text-muted {
+  color: var(--gb-text-muted) !important;
+}
+[data-theme="dark"] .section-kicker {
+  color: var(--gb-accent) !important;
+}
+
+/* ── 35. Info cards ("Three taps to dinner" steps + quick-pick restaurants) ── */
+[data-theme="dark"] .info-card {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45) !important;
+}
+[data-theme="dark"] .info-card h5,
+[data-theme="dark"] .info-card strong {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .info-card .text-muted {
+  color: var(--gb-text-muted) !important;
+}
+[data-theme="dark"] .info-card i { color: var(--gb-accent) !important; }
+
+/* ── 36. Review cards ── */
+[data-theme="dark"] .review-card {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+[data-theme="dark"] .review-card p { color: var(--gb-text-secondary) !important; }
+[data-theme="dark"] .review-card strong { color: var(--gb-text-primary) !important; }
+
+/* ── 37. Search results panel (white dropdown below hero search) ── */
+[data-theme="dark"] .search-results-panel {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .mini-result {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .mini-result:hover {
+  background: var(--gb-surface-2) !important;
+}
+[data-theme="dark"] .mini-result strong { color: var(--gb-text-primary) !important; }
+[data-theme="dark"] .mini-result span { color: var(--gb-text-muted) !important; }
+
+/* ── 38. Hero search form (white pill below hero image) ── */
+[data-theme="dark"] .home-search-form {
+  background: rgba(22, 24, 29, 0.85) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(16px) !important;
+}
+[data-theme="dark"] .home-search-form input {
+  background: transparent !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .home-search-form input::placeholder {
+  color: rgba(255,255,255,0.5) !important;
+}
+[data-theme="dark"] .home-search-form .search-icon-wrap {
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* ── 39. Best cuisines pill buttons ── */
+[data-theme="dark"] .btn-light.border {
+  background: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .btn-light.border:hover {
+  background: var(--gb-accent) !important;
+  color: #fff !important;
+  border-color: var(--gb-accent) !important;
+}
+
+/* ── 40. Skeleton loader in dark ── */
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg, var(--gb-surface-2), var(--gb-surface-3), var(--gb-surface-2)) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DISH_DETAIL.HTML — SPECIFIC COMPONENT OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 41. Dish title and short description ── */
+[data-theme="dark"] .dish-title {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .dish-short-desc {
+  color: var(--gb-text-muted) !important;
+}
+
+/* ── 42. Stat boxes (Calories, Prep Time, Rating, Restaurant) ── */
+[data-theme="dark"] .stat-box {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4) !important;
+}
+[data-theme="dark"] .stat-label {
+  color: var(--gb-text-faint) !important;
+}
+[data-theme="dark"] .stat-value {
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 43. "About this Dish" detail card ── */
+[data-theme="dark"] .detail-card {
+  background: rgba(229,57,53,0.08) !important;
+  border-color: rgba(229,57,53,0.25) !important;
+}
+[data-theme="dark"] .detail-card .text-muted {
+  color: var(--gb-text-muted) !important;
+}
+
+/* ── 44. CTA row (Price + Add to Cart) ── */
+[data-theme="dark"] .cta-row {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+[data-theme="dark"] .price-label {
+  color: var(--gb-text-faint) !important;
+}
+
+/* ── 45. "All Dishes" back button ── */
+[data-theme="dark"] .btn-back {
+  background: var(--gb-surface-2) !important;
+  color: var(--gb-text-secondary) !important;
+  border: 1px solid var(--gb-border) !important;
+}
+[data-theme="dark"] .btn-back:hover {
+  background: var(--gb-accent) !important;
+  color: #fff !important;
+  border-color: var(--gb-accent) !important;
+}
+
+/* ── 46. Tag pills ── */
+[data-theme="dark"] .tag-pill {
+  background: rgba(229,57,53,0.12) !important;
+  border-color: rgba(229,57,53,0.3) !important;
+  color: #fca5a5 !important;
+}
+
+/* ── 47. Restaurant / category detail badges ── */
+[data-theme="dark"] .restaurant-badge {
+  background: rgba(99,102,241,0.15) !important;
+  color: #a5b4fc !important;
+  border-color: rgba(99,102,241,0.3) !important;
+}
+[data-theme="dark"] .category-badge {
+  background: rgba(234,88,12,0.12) !important;
+  color: #fdba74 !important;
+  border-color: rgba(234,88,12,0.3) !important;
+}
+
+/* ── 48. Related dish cards ── */
+[data-theme="dark"] .related-card {
+  background: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .related-card .text-dark {
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 49. "You Might Also Like" section background ── */
+[data-theme="dark"] section[style*="background:var(--gb-surface-2)"] {
+  background: var(--gb-surface-2) !important;
+}
+
+/* ── 50. Section title text on dark backgrounds ── */
+[data-theme="dark"] .section-title {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .section-copy { color: var(--gb-text-muted) !important; }
+
+/* ── 51. Collection cards (dark already but ensure consistency) ── */
+[data-theme="dark"] .collection-card {
+  background: var(--gb-surface-2) !important;
+}
+
+/* ── 52. Split band (Why GrabBite) – already dark bg, ensure text ── */
+[data-theme="dark"] .split-band {
+  background: var(--gb-surface-2) !important;
+}
+
+/* ── 53. Veg/non-veg dot on dark ── */
+[data-theme="dark"] .veg-dot { border-color: #22c55e !important; }
+[data-theme="dark"] .veg-dot::after { background: #22c55e !important; }
+[data-theme="dark"] .veg-dot.nonveg { border-color: #f87171 !important; }
+[data-theme="dark"] .veg-dot.nonveg::after { background: #f87171 !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESTAURANTS PAGE — SEARCH BAR DARK MODE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 54. Restaurant hero search bar container ── */
+[data-theme="dark"] .rest-search-bar {
+  background: rgba(22, 24, 29, 0.88) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* ── 55. Search icon area (was bg-white) ── */
+[data-theme="dark"] .rest-search-icon {
+  background: transparent !important;
+  color: rgba(255,255,255,0.5) !important;
+}
+[data-theme="dark"] .rest-search-icon i {
+  color: rgba(255,255,255,0.55) !important;
+}
+
+/* ── 56. Search input field ── */
+[data-theme="dark"] .rest-search-input {
+  background: transparent !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .rest-search-input::placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+[data-theme="dark"] .rest-search-input:focus {
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* ── 57. Suggestions dropdown ── */
+[data-theme="dark"] .search-suggestions {
+  background: var(--gb-surface) !important;
+  border-top: 1px solid var(--gb-border) !important;
+}
+[data-theme="dark"] .suggestion-item {
+  color: var(--gb-text-primary) !important;
+  border-bottom: 1px solid var(--gb-border) !important;
+}
+[data-theme="dark"] .suggestion-item:hover {
+  background: var(--gb-surface-2) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .suggestion-item.text-dark {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .suggestion-item small.text-muted {
+  color: var(--gb-text-faint) !important;
+}
+
+/* ── 58. Sort bar below hero (bg-light section) ── */
+[data-theme="dark"] section.bg-light {
+  background: var(--gb-surface-2) !important;
+}
+[data-theme="dark"] section.bg-light h2,
+[data-theme="dark"] section.bg-light .h4 {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] section.bg-light .text-muted {
+  color: var(--gb-text-muted) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BLOGS PAGE — SEARCH BAR DARK MODE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 59. Blog hero search bar container ── */
+[data-theme="dark"] .blog-search-bar {
+  background: rgba(22, 24, 29, 0.88) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* ── 60. Blog search icon area ── */
+[data-theme="dark"] .blog-search-icon {
+  background: transparent !important;
+}
+[data-theme="dark"] .blog-search-icon i {
+  color: rgba(255,255,255,0.55) !important;
+}
+
+/* ── 61. Blog search input ── */
+[data-theme="dark"] .blog-search-input {
+  background: transparent !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .blog-search-input::placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+[data-theme="dark"] .blog-search-input:focus {
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GALLERY (DISHES) PAGE — SEARCH BAR & CATEGORY STRIP
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 62. Dish gallery hero search-wrap ── */
+[data-theme="dark"] .search-wrap {
+  background: rgba(22, 24, 29, 0.88) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+[data-theme="dark"] .search-wrap input {
+  color: #fff !important;
+  background: transparent !important;
+}
+[data-theme="dark"] .search-wrap input::placeholder {
+  color: rgba(255,255,255,0.45) !important;
+}
+[data-theme="dark"] .search-wrap i {
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* ── 63. Category strip ── */
+[data-theme="dark"] .category-strip {
+  background: var(--gb-surface) !important;
+  border-bottom-color: var(--gb-border) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+}
+
+/* ── 64. Category buttons ── */
+[data-theme="dark"] .cat-btn {
+  background: var(--gb-surface-2) !important;
+  color: var(--gb-text-muted) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .cat-btn:hover {
+  background: rgba(229,57,53,0.12) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(229,57,53,0.35) !important;
+}
+[data-theme="dark"] .cat-btn.active {
+  background: #e53935 !important;
+  color: #fff !important;
+  border-color: #e53935 !important;
+}
+
+/* ── 65. Dish cards ── */
+[data-theme="dark"] .dish-card {
+  background: var(--gb-surface) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.4) !important;
+}
+[data-theme="dark"] .dish-card h5.text-dark,
+[data-theme="dark"] .dish-card .fw-bold {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .dish-card .text-muted {
+  color: var(--gb-text-muted) !important;
+}
+[data-theme="dark"] .dish-card .card-footer {
+  background: var(--gb-surface) !important;
+  border-top: 1px solid var(--gb-border) !important;
+}
+[data-theme="dark"] .cat-heading {
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 66. Bootstrap Accordions ── */
+[data-theme="dark"] .accordion-item {
+  background-color: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .accordion-button {
+  background-color: var(--gb-surface) !important;
+  color: var(--gb-text-primary) !important;
+  border-color: var(--gb-border) !important;
+  box-shadow: none !important;
+}
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+  background-color: var(--gb-surface-2) !important;
+  color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .accordion-button::after {
+  filter: invert(1) grayscale(1) brightness(2) !important;
+}
+
+/* ── 67. Generic Form Elements ── */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] textarea {
+  background-color: var(--gb-surface-2) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: var(--gb-accent) !important;
+  box-shadow: 0 0 0 0.25rem var(--gb-accent-soft) !important;
+}
+[data-theme="dark"] .form-control::placeholder {
+  color: var(--gb-text-faint) !important;
+}
+
+/* ── 68. List Groups ── */
+[data-theme="dark"] .list-group-item {
+  background-color: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .list-group-item-action:hover,
+[data-theme="dark"] .list-group-item-action:focus {
+  background-color: var(--gb-surface-2) !important;
+  color: var(--gb-text-primary) !important;
+}
+
+/* ── 69. Modals ── */
+[data-theme="dark"] .modal-content {
+  background-color: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: var(--gb-border) !important;
+  background-color: var(--gb-surface-2) !important;
+}
+[data-theme="dark"] .modal-header .btn-close {
+  filter: invert(1) grayscale(1) brightness(2) !important;
+}
+
+/* ── 70. Tables ── */
+[data-theme="dark"] .table {
+  color: var(--gb-text-primary) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .table th,
+[data-theme="dark"] .table td {
+  background-color: var(--gb-surface) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) td {
+  background-color: var(--gb-surface-2) !important;
+}
+[data-theme="dark"] .table-hover tbody tr:hover td {
+  background-color: var(--gb-surface-3) !important;
+}
+

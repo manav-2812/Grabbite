@@ -316,8 +316,8 @@
 (function () {
   'use strict';
 
-  const ORDER_ID    = {{ order.id }};
-  const IS_DONE     = {{ 'true' if order.status in ('delivered','cancelled') else 'false' }};
+  const ORDER_ID    = Number('{{ order.id }}');
+  const IS_DONE     = '{{ order.status }}' === 'delivered' || '{{ order.status }}' === 'cancelled';
   const PIPELINE    = ['placed','accepted','preparing','ready','on_the_way','delivered'];
   const POLL_MS     = 12000;   // fallback poll every 12 s
   let   pollTimer   = null;
