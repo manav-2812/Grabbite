@@ -864,3 +864,65 @@ html[data-theme="dark"] {
   background-color: var(--gb-surface-3) !important;
 }
 
+/* ── 71. Blog Article & Detail Open Section ── */
+[data-theme="dark"] .blog-article {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .blog-content,
+[data-theme="dark"] .blog-content p,
+[data-theme="dark"] .blog-content li,
+[data-theme="dark"] .blog-content span,
+[data-theme="dark"] .blog-content div {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .blog-excerpt p,
+[data-theme="dark"] .blog-excerpt {
+  color: var(--gb-text-secondary) !important;
+}
+[data-theme="dark"] .blog-content blockquote {
+  background-color: var(--gb-surface-2) !important;
+  color: var(--gb-text-secondary) !important;
+  border-left-color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .blog-article h1,
+[data-theme="dark"] .blog-article h2,
+[data-theme="dark"] .blog-article h3,
+[data-theme="dark"] .blog-article h4,
+[data-theme="dark"] .blog-article h5,
+[data-theme="dark"] .blog-article h6 {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .blog-article header h1 {
+  background: none !important;
+  -webkit-text-fill-color: var(--gb-text-primary) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .share-buttons .btn-outline-dark {
+  color: var(--gb-text-primary) !important;
+  border-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .share-buttons .btn-outline-dark:hover {
+  background-color: var(--gb-surface-2) !important;
+}
+[data-theme="dark"] .related-article {
+  border-bottom-color: var(--gb-border) !important;
+}
+[data-theme="dark"] .related-article:hover {
+  background-color: var(--gb-surface-2) !important;
+}
+[data-theme="dark"] .related-article a {
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .blog-navigation .btn-outline-danger {
+  border-color: var(--gb-border) !important;
+  color: var(--gb-text-primary) !important;
+}
+[data-theme="dark"] .blog-navigation .btn-outline-danger:hover {
+  background-color: var(--gb-surface-2) !important;
+  border-color: var(--gb-accent) !important;
+}
+[data-theme="dark"] .blog-navigation .btn-outline-danger small.text-muted {
+  color: var(--gb-text-muted) !important;
+}
+
+
