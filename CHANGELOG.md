@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-20
+
+### Added
+- Premium dark mode theme support with Zomato-inspired high-contrast aesthetic.
+- User dark theme preference persistence utilizing `localStorage` (`gb-theme`).
+- Prevent-flash theme loader script in `<head>` to execute prior to first paint.
+- Scoped overrides for Bootstrap Accordions, Modals, Forms, Tables, and List Groups.
+- Custom styled components for cart items, search filters, related dish cards, and blog open prose content.
+
+### Fixed
+- Deprecation warning console noise from Eventlet concurrent library during server start.
+- Hardcoded inline light backgrounds on home, gallery, blogs, and restaurants search controls.
+
+
 ### Added
 - Initial release of GrabBite food ordering platform
 - User authentication system (login, signup, password reset)
