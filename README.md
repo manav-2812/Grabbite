@@ -197,10 +197,6 @@ Three demo accounts are seeded automatically on first boot. Use them to explore 
 | ![Login](assets/screenshots/login.png) | ![Admin Dashboard](assets/screenshots/admin.png) |
 | ![Dish Gallery](assets/screenshots/gallery.png) | |
 
-<p align="center">
-  <img src="assets/screenshots/installation.gif" alt="Installation" width="520" />
-</p>
-
 ---
 
 ## Architecture
