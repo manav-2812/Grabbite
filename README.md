@@ -1,78 +1,85 @@
-# GrabBite — Full-Stack Food Delivery Platform
+<p align="center">
+  <img src="static/img/logo.svg" alt="GrabBite" width="140" />
+</p>
 
-[![CI](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml/badge.svg)](https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml)
-[![Live on Railway](https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=flat&logo=railway&logoColor=white)](https://grabbite.up.railway.app)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.3-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Primary%20DB-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
-[![Socket.IO](https://img.shields.io/badge/Socket.IO-Realtime-010101?style=flat&logo=socket.io&logoColor=white)](https://socket.io/)
-[![Razorpay](https://img.shields.io/badge/Razorpay-Payments-02042B?style=flat&logo=razorpay&logoColor=white)](https://razorpay.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat)](LICENSE)
+<h1 align="center">GrabBite</h1>
 
-[![GitHub stars](https://img.shields.io/github/stars/manav-2812/Grabbite?style=flat&logo=github&color=f59e0b)](https://github.com/manav-2812/Grabbite/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/manav-2812/Grabbite?style=flat&logo=github&color=6366f1)](https://github.com/manav-2812/Grabbite/forks)
-[![GitHub issues](https://img.shields.io/github/issues/manav-2812/Grabbite?style=flat&logo=github&color=ef4444)](https://github.com/manav-2812/Grabbite/issues)
-[![GitHub last commit](https://img.shields.io/github/last-commit/manav-2812/Grabbite?style=flat&logo=github&color=10b981)](https://github.com/manav-2812/Grabbite/commits)
+<p align="center">
+  <strong>A full-stack, production-grade food delivery platform built with Python &amp; Flask.</strong><br/>
+  Restaurant discovery · Cart &amp; checkout · Real-time order tracking · Razorpay payments · Role-based admin &amp; owner dashboards.
+</p>
 
-**GrabBite** is a full-stack food delivery platform engineered with **Python (Flask)** and **PostgreSQL**, designed to replicate the end-to-end experience of modern food-tech products. Customers discover restaurants, build orders, and complete payments through an integrated Razorpay checkout — while restaurant owners manage their menus and fulfil orders through a dedicated dashboard, and platform administrators maintain full operational control via a real-time admin panel. The platform is built with production concerns in mind: CSRF protection, HMAC-verified payment webhooks, rate limiting, signed password-reset tokens, WebSocket-based live order tracking, and a role-based access control system across three distinct user types.
+<p align="center">
+  <a href="https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml"><img src="https://github.com/manav-2812/Grabbite/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://grabbite.up.railway.app"><img src="https://img.shields.io/badge/Live%20Demo-Railway-0B0D0E?style=flat&logo=railway&logoColor=white" alt="Live Demo"></a>
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Flask-2.3-000000?style=flat&logo=flask&logoColor=white" alt="Flask">
+  <img src="https://img.shields.io/badge/PostgreSQL-Primary%20DB-336791?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/Socket.IO-Realtime-010101?style=flat&logo=socket.io&logoColor=white" alt="Socket.IO">
+  <img src="https://img.shields.io/badge/Razorpay-Payments-02042B?style=flat&logo=razorpay&logoColor=white" alt="Razorpay">
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat" alt="License: MIT">
+</p>
 
----
-
-## 🚀 Live Demo
-
-> **Deployed on Railway** → [https://grabbite.up.railway.app](https://grabbite.up.railway.app)
-
-| Role | Email | Password |
-|------|-------|----------|
-| Customer | `customer@demo.com` | `demo1234` |
-| Restaurant Owner | `owner@demo.com` | `demo1234` |
-| Admin | *(set via env on deploy)* | — |
+<p align="center">
+  <a href="https://github.com/manav-2812/Grabbite/stargazers"><img src="https://img.shields.io/github/stars/manav-2812/Grabbite?style=flat&logo=github&color=f59e0b" alt="GitHub stars"></a>
+  <a href="https://github.com/manav-2812/Grabbite/network/members"><img src="https://img.shields.io/github/forks/manav-2812/Grabbite?style=flat&logo=github&color=6366f1" alt="GitHub forks"></a>
+  <a href="https://github.com/manav-2812/Grabbite/issues"><img src="https://img.shields.io/github/issues/manav-2812/Grabbite?style=flat&logo=github&color=ef4444" alt="GitHub issues"></a>
+  <a href="https://github.com/manav-2812/Grabbite/commits/main"><img src="https://img.shields.io/github/last-commit/manav-2812/Grabbite?style=flat&logo=github&color=10b981" alt="GitHub last commit"></a>
+</p>
 
 ---
 
 ## Table of Contents
 
-
-- [Platform at a Glance](#platform-at-a-glance)
-- [Demo Accounts](#demo-accounts)
-- [Features](#features)
+- [Overview](#overview)
+- [Live Demo](#live-demo)
+- [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
+- [UI Showcase](#ui-showcase)
 - [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation & Setup](#installation--setup)
-- [Environment Variables](#environment-variables)
-- [User Roles](#user-roles)
-- [API Reference](#api-reference)
+- [Order Lifecycle](#order-lifecycle)
 - [Database Schema](#database-schema)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [API Reference](#api-reference)
+- [User Roles & Access Control](#user-roles--access-control)
 - [Security](#security)
+- [Testing](#testing)
 - [Performance & Metrics](#performance--metrics)
-- [Screenshots](#screenshots)
 - [Deployment](#deployment)
 - [Contributing](#contributing)
+- [Changelog](#changelog)
+- [License](#license)
+- [Author](#author)
 
 ---
 
-## Platform at a Glance
+## Overview
+
+**GrabBite** is a full-stack food delivery web application engineered with **Python (Flask)** and **PostgreSQL**. It replicates the end-to-end experience of a modern food-tech product: customers discover restaurants, build orders, and pay through an integrated Razorpay checkout, while restaurant owners manage their menus and fulfil orders from a dedicated dashboard, and platform administrators maintain operational control through a real-time admin panel.
+
+The codebase is written with production concerns in mind — CSRF protection, HMAC-verified payment webhooks, rate limiting, signed password-reset tokens, WebSocket-based live order tracking, and a role-based access control system spanning three distinct user types.
 
 | Metric | Value |
 |---|---|
-| Database tables | 19 (fully relational, indexed, with audit trails) |
-| API endpoints | 126 (57 JSON APIs/webhooks + 26 admin routes + 43 web views) |
-| User roles | 3 — Customer, Restaurant Owner, Admin |
-| Payment flows | 2 — Cash on Delivery + Razorpay (UPI / card / net banking) |
-| Order lifecycle states | 8 — `placed → accepted → preparing → ready → picked → on_the_way → delivered / cancelled` |
+| Database tables | **19** (relational, indexed, with audit trails) |
+| API endpoints | **126** (57 JSON APIs / webhooks + 26 admin routes + 43 web views) |
+| User roles | **3** — Customer, Restaurant Owner, Admin |
+| Payment flows | **2** — Cash on Delivery + Razorpay (UPI / card / net banking) |
+| Order lifecycle states | **9** — `placed → accepted → preparing → ready → picked → on_the_way → delivered / cancelled / refunded` |
 | Real-time events | WebSocket push via Flask-SocketIO (order updates, admin alerts) |
-| CI | GitHub Actions — Python 3.11 + 3.12, SQLite in-memory, 87 tests |
+| CI | GitHub Actions — Python 3.11 & 3.12, SQLite in-memory, **87 tests** |
 | Primary database | PostgreSQL (SQLite fallback for local dev without `DATABASE_URL`) |
 
 ---
 
-## Demo Accounts
+## Live Demo
 
-Three accounts are seeded automatically on first boot. Use them to explore every role without registering.
+> Deployed on **Railway** → <https://grabbite.up.railway.app>
+
+Three demo accounts are seeded automatically on first boot. Use them to explore every role without registering:
 
 | Role | Email | Password |
 |---|---|---|
@@ -80,18 +87,18 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 | 🍽️ Restaurant Owner | `owner@gmail.com` | `Owner@1234` |
 | 🛡️ Admin | `admin@gmail.com` | `Admin@1234` |
 
-> The live demo runs on a shared database — please don't change these passwords.
+> The live demo runs on a shared database — please do not change these passwords.
 
 ---
 
-## Features
+## Key Features
 
 ### For Customers
 
 | Feature | Description |
 |---|---|
 | Restaurant discovery | Browse with ratings, cuisine types, location, and estimated delivery time |
-| Dish gallery | Explore 60+ categorised dishes with details, calories, and prep time |
+| Dish gallery | Explore categorised dishes with details, calories, and prep time |
 | Cart | Add, update, and remove items; cart is persisted in the DB and restored on login |
 | Wishlist | Save favourite restaurants for later |
 | Delivery addresses | Manage multiple saved addresses; select at checkout |
@@ -103,7 +110,7 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 | Blog | Read food-related articles |
 | Search | AJAX search across restaurants, dishes, and blog posts |
 | Password reset | Time-limited, signed email link via `itsdangerous` |
-| Zomato-Style Dark Mode | Full theme support with automatic user preference persistence and high-contrast, premium styling |
+| Dark Mode | Full theme support with automatic preference persistence and high-contrast, premium styling |
 
 ### For Restaurant Owners
 
@@ -151,8 +158,8 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 | Flask-WTF | 1.2.1 | Form handling (admin blog forms) |
 | Werkzeug | 2.3.8 | Password hashing, secure uploads (patched CVE-2023-46136) |
 | psycopg2-binary | 2.9.9 | PostgreSQL driver |
-| Pillow | 10+ | Image resizing for uploads |
-| itsdangerous | 2.1+ | Signed password-reset tokens |
+| Pillow | 10.3.0 | Image resizing for uploads |
+| itsdangerous | 2.2.0 | Signed password-reset tokens |
 | razorpay | 1.4.1 | Payment gateway SDK |
 | python-dotenv | 1.0.0 | `.env` loading |
 
@@ -162,24 +169,40 @@ Three accounts are seeded automatically on first boot. Use them to explore every
 |---|---|
 | HTML5 + Jinja2 | Server-side templating |
 | Bootstrap 5 | Responsive layout and components |
-| Custom CSS | `theme.css` (Design tokens / color variables), `dark-mode-fixes.css` (Global overrides), `modern.css`, `style.css`, `search.css`, `offers.css` |
+| Custom CSS | `theme.css` (design tokens), `dark-mode-fixes.css` (global overrides), `modern.css`, `style.css`, `search.css`, `offers.css` |
 | Vanilla JS (ES6) | Cart, search, order management, admin utilities |
 | Socket.IO (client) | Live order status subscription |
 | Razorpay Checkout.js | Payment modal |
 | Font Awesome 6 | Icons |
 | Google Fonts (Poppins + Inter) | Typography |
 
-### Infrastructure
+### Infrastructure & DevOps
 
 | Component | Role |
 |---|---|
 | PostgreSQL | Primary database (production) |
 | SQLite | Local dev fallback (no `DATABASE_URL` needed) |
 | Waitress | Pure-Python WSGI production server (zero C deps, works on Windows + Linux) |
-| Nginx | Reverse proxy, static files, WebSocket upgrade |
+| Gunicorn | WSGI server for buildpack deploys (Railway / Heroku / Render) |
 | Docker + docker-compose | Containerised deployment (app + PostgreSQL) |
 | GitHub Actions | CI — runs 87 tests on Python 3.11 + 3.12 |
-| Railway | One-click cloud deployment (see [Deployment](#deployment)) |
+| Railway | One-click cloud deployment |
+| Nginx | Reverse proxy, static files, WebSocket upgrade (VPS) |
+
+---
+
+## UI Showcase
+
+| | |
+|---|---|
+| ![Homepage](assets/screenshots/homepage.png) | ![Restaurants](assets/screenshots/restaurants.png) |
+| ![Restaurant Menu](assets/screenshots/menu.png) | ![Cart](assets/screenshots/cart.png) |
+| ![Login](assets/screenshots/login.png) | ![Admin Dashboard](assets/screenshots/admin.png) |
+| ![Dish Gallery](assets/screenshots/gallery.png) | |
+
+<p align="center">
+  <img src="assets/screenshots/installation.gif" alt="Installation" width="520" />
+</p>
 
 ---
 
@@ -271,7 +294,33 @@ sequenceDiagram
     Flask-->>Customer: { success: true, redirect: /payment/success/<id> }
 ```
 
-### Database Schema
+---
+
+## Order Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> placed
+    placed --> accepted : Owner accepts
+    accepted --> preparing : Kitchen starts
+    preparing --> ready : Food ready
+    ready --> picked : Rider picks up
+    picked --> on_the_way : Out for delivery
+    on_the_way --> delivered : Marked delivered
+    placed --> cancelled : Customer / Owner cancels
+    accepted --> cancelled : Owner declines
+    preparing --> cancelled : Kitchen issue
+    delivered --> refunded : Refund issued
+    cancelled --> [*]
+    delivered --> [*]
+    refunded --> [*]
+```
+
+---
+
+## Database Schema
+
+GrabBite persists **19 relational tables**. The full entity-relationship diagram below reflects the actual models in [`models/`](models).
 
 ```mermaid
 erDiagram
@@ -279,11 +328,28 @@ erDiagram
         int id PK
         string name
         string email
-        string password_hash
+        string password
+        string phone
         string role
+        bool is_admin
+        bool is_active
         float wallet_balance
         string referral_code
         datetime last_login
+        datetime created_at
+    }
+    addresses {
+        int id PK
+        int user_id FK
+        string label
+        string full_address
+        string city
+        string state
+        string pincode
+        float latitude
+        float longitude
+        bool is_default
+        datetime created_at
     }
     restaurants {
         int id PK
@@ -291,28 +357,71 @@ erDiagram
         string name
         string location
         string cuisine_type
+        string description
+        string phone
+        string email
+        int delivery_time
+        float min_order
+        float delivery_fee
         float rating
+        int total_reviews
+        string tags
+        string opening_time
+        string closing_time
         bool is_active
         bool is_approved
+        datetime created_at
     }
     food_items {
         int id PK
         int restaurant_id FK
         string name
         float price
+        string description
         string category
         bool is_available
         bool is_vegetarian
+        bool is_vegan
+        bool is_gluten_free
+        bool is_bestseller
+        float rating
+        int preparation_time
+        int calories
+        string tags
+        datetime created_at
+    }
+    cart {
+        int id PK
+        int user_id FK
+        int food_item_id FK
+        int quantity
+        float price
+        string notes
+        datetime created_at
     }
     orders {
         int id PK
         int user_id FK
         int restaurant_id FK
-        string status
-        string payment_status
+        string order_items
+        float subtotal
+        float tax
+        float delivery_fee
+        float discount
         float total_amount
+        string delivery_address
+        string delivery_phone
         string payment_method
+        string payment_status
         string razorpay_order_id
+        string razorpay_payment_id
+        string coupon_code
+        string status
+        string notes
+        int estimated_time
+        datetime delivered_at
+        datetime created_at
+        datetime updated_at
     }
     order_items {
         int id PK
@@ -321,6 +430,8 @@ erDiagram
         string name
         float price
         int quantity
+        string notes
+        string image
     }
     order_status_history {
         int id PK
@@ -334,80 +445,153 @@ erDiagram
         int order_id FK
         int user_id FK
         float amount
+        string currency
         string payment_method
-        string status
+        string gateway
         string gateway_order_id
         string gateway_payment_id
         string gateway_signature
+        string transaction_id
+        string status
+        string refund_status
+        float refund_amount
+        datetime created_at
+        datetime updated_at
     }
-    cart {
+    wallet_transactions {
         int id PK
         int user_id FK
-        int food_item_id FK
-        int quantity
-        float price
-    }
-    addresses {
-        int id PK
-        int user_id FK
-        string label
-        string full_address
-        bool is_default
-    }
-    reviews {
-        int id PK
-        int user_id FK
-        int restaurant_id FK
-        int order_id FK
-        float rating
-        string comment
-    }
-    notifications {
-        int id PK
-        int user_id FK
-        string title
+        float amount
         string type
-        bool is_read
+        string description
+        int order_id FK
+        datetime created_at
     }
     offers {
         int id PK
-        string code
+        string title
+        string description
         string discount_type
         float discount_value
+        float min_order_amount
+        float max_discount
+        string code
+        datetime start_date
+        datetime end_date
+        bool is_active
         int usage_limit
         int used_count
+        int restaurant_id FK
+        datetime created_at
     }
     coupon_usage {
         int id PK
         int offer_id FK
         int user_id FK
         int order_id FK
+        datetime used_at
+    }
+    blogs {
+        int id PK
+        string title
+        string slug
+        string content
+        string author
+        string image
+        string excerpt
+        string category
+        string status
+        bool featured
+        int views
+        string tags
+        datetime created_at
+        datetime updated_at
+    }
+    reviews {
+        int id PK
+        int user_id FK
+        int restaurant_id FK
+        int order_id FK
+        int rating
+        string comment
+        string image
+        bool is_approved
+        datetime created_at
+    }
+    notifications {
+        int id PK
+        int user_id FK
+        string title
+        string message
+        string type
+        string link
+        bool is_read
+        datetime created_at
+    }
+    admin_notifications {
+        int id PK
+        string title
+        string message
+        string type
+        string target_users
+        bool is_sent
+        datetime created_at
+        datetime sent_at
+    }
+    support_tickets {
+        int id PK
+        int user_id FK
+        string subject
+        string message
+        string status
+        string priority
+        datetime created_at
+        datetime updated_at
     }
     wishlist {
         int id PK
         int user_id FK
         int restaurant_id FK
+        datetime created_at
+    }
+    admin_activities {
+        int id PK
+        int admin_id FK
+        string action
+        string target_type
+        int target_id
+        string details
+        string ip_address
+        datetime created_at
     }
 
-    users ||--o{ restaurants : owns
-    users ||--o{ orders : places
-    users ||--o{ cart : has
-    users ||--o{ addresses : has
-    users ||--o{ reviews : writes
-    users ||--o{ notifications : receives
-    users ||--o{ wishlist : saves
-    restaurants ||--o{ food_items : has
-    restaurants ||--o{ orders : receives
-    restaurants ||--o{ reviews : receives
-    food_items ||--o{ cart : in
-    food_items ||--o{ order_items : in
-    orders ||--o{ order_items : contains
-    orders ||--o{ order_status_history : tracks
-    orders ||--|| payments : has
-    orders ||--o{ coupon_usage : uses
-    offers ||--o{ coupon_usage : tracked-by
-    wishlist }o--|| restaurants : references
+    users ||--o{ addresses : "has"
+    users ||--o{ restaurants : "owns"
+    users ||--o{ cart : "has"
+    users ||--o{ orders : "places"
+    users ||--o{ reviews : "writes"
+    users ||--o{ notifications : "receives"
+    users ||--o{ support_tickets : "submits"
+    users ||--o{ wishlist : "saves"
+    users ||--o{ wallet_transactions : "owns"
+    users ||--o{ admin_activities : "logs"
+    users ||--o{ payments : "makes"
+    restaurants ||--o{ food_items : "serves"
+    restaurants ||--o{ orders : "receives"
+    restaurants ||--o{ reviews : "receives"
+    restaurants ||--o{ offers : "runs"
+    food_items ||--o{ cart : "in"
+    food_items ||--o{ order_items : "in"
+    orders ||--o{ order_items : "contains"
+    orders ||--o{ order_status_history : "tracks"
+    orders ||--|| payments : "settled by"
+    orders ||--o{ coupon_usage : "uses"
+    orders ||--o{ wallet_transactions : "funds"
+    offers ||--o{ coupon_usage : "tracked by"
+    wishlist }o--|| restaurants : "references"
 ```
+
+> Foreign keys use integer primary keys with PostgreSQL sequences. High-traffic lookups carry explicit indexes (`payments.order_id + status`, `cart.user_id + food_item_id`, and single-column indexes on all FK and status columns).
 
 ---
 
@@ -478,7 +662,7 @@ Grabbite/
 │   ├── razorpay_helpers.py   # _get_razorpay_client, verify_razorpay_signature, verify_webhook_signature
 │   ├── socket_events.py      # register_socket_events, broadcast_update
 │   ├── uploads.py            # allowed_file, magic-byte check, resize_image, save_upload
-│   ├── seed_data.py          # Seed restaurants, dishes, and blog posts on first boot
+│   ├── seed_data.py          # Seed restaurants, dishes, blog posts, and demo accounts on first boot
 │   ├── image_data.py         # Curated Pexels image URL map for seeded data
 │   └── page_builders.py      # Static offer cards and dish catalogue for gallery/search
 │
@@ -503,15 +687,15 @@ Grabbite/
 │   ├── payment_success.html / payment_failed.html
 │   ├── offer_details.html / about.html / help.html / careers.html
 │   ├── database_viewer.html  # Admin raw table viewer
-│   ├── admin/                # 18 admin panel templates
-│   ├── owner/                # 6 owner dashboard templates
-│   ├── emails/               # 6 transactional HTML email templates
-│   └── errors/               # 403, 404, 500 error pages
+│   ├── admin/                # Admin panel templates
+│   ├── owner/                # Owner dashboard templates
+│   ├── emails/               # Transactional HTML email templates
+│   └── errors/              # 403, 404, 500 error pages
 │
 ├── static/
-│   ├── css/                  # modern.css, style.css, search.css, offers.css
-│   ├── js/                   # admin-utils.js, cart.js, checkout.js, search.js, …
-│   ├── img/                  # Default images (food-default.jpg, restaurant-default.jpg, …)
+│   ├── css/                  # modern.css, style.css, search.css, offers.css, theme.css, dark-mode-fixes.css
+│   ├── js/                   # admin-utils.js, location-manager.js, menu-manager.js, modern.js
+│   ├── img/                  # Logo, default images, avatars
 │   └── uploads/              # User-uploaded images (gitignored)
 │
 ├── scripts/
@@ -524,32 +708,36 @@ Grabbite/
 │   └── test_payment_logic.py # Unit tests — Payment model, HMAC signatures, webhook DB side-effects
 │
 ├── docs/
+│   ├── API.md                # Full API reference (endpoints, request/response envelopes)
 │   └── DEPLOYMENT.md         # Full production deployment guide (VPS, Docker, Railway, cloud)
+│
+├── migrations/               # Alembic migrations (env.py + versions/)
+├── .github/workflows/ci.yml  # GitHub Actions CI pipeline
 │
 ├── Dockerfile                # Multi-stage production image (python:3.11-slim)
 ├── docker-compose.yml        # App + PostgreSQL for local Docker development
 ├── .dockerignore             # Excludes .venv, .env, instance/, tests/ from the image
 ├── Procfile                  # Gunicorn start command for Railway / Heroku / Render buildpack deploys
+├── railway.toml              # Railway deploy config (Docker build, /healthz healthcheck)
 ├── runtime.txt               # Python version pin for Railway / Render / Heroku buildpacks
 ├── .env.example              # All supported environment variables with documentation
-├── .github/workflows/ci.yml  # GitHub Actions CI pipeline
 ├── requirements.txt          # Python production dependencies (pinned)
 ├── requirements-dev.txt      # Development and test dependencies
 ├── pytest.ini                # Pytest configuration
-└── pyrightconfig.json        # Pyright type checker configuration
+├── pyrightconfig.json        # Pyright type checker configuration
+└── SECURITY.md               # Security policy
 ```
 
 ---
 
-## Prerequisites
+## Getting Started
+
+### Prerequisites
 
 - **Python 3.11+**
-- **PostgreSQL 14+** (or use SQLite for local dev by omitting `DATABASE_URL`)
+- **PostgreSQL 14+** (optional — SQLite is used automatically if `DATABASE_URL` is unset)
 - **Git**
-
----
-
-## Installation & Setup
+- **Docker** (optional, for containerised local dev)
 
 ### 1. Clone the repository
 
@@ -601,19 +789,20 @@ python run.py
 ```
 
 On first boot the app will:
-- Create all database tables via `db.create_all()`
-- Seed demo restaurants, dishes, and blog posts
-- Print a one-time admin password to the terminal
+
+- Create all database tables via `db.create_all()` (and apply Alembic migrations)
+- Seed demo restaurants, dishes, blog posts, and demo accounts
+- Print a one-time admin password to the terminal (dev mode)
 
 Open **http://127.0.0.1:8000** in your browser.
 
-### Alternative — Docker (app + PostgreSQL in one command)
+### 6. Run with Docker (app + PostgreSQL)
 
 ```bash
 docker-compose up -d --build
 ```
 
-This starts the Flask app on port `8000` and a PostgreSQL container. No manual DB setup needed. On first boot the app seeds demo data automatically.
+This starts the Flask app on port `8000` and a PostgreSQL container. No manual DB setup needed.
 
 ```bash
 docker-compose logs -f web    # follow app logs
@@ -621,21 +810,21 @@ docker-compose down           # stop
 docker-compose down -v        # stop + wipe DB volume
 ```
 
-### 6. (Optional) Fix PostgreSQL sequences after a bulk import
+### 7. (Optional) Fix PostgreSQL sequences after a bulk import
 
-If you restored data from a dump or migrated from SQLite, primary key sequences may be out of sync (causing duplicate key errors on insert). Run once:
+If you restored data from a dump, primary key sequences may be out of sync. Run once:
 
 ```bash
 PYTHONPATH=. python scripts/fix_sequences.py
 ```
 
-### 7. Run the test suite
+### 8. Run the test suite
 
 ```bash
 pytest tests/ -v
 ```
 
-The suite has 87 tests across three files:
+The suite contains **87 tests** across three files:
 
 | File | Coverage |
 |---|---|
@@ -645,9 +834,9 @@ The suite has 87 tests across three files:
 
 ---
 
-## Environment Variables
+## Configuration
 
-Full documentation for every variable is in `.env.example`. Key variables:
+Full documentation for every variable is in [`.env.example`](.env.example). Key variables:
 
 | Variable | Required | Description |
 |---|---|---|
@@ -667,19 +856,11 @@ Full documentation for every variable is in `.env.example`. Key variables:
 
 ---
 
-## User Roles
-
-| Role | Registration | Access |
-|---|---|---|
-| **Customer** | `/signup` | Browse, order, review, wishlist, notifications |
-| **Restaurant Owner** | `/signup/restaurant` | Owner dashboard (`/owner/*`), dishes, orders for own restaurant |
-| **Admin** | Seeded on first boot or via `flask create-admin` | Full admin panel (`/admin/*`) |
-
----
-
 ## API Reference
 
-All API endpoints return JSON. State-changing requests require a `_csrf_token` field (forms) or `X-CSRF-Token` header (fetch/XHR).
+All API endpoints return JSON. State-changing requests require a CSRF token (`X-CSRF-Token` header, `_csrf` JSON field, or `_csrf_token` form field). The Razorpay webhook is exempt and uses HMAC verification instead.
+
+> For the full reference — request/response envelopes, error codes, and every endpoint — see [**docs/API.md**](docs/API.md).
 
 ### Cart
 
@@ -737,45 +918,28 @@ All API endpoints return JSON. State-changing requests require a `_csrf_token` f
 | `GET` | `/healthz` | Liveness probe — always 200 |
 | `GET` | `/readyz` | Readiness probe — checks DB connectivity |
 
-### SEO & Search Engine Crawling
+### SEO
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/robots.txt` | Crawler configuration and dynamic sitemap location |
-| `GET` | `/sitemap.xml` | Dynamically generated XML sitemap compiling static pages, restaurants, blogs, and dishes |
+| `GET` | `/robots.txt` | Crawler configuration and sitemap location |
+| `GET` | `/sitemap.xml` | Dynamically generated XML sitemap |
 
 ---
 
-## Database Schema
+## User Roles & Access Control
 
-19 tables. Relationships at a glance:
+| Role | Registration | Access |
+|---|---|---|
+| **Customer** | `/signup` | Browse, order, review, wishlist, notifications |
+| **Restaurant Owner** | `/signup/restaurant` | Owner dashboard (`/owner/*`), dishes, orders for own restaurant |
+| **Admin** | Seeded on first boot or via `flask create-admin` | Full admin panel (`/admin/*`) |
 
+Access is enforced by decorators in [`utils/decorators.py`](utils/decorators.py): `@login_required` (Flask-Login), `@admin_required`, `@owner_required`, and `@role_required`. The admin account can also be created manually with:
+
+```bash
+flask create-admin
 ```
-users
-  ├── addresses           (user_id FK)
-  ├── cart                (user_id FK, food_item_id FK)
-  ├── orders              (user_id FK, restaurant_id FK)
-  │     ├── order_items          (order_id FK, food_item_id FK)
-  │     ├── order_status_history (order_id FK)
-  │     └── payments             (order_id FK)
-  ├── reviews             (user_id FK, restaurant_id FK)
-  ├── notifications       (user_id FK)
-  ├── wishlist            (user_id FK, restaurant_id FK)
-  ├── support_tickets     (user_id FK)
-  └── wallet_transactions (user_id FK)
-
-restaurants             (owner_id FK → users)
-  └── food_items         (restaurant_id FK)
-
-offers
-  └── coupon_usage       (offer_id FK, user_id FK, order_id FK)
-
-blogs
-admin_notifications
-admin_activities        (admin_id FK → users)
-```
-
-All tables use integer primary keys with PostgreSQL sequences. Foreign key indexes are explicit. Compound indexes on high-traffic lookups (`payments.order_id + status`, `cart.user_id + food_item_id`).
 
 ---
 
@@ -795,87 +959,89 @@ All tables use integer primary keys with PostgreSQL sequences. Foreign key index
 | Production secret key | Refuses to boot without `SECRET_KEY`; derives stable dev key from file path |
 | Cookie flags | `HttpOnly`, `SameSite=Lax`; `Secure` enabled automatically in production |
 
+See [`SECURITY.md`](SECURITY.md) for the disclosure policy.
+
+---
+
+## Testing
+
+The test suite runs automatically on every push/PR via GitHub Actions (Python 3.11 + 3.12, SQLite in-memory).
+
+```bash
+# Run the full suite with coverage
+pytest tests/ -v --cov=. --cov-report=term-missing
+
+# Run a single file
+pytest tests/test_payment_logic.py -v
+```
+
+Tests are split by concern:
+
+- **Smoke** — app imports, routing, auth redirects, JSON API responses.
+- **Order logic** — model behaviour, pricing rules, coupon validation, order record persistence.
+- **Payment logic** — payment model, Razorpay HMAC/ webhook signature verification, webhook side-effects.
+
 ---
 
 ## Performance & Metrics
 
-Real, concrete metrics tested and verified directly on the application:
+Real, concrete metrics tested and verified directly on the application.
 
 ### Lighthouse Audit Scores
-Mobile performance and accessibility were optimized against Google Lighthouse standards, achieving excellent scores under simulated throttled network and CPU conditions:
+
 * **SEO (Mobile & Desktop):** **100 / 100**
-* **Accessibility (Mobile):** **90 / 100** *(WCAG AA compliant color contrast ratio ≥ 4.5:1)*
+* **Accessibility (Mobile):** **90 / 100** *(WCAG AA — contrast ratio ≥ 4.5:1)*
 * **Accessibility (Desktop):** **90 / 100**
 * **Best Practices:** **73 / 100**
-* **Performance:** **51 / 100** *(Waitress WSGI Local Dev)*
+* **Performance:** **51 / 100** *(Waitress WSGI, local dev)*
 * **Liveness / Readiness Probe Latency:** **< 2 ms**
 
 ### Theme System & Mobile Layout Redesign
-* **Unified CSS Custom Properties (Design Tokens):** Migrated hardcoded hex colors to a centralized CSS variable system defined in `theme.css`. Implemented robust light and dark themes with zero visual bleeding, full WCAG AA contrast compliance, and FOUC-prevention scripts executing in the HTML `<head>` across all blueprints (including isolated Owner and Admin panels).
-* **Sleek Mobile Navigation & Header:** Redesigned the top mobile header for viewport widths below `600px` to deliver a premium, native app-like experience. Transformed the brand logo into a compact rounded badge, turned the location picker into an interactive pill, and unified all actions (notification bell, theme toggle, and hamburger menus) into circular buttons with touch-active scaling.
-* **Persistent Theme State Sync:** Bound both desktop and profile theme toggles to the same event-driven JS listener, ensuring synchronized icon changes, tooltip label updates, and storage persistence across restarts.
+
+* **Unified Design Tokens:** Hardcoded hex colors migrated to a centralized CSS variable system in `theme.css`. Light and dark themes with zero visual bleeding, full WCAG AA contrast compliance, and FOUC-prevention scripts in the HTML `<head>` across all blueprints (Owner and Admin panels included).
+* **Sleek Mobile Navigation:** Redesigned top header for viewports below `600px` — compact rounded logo badge, interactive location pill, and circular action buttons with touch-active scaling for a native app-like experience.
+* **Persistent Theme State:** Desktop and profile toggles bound to the same event-driven listener, synchronizing icons, tooltips, and `localStorage` persistence across restarts.
 
 ### Mobile Page Load Optimizations
-* **Non-blocking Fonts & Icon Stylesheets:** Google Fonts and Font Awesome are configured to load asynchronously (`media="print" onload="this.media='all'"`), removing them from the critical render-blocking path and accelerating First Contentful Paint (FCP).
-* **Instant Page Loader:** Transitioned the full-screen loader to hide 50ms after `DOMContentLoaded` ready states rather than waiting for the entire network payload to finish downloading, improving FCP/LCP by 41% on throttled viewports.
-* **Dynamic Image Resizing Filter:** Implemented a custom `resize_image` Jinja filter and parameterized the `food_photo` helper to dynamically rewrite remote Pexels image width parameters (handling HTML-escaped `&amp;` separators). This serves perfectly sized graphics (e.g. `240px` for categories, `360px` for cards) instead of massive desktop files, saving up to 80% on image payload sizes.
-* **iOS Safari Auto-Zoom Prevention:** Overrode mobile text and search inputs to at least `16px` font-size, preventing iOS Safari from forcing automatic camera shifts/zoom on element focus.
 
-### API Endpoints Breakdown
+* **Non-blocking Fonts & Icons:** Google Fonts and Font Awesome load asynchronously (`media="print" onload="this.media='all'"`), removing them from the critical render path.
+* **Instant Page Loader:** Full-screen loader hides ~50ms after `DOMContentLoaded`, improving FCP/LCP by ~41% on throttled viewports.
+* **Dynamic Image Resizing:** A custom `resize_image` Jinja filter rewrites remote Pexels image widths (handling HTML-escaped `&amp;`), serving correctly sized graphics (e.g. `240px`/`360px`) and cutting image payload by up to 80%.
+* **iOS Safari Auto-Zoom Prevention:** Mobile inputs use ≥ `16px` font-size to prevent forced zoom on focus.
+
+### API Endpoint Breakdown
+
 * **Total Registered Endpoints:** **126** (excluding static asset routing)
-* **JSON APIs & Webhooks:** **57**
-* **Admin Web Routes:** **26**
-* **Customer & Restaurant Owner Web Routes:** **43**
+  * JSON APIs & Webhooks: **57**
+  * Admin Web Routes: **26**
+  * Customer & Restaurant Owner Web Routes: **43**
 
-### HTTP Load Test Performance
-Tested locally against the HTTP `/healthz` endpoint:
-* **Low Concurrency (10 concurrent clients, 50 requests):**
-  * Average Latency: **24.83 ms**
-  * 95th Percentile: **29.95 ms**
-  * Min / Max Latency: **9.89 ms / 31.08 ms**
-  * Success Rate: **100%**
-* **High Concurrency (50 concurrent clients, 200 requests):**
-  * Average Latency: **41.36 ms**
-  * 95th Percentile: **64.77 ms**
-  * Min / Max Latency: **7.28 ms / 69.81 ms**
-  * Success Rate: **24.5%** 
-  > [!NOTE]
-  > Under high concurrency, the application's built-in rate limiter (`Flask-Limiter` set to `100 per minute`) successfully throttles excess requests, returning HTTP `429 Too Many Requests`.
+### HTTP Load Test (local `/healthz`)
 
-### WebSocket Concurrency & Limitations
-* **Local Test Results:** 0 concurrent connections successfully established under default waitress dev configuration.
-* **Explanation:** Flask-SocketIO runs in `async_mode='threading'` by default. The local Waitress server is configured with 4 worker threads. Because Waitress does not support the raw `websocket` transport, the connection falls back to HTTP long-polling. Since long-polling keeps threads open waiting for events, 4 active clients immediately exhaust the thread pool, causing other attempts to time out.
-* **Production Recommendation:** To test and scale to 1000+ concurrent WebSockets:
-  1. Uncomment `eventlet==0.33.3` in the `requirements.txt` file.
+* **Low concurrency (10 clients, 50 requests):** Avg **24.83 ms** · p95 **29.95 ms** · min/max **9.89 / 31.08 ms** · 100% success
+* **High concurrency (50 clients, 200 requests):** Avg **41.36 ms** · p95 **64.77 ms** · min/max **7.28 / 69.81 ms** · ~24.5% success
+  > Under high concurrency, the built-in rate limiter (`Flask-Limiter`, `100 per minute`) intentionally throttles excess requests, returning HTTP `429 Too Many Requests`.
+
+### WebSocket Concurrency
+
+* **Local:** Flask-SocketIO runs in `async_mode='threading'`; under the default Waitress config, long-polling can exhaust worker threads at high client counts.
+* **Production recommendation (1000+ concurrent sockets):**
+  1. Uncomment `eventlet==0.41.1` in `requirements.txt`.
   2. Add `import eventlet; eventlet.monkey_patch()` at the top of `run.py`.
-  3. Deploy using an async-compatible server, such as Gunicorn with an eventlet worker class (`gunicorn -k eventlet run:app`).
-
----
-
-## Screenshots
-
-| Page | Screenshot |
-|---|---|
-| Homepage | ![Homepage](assets/screenshots/homepage.png) |
-| Restaurant listing | ![Restaurants](assets/screenshots/restaurants.png) |
-| Restaurant menu | ![Menu](assets/screenshots/menu.png) |
-| Cart | ![Cart](assets/screenshots/cart.png) |
-| Admin dashboard | ![Admin](assets/screenshots/admin.png) |
-| Login | ![Login](assets/screenshots/login.png) |
-| Gallery | ![Gallery](assets/screenshots/gallery.png) |
+  3. Deploy with an async-compatible server, e.g. `gunicorn -k eventlet run:app`.
 
 ---
 
 ## Deployment
 
-### Railway (recommended — one-click from GitHub)
+### Railway (recommended)
 
-Railway auto-detects the `Dockerfile` for container deploys, or falls back to the `Procfile` + `runtime.txt` for buildpack deploys. Both are included — Railway picks the `Dockerfile` by default.
+Railway auto-detects the `Dockerfile` for container deploys (or falls back to `Procfile` + `runtime.txt`). Both are included — Railway picks the `Dockerfile` by default. `railway.toml` configures the `/healthz` healthcheck.
 
-1. Push the repo to GitHub (already done)
-2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select `Grabbite`
-3. Add a **PostgreSQL** plugin from the Railway dashboard
-4. Set the following environment variables in the Railway service settings:
+1. Push the repo to GitHub.
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select `Grabbite`.
+3. Add a **PostgreSQL** plugin from the Railway dashboard.
+4. Set the following environment variables:
 
 ```env
 SECRET_KEY=<generate a 64-byte random string>
@@ -890,35 +1056,24 @@ RAZORPAY_WEBHOOK_SECRET=<your webhook secret>
 SOCKETIO_ALLOWED_ORIGINS=https://your-railway-domain.up.railway.app
 ```
 
-5. Railway deploys automatically on every push to `main`. The `/healthz` endpoint is used as the health probe.
+5. Railway deploys automatically on every push to `main`.
 
-> Railway injects `$PORT` at runtime — `run.py` and the `Procfile` both read it automatically.
-
----
+> Railway injects `$PORT` at runtime — `run.py` and the `Procfile` read it automatically.
 
 ### Docker (local or any VPS)
 
 ```bash
-# Build and start app + PostgreSQL
 docker-compose up -d --build
-
-# App is available at http://localhost:8000
-# Follow logs
+# App available at http://localhost:8000
 docker-compose logs -f web
-
-# Stop
 docker-compose down
 ```
 
 Override any environment variable by creating a `.env` file in the project root before running `docker-compose up`.
 
----
-
 ### Traditional VPS (Ubuntu + Nginx)
 
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full guide covering Nginx config, systemd service, and Let's Encrypt SSL.
-
----
 
 ### Production checklist
 
@@ -937,7 +1092,7 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full guide covering Nginx
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines. Pull requests are welcome.
+Contributions are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines.
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/your-feature`)
@@ -947,31 +1102,26 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines. Pull requests are welco
 
 ---
 
-## Author
+## Changelog
 
-**Manav Baghel**
-
-Built GrabBite as a production-grade demonstration of Python (Flask) applied to a real-world food delivery domain — covering payment gateway integration, real-time WebSockets, role-based access control, and deployment on PostgreSQL + Railway.
-
-- Email: [manavraj854@gmail.com](mailto:manavraj854@gmail.com)
-- GitHub: [@manav-2812](https://github.com/manav-2812)
-
-## 🎨 Design System & Zomato-Style Dark Mode
-
-GrabBite features a fully theme-aware interface designed around a Zomato-like high-contrast aesthetic. It automatically adapts to user preferences and maintains state across session reloads.
-
-### Key Highlights
-- **Default Theme**: Dark mode is set as the default state for new users, offering a premium dark canvas (`#0e0f13` body background, matching Zomato's web appearance).
-- **Persistent State**: The user-controlled toggle (☀️/🌙) writes directly to `localStorage` key `gb-theme`. An inline `<head>` script applies the setting before the page finishes rendering to completely prevent "white flashes" on page load.
-- **Glassmorphism & Glows**: Active headers utilize `-webkit-backdrop-filter: blur(20px)` and frosted translucent backgrounds (`rgba(22, 24, 29, 0.92)`). Card elements feature subtle borders (`--gb-border` / `--gb-border-strong`) and elevated neon-hover shadows in dark mode.
-- **Unified Variables**: Handled using standard CSS custom properties defined in `theme.css`:
-  - Backgrounds: `--gb-bg`, `--gb-surface`, `--gb-surface-2`, `--gb-surface-3`
-  - Text colors: `--gb-text-primary`, `--gb-text-secondary`, `--gb-text-muted`, `--gb-text-faint`
-  - Accents: `--gb-red` (brand signature)
-- **Comprehensive Overrides**: Implemented via `dark-mode-fixes.css` to gracefully override hardcoded inline styles, Bootstrap interactive modules (Accordions, Modals, Forms, Tables), and custom widgets.
+See [`CHANGELOG.md`](CHANGELOG.md) for the full version history (currently **v1.1.0** — Responsive Dark Mode & UX Refinement, released 2026-07-20).
 
 ---
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+Released under the **MIT License** — see [`LICENSE`](LICENSE).
+
+Copyright © 2025 Manav Baghel.
+
+---
+
+## Author
+
+**Manav Baghel**
+
+Built GrabBite as a full-stack application demonstrating Python (Flask) applied to a real-world food delivery domain — covering payment gateway integration, real-time WebSockets, role-based access control, and deployment on PostgreSQL + Railway.
+
+- 📧 Email: [manavraj854@gmail.com](mailto:manavraj854@gmail.com)
+- 💻 GitHub: [@manav-2812](https://github.com/manav-2812)
+- 🔗 Live project: <https://grabbite.up.railway.app>

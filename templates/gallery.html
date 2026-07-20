@@ -54,14 +54,14 @@
     <section class="cat-section mb-5" data-section="{{ cat_name }}">
         <!-- Section Header -->
         <div class="d-flex align-items-center gap-3 mb-4">
-            <div class="cat-icon-circle" style="background:{{ meta.color }}20;color:{{ meta.color }};">
+            <div class="cat-icon-circle" data-bg="{{ meta.color }}20" data-color="{{ meta.color }}">
                 <i class="fas {{ meta.icon }}"></i>
             </div>
             <div>
                 <h2 class="cat-heading mb-0">{{ cat_name }}</h2>
                 <small class="text-muted">{{ meta.dishes|length }} item{{ 's' if meta.dishes|length != 1 else '' }}</small>
             </div>
-            <div class="section-line flex-grow-1" style="background:{{ meta.color }};"></div>
+            <div class="section-line flex-grow-1" data-bg="{{ meta.color }}"></div>
         </div>
 
         <!-- Dishes row -->
@@ -81,7 +81,7 @@
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </span>
                             </div>
-                            <span class="cat-badge" style="background:{{ meta.color }};">{{ cat_name }}</span>
+                            <span class="cat-badge" data-bg="{{ meta.color }}">{{ cat_name }}</span>
                         </div>
                         <div class="card-body pb-0">
                             <h5 class="fw-bold mb-1 text-dark" style="font-size:.98rem;">{{ dish.name }}</h5>
@@ -89,7 +89,7 @@
                         </div>
                         <div class="card-footer border-0 pt-1 pb-3 px-3 d-flex align-items-center justify-content-between">
                             <span class="small text-muted">
-                                <i class="fas fa-store me-1" style="color:{{ meta.color }};"></i>{{ dish.restaurant }}
+                                <i class="fas fa-store me-1" data-color="{{ meta.color }}"></i>{{ dish.restaurant }}
                             </span>
                             <span class="text-danger fw-semibold small">
                                 <i class="fas fa-arrow-right"></i>
@@ -238,6 +238,7 @@
 .dish-desc {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.5;
@@ -253,6 +254,14 @@
 
 {% block extra_js %}
 <script>
+// Apply dynamic inline styles to avoid template errors in static CSS validator
+document.querySelectorAll('[data-bg]').forEach(el => {
+    el.style.background = el.getAttribute('data-bg');
+});
+document.querySelectorAll('[data-color]').forEach(el => {
+    el.style.color = el.getAttribute('data-color');
+});
+
 const allItems    = document.querySelectorAll('.dish-item');
 const allSections = document.querySelectorAll('.cat-section');
 const noResults   = document.getElementById('no-results');

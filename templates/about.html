@@ -128,7 +128,7 @@
     {% for initials, color, name, role, bio in leaders %}
     <div class="col-6 col-md-3">
       <div class="team-card">
-        <div class="team-avatar" style="background:{{ color }};">{{ initials }}</div>
+        <div class="team-avatar" data-bg="{{ color }}">{{ initials }}</div>
         <div class="fw-bold">{{ name }}</div>
         <div style="font-size:.8rem; color:#e53935; margin-bottom:8px;">{{ role }}</div>
         <div style="font-size:.78rem; color:#888;">{{ bio }}</div>
@@ -150,4 +150,10 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('[data-bg]').forEach(el => {
+    el.style.background = el.getAttribute('data-bg');
+  });
+</script>
 {% endblock %}

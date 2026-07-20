@@ -109,7 +109,7 @@
     ] %}
     {% for icon, bg, title, desc in perks %}
     <div class="col-6 col-md-4 col-lg-2">
-      <div class="perk-card" style="background:{{ bg }};">
+      <div class="perk-card" data-bg="{{ bg }}">
         <div class="perk-icon">{{ icon }}</div>
         <div class="fw-bold mb-1" style="font-size:.9rem;">{{ title }}</div>
         <div style="font-size:.75rem; color:#666; line-height:1.5;">{{ desc }}</div>
@@ -196,6 +196,11 @@
 </div>
 
 <script>
+// Apply dynamic backgrounds to avoid inline style template syntax errors
+document.querySelectorAll('[data-bg]').forEach(el => {
+  el.style.background = el.getAttribute('data-bg');
+});
+
 function filterJobs(dept, btn) {
   document.querySelectorAll('.dept-tab').forEach(t => {
     t.classList.remove('btn-danger', 'active');
