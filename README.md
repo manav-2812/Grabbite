@@ -2,7 +2,7 @@
   <img src="static/img/logo.svg" alt="GrabBite" width="140" />
 </p>
 <p align="center">
-  <strong>Grabbite is a full-stack, production-grade food delivery platform built with Python &amp; Flask.</strong><br/>
+  <strong>Grabbite is full-stack, production-grade food delivery platform built with Python &amp; Flask.</strong><br/>
   Restaurant discovery · Cart &amp; checkout · Real-time order tracking · Razorpay payments · Role-based admin &amp; owner dashboards.
 </p>
 
