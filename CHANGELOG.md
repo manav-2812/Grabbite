@@ -7,19 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-07-20
+## [1.1.0] - 2026-07-20 — Responsive Dark Mode & UX Refinement
 
 ### Added
-- Premium dark mode theme support with Zomato-inspired high-contrast aesthetic.
-- User dark theme preference persistence utilizing `localStorage` (`gb-theme`).
-- Prevent-flash theme loader script in `<head>` to execute prior to first paint.
-- Scoped overrides for Bootstrap Accordions, Modals, Forms, Tables, and List Groups.
-- Custom styled components for cart items, search filters, related dish cards, and blog open prose content.
+- **Full Dark Mode**: High-contrast, premium dark theme support integrated across the entire platform.
+- **User Preference Memory**: Persistent theme selection stored in `localStorage` with a fast-loading head script to prevent flash-of-unstyled-content.
+- **Enhanced Responsive Design**: Optimized layouts and responsive controls specifically tailored for mobile and tablet viewports.
 
 ### Fixed
-- Deprecation warning console noise from Eventlet concurrent library during server start.
-- Hardcoded inline light backgrounds on home, gallery, blogs, and restaurants search controls.
+- **Theme Rendering Bugs**: Neutralized hardcoded inline light backgrounds on home, gallery, blogs, cart, and restaurant search bars.
+- **Bootstrap Widget Overrides**: Resolved visual layout errors on Accordions, Modals, Forms, Tables, and List Groups under dark mode.
+- **Eventlet Startup Deprecation**: Silenced console deprecation warning logs from the Eventlet concurrent library during server boot.
 
+### Refined
+- **Seamless User Experience**: Enhanced typography contrast, card elevations, hover states, and navigation transitions for a cleaner checkout and discovery flow.
 
 ### Added
 - Initial release of GrabBite food ordering platform
